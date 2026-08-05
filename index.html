@@ -65,17 +65,50 @@
 
     <main>
       <section id="homePage" class="page active">
-        <div id="homeEmpty" class="home-empty">
-          <div class="welcome-copy"><p class="eyebrow">YOUR ROOM</p><h1>開一個房間，<br>一起累積幸福。</h1><p>建立你們的專屬房間，邀請情侶、家人或朋友一起生活。</p></div>
-          <article class="welcome-card"><div class="mascot-scene"><div class="bear">🐻</div><div class="wheat">🌾</div></div><button class="primary" data-open="bookDialog">🚪 開一個房間</button><button class="secondary" data-open="joinDialog">輸入房間代碼加入</button></article>
+        <div class="home-greet">
+          <p class="eyebrow" id="helloText">안녕, 오늘도 함께해요</p>
+          <h1>今天一起累積幸福吧！</h1>
+          <p class="home-sub">與重要的家人、伴侶或朋友，一起記錄生活的每一天。</p>
         </div>
 
+        <article class="hero-card">
+          <div class="hero-copy">
+            <p class="hero-eyebrow">🏠 歡迎回家</p>
+            <h2>BORI</h2>
+            <p>我們一起，<br>讓生活更美好。</p>
+            <span class="hero-pill">❤️ 一起累積幸福</span>
+          </div>
+          <div class="hero-bear">🐻</div>
+        </article>
+
+        <div class="action-cards">
+          <button class="action-card create" data-open="bookDialog">
+            <span class="action-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 6 5.3v15L13 19z"/><path d="M13 4h5v16h-5"/><circle cx="10.3" cy="12.3" r="0.9" fill="currentColor" stroke="none"/></svg></span>
+            <strong>建立房間</strong>
+            <small>建立專屬的共同生活空間</small>
+            <span class="action-arrow"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+          </button>
+          <button class="action-card join" data-open="joinDialog">
+            <span class="action-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="9.5" r="3.3"/><path d="M9.9 11.9 18.5 20.5"/><path d="M15.5 17.5l-2 2M18 20l-1.7 1.7"/></svg></span>
+            <strong>加入房間</strong>
+            <small>輸入房間代碼加入一起生活</small>
+            <span class="action-arrow"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+          </button>
+        </div>
+
+        <div class="section-head"><h2><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>最近的房間</h2></div>
+        <p id="roomEmptyHint" class="muted-hint hidden">還沒有房間，開一個或輸入代碼加入吧。</p>
+        <div id="roomCarousel" class="room-carousel hidden"></div>
+
         <div id="homeDashboard" class="hidden">
-          <section class="greeting-block"><div><p class="eyebrow" id="helloText">안녕, 오늘도 함께해요</p><h1 id="homeBookName">今天也一起記帳吧！</h1></div><button class="icon-button" data-open="bookDialog"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></section>
-          <label class="book-switcher"><span>目前房間</span><select id="activeBookSelect"></select></label>
           <article class="overview-card">
-            <div><span>本月可用餘額</span><strong id="availableAmount">$0</strong><small id="budgetHint">設定預算後會顯示提醒</small></div>
-            <div class="overview-row"><div><span>收入</span><b id="incomeTotal">$0</b></div><div><span>支出</span><b id="expenseTotal">$0</b></div><div><span>預算</span><b id="budgetTotal">$0</b></div></div>
+            <div class="overview-head"><div><h2>本月總覽</h2><small id="overviewRange"></small></div><button class="text-button" data-page="analysisPage">查看分析 ›</button></div>
+            <div class="overview-row">
+              <div><span class="stat-icon income"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><span>總收入</span><b id="incomeTotal">$0</b></div>
+              <div><span class="stat-icon expense"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l3 3v15H7z"/><path d="M15 3v3h3M9.5 12h5M9.5 15.5h5"/></svg></span><span>總支出</span><b id="expenseTotal">$0</b></div>
+              <div><span class="stat-icon budget"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><span>預算剩餘</span><b id="availableAmount">$0</b></div>
+            </div>
+            <small id="budgetHint">設定預算後會顯示提醒</small>
           </article>
           <div class="quick-grid">
             <button data-open="incomeDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><strong>新增收入</strong><small>同步到房間</small></button>

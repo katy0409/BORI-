@@ -72,12 +72,18 @@ async function loadProfile() {
   profile = data || { id: session.user.id, display_name: session.user.user_metadata?.display_name || session.user.email?.split("@")[0] || "BORI 使用者" };
 }
 
+let memberCounts = {};
 async function loadBooks() {
   const { data, error } = await supabaseClient.from("book_members").select("role, books(*)").eq("user_id", session.user.id);
-  if (error) { toast(error.message); books = []; return; }
+  if (error) { toast(error.message); books = []; memberCounts = {}; return; }
   books = (data || []).map((row) => ({ ...row.books, role: row.role })).filter(Boolean);
   if (!books.some((b) => b.id === activeBookId)) activeBookId = books[0]?.id || null;
   if (activeBookId) localStorage.setItem(ACTIVE_BOOK_KEY, activeBookId); else localStorage.removeItem(ACTIVE_BOOK_KEY);
+  memberCounts = {};
+  if (books.length) {
+    const { data: mrows } = await supabaseClient.from("book_members").select("book_id").in("book_id", books.map((b) => b.id));
+    (mrows || []).forEach((r) => { memberCounts[r.book_id] = (memberCounts[r.book_id] || 0) + 1; });
+  }
 }
 
 async function fetchLedger() {
@@ -140,17 +146,22 @@ function renderProfile() {
   $("#deleteRoomBtn").classList.toggle("hidden", !book || !isOwner);
 }
 function renderBookSwitcher() {
-  $("#activeBookSelect").innerHTML = books.map((b) => `<option value="${b.id}" ${b.id === activeBookId ? "selected" : ""}>${typeIcon[b.type] || "📒"} ${escapeHTML(b.name)}</option>`).join("");
+  $("#roomEmptyHint").classList.toggle("hidden", books.length > 0);
+  $("#roomCarousel").classList.toggle("hidden", books.length === 0);
+  $("#roomCarousel").innerHTML = books.map((b) => `<button class="room-card ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><span class="room-thumb">${typeIcon[b.type] || "📒"}</span><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></button>`).join("");
+}
+function monthRangeLabel() {
+  const d = new Date(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  return `${d.getMonth() + 1}月1日 - ${d.getMonth() + 1}月${last}日`;
 }
 function renderHome() {
-  const has = books.length > 0;
-  $("#homeEmpty").classList.toggle("hidden", has); $("#homeDashboard").classList.toggle("hidden", !has);
+  const has = !!activeBookId;
+  $("#homeDashboard").classList.toggle("hidden", !has);
   if (!has) return;
-  const book = activeBook();
   const expenses = monthTransactions("expense"), incomes = monthTransactions("income");
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0), bud = budgets.reduce((s, x) => s + Number(x.amount), 0);
-  $("#homeBookName").textContent = `${typeIcon[book.type] || "📒"} ${book.name}`;
-  $("#incomeTotal").textContent = money(inc); $("#expenseTotal").textContent = money(exp); $("#budgetTotal").textContent = money(bud);
+  $("#overviewRange").textContent = monthRangeLabel();
+  $("#incomeTotal").textContent = money(inc); $("#expenseTotal").textContent = money(exp);
   $("#availableAmount").textContent = money(bud ? Math.max(bud - exp, 0) : inc - exp);
   $("#budgetHint").textContent = bud ? `預算已使用 ${Math.min(100, Math.round((exp / bud) * 100 || 0))}%` : `目前結餘 ${money(inc - exp)}`;
   const last = messages.at(-1); $("#chatSummary").textContent = last ? (last.message_type === "sticker" ? stickerById(last.sticker_id)?.text || "BORI 貼圖" : last.content) : "還沒有聊天訊息";
@@ -259,7 +270,7 @@ $("#googleLoginBtn").addEventListener("click", async () => {
 $$('[data-page]').forEach((b) => b.addEventListener("click", () => goTo(b.dataset.page)));
 $$('[data-open]').forEach((b) => b.addEventListener("click", () => openDialog(b.dataset.open)));
 $$('[data-close]').forEach((b) => b.addEventListener("click", () => closeDialog(b.dataset.close)));
-$("#activeBookSelect").addEventListener("change", (e) => switchBook(e.target.value));
+$("#roomCarousel").addEventListener("click", (e) => { const btn = e.target.closest(".room-card"); if (btn) switchBook(btn.dataset.book); });
 
 $("#bookForm").addEventListener("submit", async (e) => { e.preventDefault(); try { const name = $("#newBookName").value.trim(), type = document.querySelector('[name="bookType"]:checked').value; const book = await createBook(name, type); activeBookId = book.id; localStorage.setItem(ACTIVE_BOOK_KEY, activeBookId); e.target.reset(); closeDialog("bookDialog"); await loadBooks(); await loadActiveBookData(); renderAll(); toast(`房間開好了，房間代碼：${book.invite_code}`); } catch (err) { toast(err.message); } });
 $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); const code = $("#inviteCodeInput").value.trim().toUpperCase(); const { data, error } = await supabaseClient.rpc("join_book_by_code", { p_invite_code: code }); if (error) return toast(error.message); if (!data) return toast("找不到這個房間代碼"); closeDialog("joinDialog"); e.target.reset(); await loadBooks(); activeBookId = data; await loadActiveBookData(); renderAll(); toast("已加入房間 🎉"); });
