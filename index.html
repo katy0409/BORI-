@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.3.1，共同生活雲端記帳 App。" />
+  <meta name="description" content="BORI V1.3.1，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
   <title>BORI V1.3.1｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,21 +61,21 @@
     <main>
       <section id="homePage" class="page active">
         <div id="homeEmpty" class="home-empty">
-          <div class="welcome-copy"><p class="eyebrow">CLOUD LIFE</p><h1>一起生活，<br>一起累積幸福。</h1><p>建立共同帳本，邀請朋友、情侶或家人一起使用。</p></div>
-          <article class="welcome-card"><div class="mascot-scene"><div class="bear">🐻</div><div class="wheat">🌾</div></div><button class="primary" data-open="bookDialog">＋ 建立第一本帳本</button><button class="secondary" data-open="joinDialog">輸入邀請碼加入</button></article>
+          <div class="welcome-copy"><p class="eyebrow">YOUR ROOM</p><h1>開一個房間，<br>一起累積幸福。</h1><p>建立你們的專屬房間，邀請情侶、家人或朋友一起生活。</p></div>
+          <article class="welcome-card"><div class="mascot-scene"><div class="bear">🐻</div><div class="wheat">🌾</div></div><button class="primary" data-open="bookDialog">🚪 開一個房間</button><button class="secondary" data-open="joinDialog">輸入房間代碼加入</button></article>
         </div>
 
         <div id="homeDashboard" class="hidden">
           <section class="greeting-block"><div><p class="eyebrow" id="helloText">안녕, 오늘도 함께해요</p><h1 id="homeBookName">今天也一起記帳吧！</h1></div><button class="icon-button" data-open="bookDialog">＋</button></section>
-          <label class="book-switcher"><span>目前帳本</span><select id="activeBookSelect"></select></label>
+          <label class="book-switcher"><span>目前房間</span><select id="activeBookSelect"></select></label>
           <article class="overview-card">
             <div><span>本月可用餘額</span><strong id="availableAmount">$0</strong><small id="budgetHint">設定預算後會顯示提醒</small></div>
             <div class="overview-row"><div><span>收入</span><b id="incomeTotal">$0</b></div><div><span>支出</span><b id="expenseTotal">$0</b></div><div><span>預算</span><b id="budgetTotal">$0</b></div></div>
           </article>
           <div class="quick-grid">
-            <button data-open="incomeDialog"><span>💰</span><strong>新增收入</strong><small>同步到共同帳本</small></button>
+            <button data-open="incomeDialog"><span>💰</span><strong>新增收入</strong><small>同步到房間</small></button>
             <button data-open="budgetDialog"><span>🎯</span><strong>設定預算</strong><small>分類管理本月額度</small></button>
-            <button data-page="chatPage"><span>💬</span><strong>共同聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
+            <button data-page="chatPage"><span>💬</span><strong>房間聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
           </div>
           <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
           <div id="budgetPreview" class="budget-list"></div>
@@ -85,7 +85,7 @@
       </section>
 
       <section id="chatPage" class="page chat-page">
-        <div id="chatEmpty" class="empty-state large-empty"><div class="empty-illustration">💬</div><h2>先建立共同帳本</h2><p>建立帳本後，就能即時聊天與傳送 BORI 貼圖。</p><button class="primary" data-open="bookDialog">建立帳本</button></div>
+        <div id="chatEmpty" class="empty-state large-empty"><div class="empty-illustration">💬</div><h2>先開一個房間</h2><p>開房間後，就能即時聊天與傳送 BORI 貼圖。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
         <div id="chatContent" class="hidden chat-layout">
           <div class="chat-head"><div><p class="eyebrow">REALTIME CHAT</p><h2 id="chatBookTitle">聊天室</h2></div><span class="live-dot">● 即時</span></div>
           <div id="messageList" class="message-list"></div>
@@ -95,7 +95,7 @@
       </section>
 
       <section id="addPage" class="page">
-        <div id="addEmpty" class="empty-state large-empty"><div class="empty-illustration">🌱</div><h2>先建立共同帳本</h2><p>帳本建立後，才能新增共同支出。</p><button class="primary" data-open="bookDialog">建立帳本</button></div>
+        <div id="addEmpty" class="empty-state large-empty"><div class="empty-illustration">🌱</div><h2>先開一個房間</h2><p>房間開好後，才能新增共同支出。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
         <div id="addContent" class="hidden"><div class="form-intro"><p class="eyebrow">NEW EXPENSE</p><h2>這次花了多少？</h2></div>
           <form id="expenseForm" class="expense-form">
             <label class="amount-field"><span>$</span><input id="amountInput" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0" required /></label>
@@ -119,7 +119,7 @@
 
       <section id="profilePage" class="page">
         <article class="profile-card"><div class="profile-mascot">🐻</div><h2 id="profileName">BORI 使用者</h2><p id="profileEmail">Cloud Life · V1.3</p></article>
-        <div class="settings-list"><button data-open="bookDialog">📒 建立新帳本 <span>›</span></button><button data-open="joinDialog">🔗 加入共同帳本 <span>›</span></button><button data-open="budgetDialog">🎯 預算管理 <span>›</span></button><button id="signOutBtn">🚪 登出 <span>›</span></button></div>
+        <div class="settings-list"><button data-open="bookDialog">🚪 開新房間 <span>›</span></button><button data-open="joinDialog">🔑 加入房間 <span>›</span></button><button data-open="budgetDialog">🎯 預算管理 <span>›</span></button><button id="signOutBtn">🔒 登出 <span>›</span></button></div>
       </section>
     </main>
 
@@ -132,9 +132,9 @@
     </nav>
   </div>
 
-  <dialog id="bookDialog"><form id="bookForm"><div class="dialog-head"><div><p class="eyebrow">NEW BOOK</p><h3>建立共同帳本</h3></div><button type="button" class="dialog-close" data-close="bookDialog">×</button></div><label>帳本名稱<input id="newBookName" required maxlength="20" placeholder="例如：我們的小家庭" /></label><label>情境<div class="type-options"><label><input type="radio" name="bookType" value="couple" checked><span>❤️<small>情侶</small></span></label><label><input type="radio" name="bookType" value="family"><span>👨‍👩‍👧<small>家人</small></span></label><label><input type="radio" name="bookType" value="friends"><span>🍻<small>朋友</small></span></label><label><input type="radio" name="bookType" value="travel"><span>✈️<small>旅行</small></span></label></div></label><button class="primary" type="submit">建立帳本</button></form></dialog>
+  <dialog id="bookDialog"><form id="bookForm"><div class="dialog-head"><div><p class="eyebrow">NEW ROOM</p><h3>開一個房間</h3></div><button type="button" class="dialog-close" data-close="bookDialog">×</button></div><label>房間名稱<input id="newBookName" required maxlength="20" placeholder="例如：我們的小家庭" /></label><label>房間類型<div class="type-options"><label><input type="radio" name="bookType" value="couple" checked><span>❤️<small>情侶</small></span></label><label><input type="radio" name="bookType" value="family"><span>👨‍👩‍👧<small>家人</small></span></label><label><input type="radio" name="bookType" value="friends"><span>🍻<small>朋友</small></span></label><label><input type="radio" name="bookType" value="travel"><span>✈️<small>旅行</small></span></label></div></label><button class="primary" type="submit">🚪 開房間</button></form></dialog>
 
-  <dialog id="joinDialog"><form id="joinForm"><div class="dialog-head"><div><p class="eyebrow">JOIN BOOK</p><h3>加入共同帳本</h3></div><button type="button" class="dialog-close" data-close="joinDialog">×</button></div><label>邀請碼<input id="inviteCodeInput" required maxlength="20" placeholder="例如：BORI-ABC123" /></label><button class="primary" type="submit">加入帳本</button></form></dialog>
+  <dialog id="joinDialog"><form id="joinForm"><div class="dialog-head"><div><p class="eyebrow">JOIN ROOM</p><h3>加入房間</h3></div><button type="button" class="dialog-close" data-close="joinDialog">×</button></div><label>房間代碼<input id="inviteCodeInput" required maxlength="20" placeholder="例如：BORI-ABC123" /></label><button class="primary" type="submit">🔑 加入房間</button></form></dialog>
 
   <dialog id="incomeDialog"><form id="incomeForm"><div class="dialog-head"><div><p class="eyebrow">NEW INCOME</p><h3>新增收入</h3></div><button type="button" class="dialog-close" data-close="incomeDialog">×</button></div><label>收入名稱<input id="incomeTitle" required placeholder="例如：薪水" /></label><label>金額<input id="incomeAmount" type="number" min="1" step="0.01" required placeholder="0" /></label><label>分類<select id="incomeCategory"><option>薪水</option><option>獎金</option><option>副業</option><option>投資</option><option>退款</option><option>禮金</option><option>其他</option></select></label><button class="primary" type="submit">儲存收入</button></form></dialog>
 
