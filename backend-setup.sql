@@ -12,7 +12,7 @@ alter table public.transactions enable row level security;
 alter table public.budgets enable row level security;
 alter table public.messages enable row level security;
 
--- New user profile trigger
+-- New user profile trigger (supports email/password signup and OAuth providers like Google)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -20,7 +20,13 @@ security definer set search_path = public
 as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', split_part(new.email, '@', 1), 'BORI 使用者'))
+  values (new.id, coalesce(
+    new.raw_user_meta_data ->> 'display_name',
+    new.raw_user_meta_data ->> 'full_name',
+    new.raw_user_meta_data ->> 'name',
+    split_part(new.email, '@', 1),
+    'BORI 使用者'
+  ))
   on conflict (id) do update set display_name = excluded.display_name;
   return new;
 end;
