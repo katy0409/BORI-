@@ -135,10 +135,19 @@ async function switchBook(bookId) {
   renderAll();
 }
 
-function renderAll() { renderProfile(); renderBookSwitcher(); renderHome(); renderAdd(); renderChat(); renderAnalysis(); }
+function renderAll() { renderProfile(); renderBookSwitcher(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); }
+function renderLedger() {
+  const has = !!activeBookId;
+  $("#ledgerEmpty").classList.toggle("hidden", has);
+  $("#ledgerContent").classList.toggle("hidden", !has);
+  if (!has) return;
+  $("#ledgerBookTitle").textContent = activeBook()?.name || "交易紀錄";
+  $("#ledgerCount").textContent = transactions.length ? `共 ${transactions.length} 筆` : "";
+  $("#ledgerList").innerHTML = transactions.length ? transactions.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
+}
 function renderProfile() {
   $("#profileName").textContent = profile?.display_name || "BORI 使用者";
-  $("#profileEmail").textContent = session?.user?.email || "Cloud Life · V1.3.2";
+  $("#profileEmail").textContent = session?.user?.email || "Cloud Life · V1.3";
   $("#helloText").textContent = `안녕, ${profile?.display_name || "BORI"} 👋`;
   const book = activeBook(), isOwner = book?.role === "owner";
   $("#leaveRoomBtn").classList.toggle("hidden", !book);
@@ -156,19 +165,17 @@ function monthRangeLabel() {
 }
 function renderHome() {
   const has = !!activeBookId;
-  $("#homeOnboarding").classList.toggle("hidden", has);
   $("#homeDashboard").classList.toggle("hidden", !has);
   if (!has) return;
   const expenses = monthTransactions("expense"), incomes = monthTransactions("income");
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0), bud = budgets.reduce((s, x) => s + Number(x.amount), 0);
-  const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
-  const otherPaid = Math.max(exp - myPaid, 0);
   $("#overviewRange").textContent = monthRangeLabel();
   $("#incomeTotal").textContent = money(inc); $("#expenseTotal").textContent = money(exp);
-  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
-  $("#spendingTrend").textContent = expenses.length ? `共 ${expenses.length} 筆支出，持續累積中` : "本月還沒有支出";
   $("#availableAmount").textContent = money(bud ? Math.max(bud - exp, 0) : inc - exp);
   $("#budgetHint").textContent = bud ? `預算已使用 ${Math.min(100, Math.round((exp / bud) * 100 || 0))}%` : `目前結餘 ${money(inc - exp)}`;
+  const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
+  const otherPaid = Math.max(exp - myPaid, 0);
+  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
   const last = messages.at(-1); $("#chatSummary").textContent = last ? (last.message_type === "sticker" ? stickerById(last.sticker_id)?.text || "BORI 貼圖" : last.content) : "還沒有聊天訊息";
   renderBudgets(expenses);
   const records = transactions.slice(0, 6); $("#recentList").innerHTML = records.length ? records.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
