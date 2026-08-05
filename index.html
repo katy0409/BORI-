@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#78965e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BORI" />
+  <meta name="description" content="BORI V1.3.2，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.3.2｜Cloud Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <section id="splashScreen" class="splash-screen" aria-label="BORI 啟動畫面">
+    <img src="assets/splash-v2.png" alt="BORI 熊熊啟動畫面" class="splash-full-art" />
+    <div class="splash-overlay"></div>
+    <div class="splash-progress"><i></i></div>
+  </section>
+
+  <section id="configErrorScreen" class="gate-screen hidden">
+    <div class="gate-card">
+      <div class="gate-logo">🌾</div>
+      <p class="eyebrow">BORI SERVICE</p>
+      <h1>系統準備中</h1>
+      <p class="gate-copy">BORI 雲端服務目前尚未完成連線，請稍後再試。</p>
+      <button class="primary" type="button" onclick="location.reload()">重新整理</button>
+    </div>
+  </section>
+
+  <section id="authScreen" class="gate-screen hidden">
+    <div class="gate-card auth-card">
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.3.2</small></div></div>
+      <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
+      <form id="loginForm" class="auth-form">
+        <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
+        <label>密碼<input id="loginPassword" type="password" required minlength="6" autocomplete="current-password" /></label>
+        <button class="primary" type="submit">登入 BORI</button>
+      </form>
+      <form id="registerForm" class="auth-form hidden">
+        <label>顯示名稱<input id="registerName" required maxlength="24" placeholder="例如：凱婷" /></label>
+        <label>Email<input id="registerEmail" type="email" required autocomplete="email" /></label>
+        <label>密碼<input id="registerPassword" type="password" required minlength="6" autocomplete="new-password" /></label>
+        <button class="primary" type="submit">建立帳號</button>
+      </form>
+      <div class="auth-divider"><span>或</span></div>
+      <button id="googleLoginBtn" type="button" class="secondary google-btn">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.61z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.91-2.26c-.81.54-1.85.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/></svg>
+        <span>用 Google 帳號登入</span>
+      </button>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.3.2</small></span></button>
+      <button class="avatar" data-page="profilePage" id="headerAvatar">🐻</button>
+    </header>
+
+    <main>
+      <section id="homePage" class="page active">
+        <div class="home-greet">
+          <p class="eyebrow" id="helloText">안녕, 오늘도 함께해요</p>
+          <h1>今天一起累積幸福吧！</h1>
+          <p class="home-sub">與重要的家人、伴侶或朋友，一起記錄生活的每一天。</p>
+        </div>
+
+        <div id="homeOnboarding">
+          <article class="hero-card"><img src="assets/hero-bori.jpg" alt="歡迎回家 BORI，我們一起，讓生活更美好" /></article>
+          <div class="action-cards">
+            <button class="action-card img-card" data-open="bookDialog"><img src="assets/action-door.jpg" alt="建立房間，建立專屬的共同生活空間" /></button>
+            <button class="action-card img-card" data-open="joinDialog"><img src="assets/action-key.jpg" alt="加入房間，輸入房間代碼加入一起生活" /></button>
+          </div>
+          <p id="roomEmptyHint" class="muted-hint hidden">還沒有帳本，建立一個或輸入代碼加入吧。</p>
+        </div>
+
+        <div id="homeDashboard" class="hidden">
+          <article class="spending-card">
+            <div class="spending-head"><div><span>本月總花費</span><small id="overviewRange"></small></div><button class="text-button" data-page="analysisPage">查看分析</button></div>
+            <strong id="expenseTotal">$0</strong>
+            <div class="trend-row"><span id="spendingTrend">本月開始一起記錄</span><div class="mini-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </article>
+          <div class="payer-grid">
+            <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
+            <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
+          </div>
+          <div class="section-head ledger-head"><h2>我的帳本</h2><div><button class="text-button" data-open="bookDialog">＋建立</button><button class="text-button" data-open="joinDialog">加入</button></div></div>
+          <div id="roomCarousel" class="room-carousel hidden"></div>
+          <article class="balance-strip"><div><span>本月收入</span><b id="incomeTotal">$0</b></div><div><span>可用餘額</span><b id="availableAmount">$0</b></div></article>
+          <small id="budgetHint" class="budget-summary">設定預算後會顯示提醒</small>
+          <div class="quick-grid">
+            <button data-open="incomeDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><strong>新增收入</strong><small>同步到房間</small></button>
+            <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><strong>設定預算</strong><small>分類管理本月額度</small></button>
+            <button data-page="chatPage"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/></svg></span><strong>房間聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
+          </div>
+          <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
+          <div id="budgetPreview" class="budget-list"></div>
+          <div class="section-head"><h2>最近紀錄</h2><button class="text-button" data-page="analysisPage">查看分析</button></div>
+          <div id="recentList" class="record-list"></div>
+        </div>
+      </section>
+
+      <section id="chatPage" class="page chat-page">
+        <div id="chatEmpty" class="empty-state large-empty"><div class="empty-illustration">💬</div><h2>先開一個房間</h2><p>開房間後，就能即時聊天與傳送 BORI 貼圖。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
+        <div id="chatContent" class="hidden chat-layout">
+          <div class="chat-head"><div><p class="eyebrow">REALTIME CHAT</p><h2 id="chatBookTitle">聊天室</h2></div><span class="live-dot">● 即時</span></div>
+          <div id="messageList" class="message-list"></div>
+          <div id="stickerTray" class="sticker-tray hidden"></div>
+          <form id="chatForm" class="chat-composer"><button type="button" id="stickerBtn" class="round-button">🐻</button><input id="messageInput" maxlength="240" placeholder="輸入訊息…" /><button class="send-button" type="submit">送出</button></form>
+        </div>
+      </section>
+
+      <section id="addPage" class="page">
+        <div id="addEmpty" class="empty-state large-empty"><div class="empty-illustration">🌱</div><h2>先開一個房間</h2><p>房間開好後，才能新增共同支出。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
+        <div id="addContent" class="hidden"><div class="form-intro"><p class="eyebrow">NEW EXPENSE</p><h2>這次花了多少？</h2></div>
+          <form id="expenseForm" class="expense-form">
+            <label class="amount-field"><span>$</span><input id="amountInput" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0" required /></label>
+            <label>項目<input id="titleInput" placeholder="例如：晚餐、電影票" required /></label>
+            <label>分類<select id="categoryInput"><option>餐飲</option><option>交通</option><option>娛樂</option><option>購物</option><option>生活</option><option>旅行</option><option>其他</option></select></label>
+            <label>備註<textarea id="noteInput" rows="3" placeholder="可留空"></textarea></label>
+            <button class="primary" type="submit">儲存支出</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="analysisPage" class="page">
+        <div class="form-intro"><p class="eyebrow">MONTHLY VIEW</p><h2>本月財務</h2></div>
+        <div id="analysisEmpty" class="empty-state"><div class="empty-illustration">📊</div><h2>還沒有資料</h2><p>新增收入、支出或預算後，這裡會顯示完整分析。</p></div>
+        <div id="analysisContent" class="hidden">
+          <div class="analysis-summary"><article><span>收入</span><strong id="analysisIncome">$0</strong></article><article><span>支出</span><strong id="analysisExpense">$0</strong></article><article><span>結餘</span><strong id="analysisNet">$0</strong></article></div>
+          <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
+          <div class="section-head"><h2>收入紀錄</h2><button class="text-button" data-open="incomeDialog">＋新增</button></div><div id="incomeList" class="record-list"></div>
+        </div>
+      </section>
+
+      <section id="profilePage" class="page">
+        <article class="profile-card"><div class="profile-mascot">🐻</div><h2 id="profileName">BORI 使用者</h2><p id="profileEmail">Cloud Life · V1.3.2</p></article>
+        <div class="settings-list">
+          <button data-open="bookDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 6 5.3v15L13 19z"/><path d="M13 4h5v16h-5"/><circle cx="10.3" cy="12.3" r="0.9" fill="currentColor" stroke="none"/></svg> 開新房間</span> <span>›</span></button>
+          <button data-open="joinDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="9.5" r="3.3"/><path d="M9.9 11.9 18.5 20.5"/><path d="M15.5 17.5l-2 2M18 20l-1.7 1.7"/></svg> 加入房間</span> <span>›</span></button>
+          <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg> 預算管理</span> <span>›</span></button>
+          <button id="leaveRoomBtn"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4H6.5A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20H13"/><path d="M11 12h9M17 8.5l3.5 3.5-3.5 3.5"/></svg> 退出目前房間</span> <span>›</span></button>
+          <button id="resetRoomBtn" class="danger-item hidden"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12A7 7 0 1 1 15.5 6"/><path d="M19 5v4.5h-4.5"/></svg> 清空房間資料</span> <span>›</span></button>
+          <button id="deleteRoomBtn" class="danger-item hidden"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M7 7l1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/><path d="M10 11v5M14 11v5"/></svg> 刪除房間</span> <span>›</span></button>
+          <button id="signOutBtn"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/></svg> 登出</span> <span>›</span></button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-page="homePage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>首頁</button>
+      <button class="nav-item" data-page="chatPage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h12a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2z"/><path d="M8 4.5v15.2M11 8h5M11 11h5"/></svg>帳本</button>
+      <button class="nav-add" data-page="addPage"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="nav-item" data-page="analysisPage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V10M12 19V5M19 19v-6"/></svg>分析</button>
+      <button class="nav-item" data-page="profilePage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c1-3.5 3.8-5.5 6.5-5.5s5.5 2 6.5 5.5"/></svg>我的</button>
+    </nav>
+  </div>
+
+  <dialog id="bookDialog"><form id="bookForm"><div class="dialog-head"><div><p class="eyebrow">NEW ROOM</p><h3>開一個房間</h3></div><button type="button" class="dialog-close" data-close="bookDialog">×</button></div><label>房間名稱<input id="newBookName" required maxlength="20" placeholder="例如：我們的小家庭" /></label><label>房間類型<div class="type-options"><label><input type="radio" name="bookType" value="couple" checked><span>❤️<small>情侶</small></span></label><label><input type="radio" name="bookType" value="family"><span>👨‍👩‍👧<small>家人</small></span></label><label><input type="radio" name="bookType" value="friends"><span>🍻<small>朋友</small></span></label><label><input type="radio" name="bookType" value="travel"><span>✈️<small>旅行</small></span></label></div></label><button class="primary" type="submit">🚪 開房間</button></form></dialog>
+
+  <dialog id="joinDialog"><form id="joinForm"><div class="dialog-head"><div><p class="eyebrow">JOIN ROOM</p><h3>加入房間</h3></div><button type="button" class="dialog-close" data-close="joinDialog">×</button></div><label>房間代碼<input id="inviteCodeInput" required maxlength="20" placeholder="例如：BORI-ABC123" /></label><button class="primary" type="submit">🔑 加入房間</button></form></dialog>
+
+  <dialog id="incomeDialog"><form id="incomeForm"><div class="dialog-head"><div><p class="eyebrow">NEW INCOME</p><h3>新增收入</h3></div><button type="button" class="dialog-close" data-close="incomeDialog">×</button></div><label>收入名稱<input id="incomeTitle" required placeholder="例如：薪水" /></label><label>金額<input id="incomeAmount" type="number" min="1" step="0.01" required placeholder="0" /></label><label>分類<select id="incomeCategory"><option>薪水</option><option>獎金</option><option>副業</option><option>投資</option><option>退款</option><option>禮金</option><option>其他</option></select></label><button class="primary" type="submit">儲存收入</button></form></dialog>
+
+  <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>分類<select id="budgetCategory"><option>餐飲</option><option>交通</option><option>娛樂</option><option>購物</option><option>生活</option><option>旅行</option><option>其他</option></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><button class="primary" type="submit">儲存預算</button></form></dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
