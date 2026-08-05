@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#7FA263" />
+  <title>BORI 보리｜共同生活記帳</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">안녕, 보리 🌾</p>
+        <h1 id="pageTitle">今天也一起加油！</h1>
+      </div>
+      <button class="avatar" aria-label="個人設定">🐻</button>
+    </header>
+
+    <main>
+      <section id="homePage" class="page active">
+        <article class="hero-card">
+          <div>
+            <span>本月總花費</span>
+            <strong id="monthlyTotal">$0</strong>
+            <small id="monthlyChange">開始記下共同生活的第一筆</small>
+          </div>
+          <div class="mini-chart" id="miniChart"></div>
+        </article>
+
+        <div class="summary-grid">
+          <article class="summary-card"><span>你付了</span><strong id="paidByMe">$0</strong></article>
+          <article class="summary-card"><span>其他人付</span><strong id="paidByOthers">$0</strong></article>
+        </div>
+
+        <div class="section-head">
+          <h2>我的帳本</h2>
+          <button class="text-button" id="addBookBtn">＋新增</button>
+        </div>
+        <div id="bookList" class="book-list"></div>
+
+        <div class="section-head">
+          <h2>最近支出</h2>
+          <button class="text-button" data-go="ledgerPage">查看全部</button>
+        </div>
+        <div id="recentList" class="transaction-list"></div>
+      </section>
+
+      <section id="ledgerPage" class="page">
+        <div class="section-head sticky-head">
+          <div>
+            <p class="eyebrow">共同帳本</p>
+            <h2 id="ledgerTitle">❤️ 我們</h2>
+          </div>
+          <select id="bookFilter" class="soft-select"></select>
+        </div>
+
+        <article class="balance-card">
+          <span>目前結算</span>
+          <strong id="balanceAmount">$0</strong>
+          <p id="balanceText">目前沒有需要結算的款項</p>
+          <button id="settleBtn" class="primary small">標記已結清</button>
+        </article>
+
+        <div id="ledgerList" class="transaction-list"></div>
+      </section>
+
+      <section id="addPage" class="page">
+        <div class="form-intro">
+          <p class="eyebrow">新增支出</p>
+          <h2>這次花了多少？</h2>
+        </div>
+
+        <form id="expenseForm" class="expense-form">
+          <label class="amount-field">
+            <span>$</span>
+            <input id="amountInput" type="number" inputmode="decimal" min="0" step="1" placeholder="580" required />
+          </label>
+
+          <label>帳本
+            <select id="bookInput"></select>
+          </label>
+          <label>項目
+            <input id="titleInput" type="text" placeholder="例如：晚餐、電影票" required />
+          </label>
+          <label>分類
+            <select id="categoryInput">
+              <option value="餐飲">🍔 餐飲</option>
+              <option value="交通">🚗 交通</option>
+              <option value="娛樂">🎬 娛樂</option>
+              <option value="購物">🛍️ 購物</option>
+              <option value="生活">🏠 生活</option>
+              <option value="旅行">✈️ 旅行</option>
+              <option value="其他">✨ 其他</option>
+            </select>
+          </label>
+          <label>付款人
+            <select id="payerInput"></select>
+          </label>
+          <label>參與者
+            <div id="participantChecks" class="chip-checks"></div>
+          </label>
+          <label>付款方式
+            <select id="methodInput">
+              <option>信用卡</option>
+              <option>現金</option>
+              <option>轉帳</option>
+              <option>行動支付</option>
+            </select>
+          </label>
+          <label>備註
+            <textarea id="noteInput" rows="3" placeholder="可留空"></textarea>
+          </label>
+          <button class="primary" type="submit">儲存這筆支出</button>
+        </form>
+      </section>
+
+      <section id="analysisPage" class="page">
+        <div class="form-intro">
+          <p class="eyebrow">本月分析</p>
+          <h2>錢都花去哪裡了？</h2>
+        </div>
+        <article class="donut-card">
+          <div class="donut" id="donutChart"><span id="donutTotal">$0</span></div>
+          <div id="categoryLegend" class="legend"></div>
+        </article>
+        <article class="ranking-card">
+          <h3>付款排行</h3>
+          <div id="payerRanking"></div>
+        </article>
+      </section>
+
+      <section id="profilePage" class="page">
+        <article class="profile-card">
+          <div class="profile-mascot">🐻</div>
+          <h2>雷凱婷</h2>
+          <p>BORI 的共同生活管理者</p>
+        </article>
+        <div class="settings-list">
+          <button>👥 成員管理 <span>›</span></button>
+          <button>🔔 提醒設定 <span>›</span></button>
+          <button>🎯 共同存錢目標 <span>›</span></button>
+          <button id="resetBtn">🧹 清除示範資料 <span>›</span></button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-page="homePage"><span>⌂</span>首頁</button>
+      <button class="nav-item" data-page="ledgerPage"><span>▣</span>帳本</button>
+      <button class="nav-add" data-page="addPage" aria-label="新增支出">＋</button>
+      <button class="nav-item" data-page="analysisPage"><span>▥</span>分析</button>
+      <button class="nav-item" data-page="profilePage"><span>♙</span>我的</button>
+    </nav>
+  </div>
+
+  <dialog id="bookDialog">
+    <form method="dialog" id="bookForm">
+      <h3>新增共同帳本</h3>
+      <label>名稱<input id="newBookName" required placeholder="例如：日本旅行" /></label>
+      <label>圖示<select id="newBookIcon"><option>❤️</option><option>👨‍👩‍👧</option><option>🍻</option><option>✈️</option><option>🐱</option><option>🏠</option></select></label>
+      <div class="dialog-actions"><button value="cancel">取消</button><button class="primary" value="default" id="saveBookBtn">建立</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
