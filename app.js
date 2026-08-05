@@ -134,6 +134,10 @@ function renderProfile() {
   $("#profileName").textContent = profile?.display_name || "BORI 使用者";
   $("#profileEmail").textContent = session?.user?.email || "Cloud Life · V1.3";
   $("#helloText").textContent = `안녕, ${profile?.display_name || "BORI"} 👋`;
+  const book = activeBook(), isOwner = book?.role === "owner";
+  $("#leaveRoomBtn").classList.toggle("hidden", !book);
+  $("#resetRoomBtn").classList.toggle("hidden", !book || !isOwner);
+  $("#deleteRoomBtn").classList.toggle("hidden", !book || !isOwner);
 }
 function renderBookSwitcher() {
   $("#activeBookSelect").innerHTML = books.map((b) => `<option value="${b.id}" ${b.id === activeBookId ? "selected" : ""}>${typeIcon[b.type] || "📒"} ${escapeHTML(b.name)}</option>`).join("");
@@ -213,6 +217,40 @@ $$('[data-auth-tab]').forEach((b) => b.addEventListener("click", () => {
 $("#loginForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signInWithPassword({ email: $("#loginEmail").value.trim(), password: $("#loginPassword").value }); if (error) return toast(error.message); session = data.session; await enterApp(); toast("登入成功 🌾"); });
 $("#registerForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signUp({ email: $("#registerEmail").value.trim(), password: $("#registerPassword").value, options: { data: { display_name: $("#registerName").value.trim() } } }); if (error) return toast(error.message); if (data.session) { session = data.session; await enterApp(); } else { toast("註冊成功，請到信箱完成驗證"); $$('[data-auth-tab]')[0].click(); } });
 $("#signOutBtn").addEventListener("click", async () => { unsubscribeRealtime(); await supabaseClient.auth.signOut(); session = null; showOnly("authScreen"); toast("已登出"); });
+$("#leaveRoomBtn").addEventListener("click", async () => {
+  const book = activeBook();
+  if (!book) return;
+  if (!confirm(`確定要退出「${book.name}」嗎？`)) return;
+  const { data, error } = await supabaseClient.rpc("leave_book", { p_book_id: book.id });
+  if (error) return toast(error.message);
+  await loadBooks();
+  await loadActiveBookData();
+  renderAll();
+  goTo("homePage");
+  toast(data === "deleted" ? "房間已刪除" : data === "transferred" ? "已退出，擁有權已轉移給其他成員 🔄" : "已退出房間");
+});
+$("#resetRoomBtn").addEventListener("click", async () => {
+  const book = activeBook();
+  if (!book) return;
+  if (!confirm(`確定要清空「${book.name}」的所有收支、預算與聊天記錄嗎？此動作無法復原。`)) return;
+  const { error } = await supabaseClient.rpc("reset_book_data", { p_book_id: book.id });
+  if (error) return toast(error.message);
+  await loadActiveBookData();
+  renderAll();
+  toast("房間資料已清空 🧹");
+});
+$("#deleteRoomBtn").addEventListener("click", async () => {
+  const book = activeBook();
+  if (!book) return;
+  if (!confirm(`確定要刪除「${book.name}」嗎？所有成員與資料都會一併移除，此動作無法復原。`)) return;
+  const { error } = await supabaseClient.rpc("delete_book", { p_book_id: book.id });
+  if (error) return toast(error.message);
+  await loadBooks();
+  await loadActiveBookData();
+  renderAll();
+  goTo("homePage");
+  toast("房間已刪除");
+});
 $("#googleLoginBtn").addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + window.location.pathname } });
   if (error) toast(error.message);
