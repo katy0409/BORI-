@@ -38,32 +38,40 @@ after insert on auth.users
 for each row execute procedure public.handle_new_user();
 
 -- Helper: membership check without recursive RLS policy
+-- NOTE: must be plpgsql (not sql) — a `language sql` function here can get
+-- inlined by the planner, which strips the security definer boundary and
+-- causes "infinite recursion detected in policy for relation book_members".
 create or replace function public.is_book_member(p_book_id uuid)
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-  select exists (
+begin
+  return exists (
     select 1 from public.book_members
     where book_id = p_book_id and user_id = auth.uid()
   );
+end;
 $$;
 
 -- Helper: does another user share any book with me? (used to scope profile visibility)
+-- Same plpgsql requirement as is_book_member above — see note there.
 create or replace function public.shares_book_with(p_user_id uuid)
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-  select exists (
+begin
+  return exists (
     select 1 from public.book_members bm1
     join public.book_members bm2 on bm1.book_id = bm2.book_id
     where bm1.user_id = auth.uid() and bm2.user_id = p_user_id
   );
+end;
 $$;
 
 -- Join by invite code without exposing private books
