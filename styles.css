@@ -50,3 +50,7 @@ input,select,textarea{font-size:16px}
 .payer-card.mine strong{color:var(--green-dark)}
 .payer-card.partner strong{color:var(--amber-dark)}
 #roomCodeValue{font-weight:800;color:var(--green-dark);letter-spacing:.02em;font-size:13px}
+.topbar-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1;overflow:hidden}
+.topbar-room{display:flex;align-items:center;gap:5px;border:0;padding:5px 11px 5px 5px;border-radius:99px;background:var(--green-soft);min-width:0;max-width:140px;flex-shrink:1}
+.topbar-room img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.topbar-room span{font-size:11px;font-weight:800;color:var(--green-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

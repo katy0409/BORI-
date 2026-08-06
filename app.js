@@ -145,7 +145,14 @@ async function switchBook(bookId) {
   renderAll();
 }
 
-function renderAll() { renderProfile(); renderBookSwitcher(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); }
+function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); }
+function renderTopbarRoom() {
+  const book = activeBook();
+  $("#topbarRoom").classList.toggle("hidden", !book);
+  if (!book) return;
+  $("#topbarRoomIcon").src = typeIcon[book.type] || typeIcon.other;
+  $("#topbarRoomName").textContent = book.name;
+}
 function renderLedger() {
   const has = !!activeBookId;
   $("#ledgerEmpty").classList.toggle("hidden", has);
