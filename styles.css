@@ -54,3 +54,11 @@ input,select,textarea{font-size:16px}
 .topbar-room{display:flex;align-items:center;gap:5px;border:0;padding:5px 11px 5px 5px;border-radius:99px;background:var(--green-soft);min-width:0;max-width:140px;flex-shrink:1}
 .topbar-room img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0}
 .topbar-room span{font-size:11px;font-weight:800;color:var(--green-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.switch-room-list{display:grid;gap:8px;margin:16px 0;max-height:50vh;overflow-y:auto}
+.switch-room-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);text-align:left;color:var(--brown)}
+.switch-room-item img{width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.switch-room-item span{flex:1;min-width:0}
+.switch-room-item strong{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.switch-room-item small{display:block;margin-top:2px;font-size:10.5px;color:var(--muted)}
+.switch-room-item.active{border-color:var(--green);background:var(--green-soft)}
+.switch-room-item svg{flex-shrink:0;color:var(--green-dark)}

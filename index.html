@@ -61,7 +61,7 @@
     <header class="topbar">
       <div class="topbar-left">
         <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.3.3</small></span></button>
-        <button id="topbarRoom" class="topbar-room hidden" data-page="homePage"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
+        <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar">🐻</button>
     </header>
@@ -192,6 +192,8 @@
   <dialog id="incomeDialog"><form id="incomeForm"><div class="dialog-head"><div><p class="eyebrow">NEW INCOME</p><h3>新增收入</h3></div><button type="button" class="dialog-close" data-close="incomeDialog">×</button></div><label>收入名稱<input id="incomeTitle" required placeholder="例如：薪水" /></label><label>金額<input id="incomeAmount" type="number" min="1" step="0.01" required placeholder="0" /></label><label>分類<select id="incomeCategory"><option>薪水</option><option>獎金</option><option>副業</option><option>投資</option><option>退款</option><option>禮金</option><option>其他</option></select></label><button class="primary" type="submit">儲存收入</button></form></dialog>
 
   <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>分類<select id="budgetCategory"><option>餐飲</option><option>交通</option><option>娛樂</option><option>購物</option><option>生活</option><option>旅行</option><option>其他</option></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><button class="primary" type="submit">儲存預算</button></form></dialog>
+
+  <dialog id="switchRoomDialog"><div class="dialog-head"><div><p class="eyebrow">SWITCH ROOM</p><h3>切換房間</h3></div><button type="button" class="dialog-close" data-close="switchRoomDialog">×</button></div><div id="switchRoomList" class="switch-room-list"></div><button type="button" class="secondary" data-close="switchRoomDialog" data-open="bookDialog">🚪 開新房間</button></dialog>
 
   <div id="toast" class="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
