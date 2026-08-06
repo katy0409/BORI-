@@ -22,10 +22,22 @@ const categoryMeta = {
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
 const stickers = [
-  { id: "ok", emoji: "🐻👌", text: "OK！" }, { id: "thanks", emoji: "🐻💛", text: "謝謝～" },
-  { id: "received", emoji: "🐻📩", text: "收到～" }, { id: "paid", emoji: "🐻✅", text: "已付款" },
-  { id: "treat", emoji: "🐻🍚", text: "今天我請客" }, { id: "laugh", emoji: "🐻😂", text: "哈哈哈" },
-  { id: "love", emoji: "🐻❤️", text: "愛你" }, { id: "remember", emoji: "🐻🌾", text: "記得記帳喔" }
+  { id: "hi", img: "assets/stickers/hi.jpg", text: "嗨嗨！" },
+  { id: "there", img: "assets/stickers/there.jpg", text: "在嗎？" },
+  { id: "thankyou", img: "assets/stickers/thankyou.jpg", text: "謝謝你！" },
+  { id: "awesome", img: "assets/stickers/awesome.jpg", text: "太棒了！" },
+  { id: "please", img: "assets/stickers/please.jpg", text: "拜託拜託～" },
+  { id: "congrats", img: "assets/stickers/congrats.jpg", text: "恭喜！" },
+  { id: "whimper", img: "assets/stickers/whimper.jpg", text: "嗚嗚…" },
+  { id: "hug", img: "assets/stickers/hug.jpg", text: "抱抱～" },
+  { id: "gotit", img: "assets/stickers/gotit.jpg", text: "好的！" },
+  { id: "thinking", img: "assets/stickers/thinking.jpg", text: "我想想…" },
+  { id: "ok2", img: "assets/stickers/ok2.jpg", text: "OK！" },
+  { id: "goodnight", img: "assets/stickers/goodnight.jpg", text: "晚安～" },
+  { id: "hardwork", img: "assets/stickers/hardwork.jpg", text: "辛苦了！" },
+  { id: "yay", img: "assets/stickers/yay.jpg", text: "耶！" },
+  { id: "touched", img: "assets/stickers/touched.jpg", text: "感動" },
+  { id: "leaving", img: "assets/stickers/leaving.jpg", text: "先走囉～" }
 ];
 
 let supabaseClient = null;
@@ -229,10 +241,10 @@ function renderChat() {
   const b = activeBook(); $("#chatBookTitle").textContent = b.name;
   $("#messageList").innerHTML = messages.length ? messages.map((m) => {
     const mine = m.user_id === session.user.id, name = m.profiles?.display_name || (mine ? profile?.display_name : "成員");
-    if (m.message_type === "sticker") { const s = stickerById(m.sticker_id) || { emoji: "🐻", text: "BORI" }; return `<div class="message ${mine ? "mine" : "other"} sticker-message"><small class="sender">${escapeHTML(name)}</small><span>${s.emoji}</span><strong>${escapeHTML(s.text)}</strong><small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`; }
+    if (m.message_type === "sticker") { const s = stickerById(m.sticker_id); return `<div class="message ${mine ? "mine" : "other"} sticker-message"><small class="sender">${escapeHTML(name)}</small>${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`; }
     return `<div class="message ${mine ? "mine" : "other"}"><small class="sender">${escapeHTML(name)}</small><p>${escapeHTML(m.content || "")}</p><small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`;
   }).join("") : `<div class="chat-welcome"><span>🐻</span><p>這裡是你們的即時聊天室。<br>先傳一句話或一張 BORI 貼圖吧。</p></div>`;
-  $("#stickerTray").innerHTML = stickers.map((s, i) => `<button type="button" data-sticker="${i}"><span>${s.emoji}</span><small>${s.text}</small></button>`).join("");
+  $("#stickerTray").innerHTML = stickers.map((s, i) => `<button type="button" data-sticker="${i}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
 }
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
