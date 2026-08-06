@@ -169,6 +169,12 @@ function renderProfile() {
   $("#profileName").textContent = profile?.display_name || "BORI 使用者";
   $("#profileEmail").textContent = session?.user?.email || "Cloud Life · V1.3";
   $("#helloText").textContent = `안녕, ${profile?.display_name || "BORI"} 👋`;
+  const hasAvatar = !!profile?.avatar_url;
+  $("#profileAvatarEmoji").classList.toggle("hidden", hasAvatar);
+  $("#profileAvatarImg").classList.toggle("hidden", !hasAvatar);
+  $("#headerAvatarEmoji").classList.toggle("hidden", hasAvatar);
+  $("#headerAvatarImg").classList.toggle("hidden", !hasAvatar);
+  if (hasAvatar) { $("#profileAvatarImg").src = profile.avatar_url; $("#headerAvatarImg").src = profile.avatar_url; }
   const book = activeBook(), isOwner = book?.role === "owner";
   $("#leaveRoomBtn").classList.toggle("hidden", !book);
   $("#resetRoomBtn").classList.toggle("hidden", !book || !isOwner);
@@ -262,6 +268,37 @@ $$('[data-auth-tab]').forEach((b) => b.addEventListener("click", () => {
 $("#loginForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signInWithPassword({ email: $("#loginEmail").value.trim(), password: $("#loginPassword").value }); if (error) return toast(error.message); session = data.session; await enterApp(); toast("登入成功 🌾"); });
 $("#registerForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signUp({ email: $("#registerEmail").value.trim(), password: $("#registerPassword").value, options: { data: { display_name: $("#registerName").value.trim() } } }); if (error) return toast(error.message); if (data.session) { session = data.session; await enterApp(); } else { toast("註冊成功，請到信箱完成驗證"); $$('[data-auth-tab]')[0].click(); } });
 $("#signOutBtn").addEventListener("click", async () => { unsubscribeRealtime(); await supabaseClient.auth.signOut(); session = null; showOnly("authScreen"); toast("已登出"); });
+$("#editAvatarBtn").addEventListener("click", () => $("#avatarFileInput").click());
+$("#avatarFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) return toast("圖片太大了，請選 3MB 以內的照片");
+  toast("上傳中…");
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${session.user.id}/avatar.${ext}`;
+  const { error: uploadError } = await supabaseClient.storage.from("avatars").upload(path, file, { upsert: true, cacheControl: "3600" });
+  if (uploadError) return toast(uploadError.message);
+  const { data: pub } = supabaseClient.storage.from("avatars").getPublicUrl(path);
+  const url = `${pub.publicUrl}?t=${Date.now()}`;
+  const { error: updateError } = await supabaseClient.from("profiles").update({ avatar_url: url }).eq("id", session.user.id);
+  if (updateError) return toast(updateError.message);
+  profile.avatar_url = url;
+  renderProfile();
+  toast("大頭貼更新完成 📷");
+  e.target.value = "";
+});
+$("#editNameBtn").addEventListener("click", () => { $("#editNameInput").value = profile?.display_name || ""; openDialog("editNameDialog"); });
+$("#editNameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("#editNameInput").value.trim();
+  if (!name) return;
+  const { error } = await supabaseClient.from("profiles").update({ display_name: name }).eq("id", session.user.id);
+  if (error) return toast(error.message);
+  profile.display_name = name;
+  renderProfile();
+  closeDialog("editNameDialog");
+  toast("暱稱更新完成");
+});
 $("#roomCodeBtn").addEventListener("click", async () => {
   const book = activeBook();
   if (!book) return;

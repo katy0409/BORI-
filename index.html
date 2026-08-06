@@ -63,7 +63,7 @@
         <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.3.3</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
-      <button class="avatar" data-page="profilePage" id="headerAvatar">🐻</button>
+      <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
     </header>
 
     <main>
@@ -162,7 +162,12 @@
       </section>
 
       <section id="profilePage" class="page">
-        <article class="profile-card"><div class="profile-mascot">🐻</div><h2 id="profileName">BORI 使用者</h2><p id="profileEmail">Cloud Life · V1.3</p></article>
+        <article class="profile-card">
+          <button id="editAvatarBtn" class="profile-mascot"><span id="profileAvatarEmoji">🐻</span><img id="profileAvatarImg" class="hidden" alt="" /><span class="avatar-edit-badge"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
+          <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/webp" class="hidden" />
+          <button id="editNameBtn" class="profile-name-btn"><h2 id="profileName">BORI 使用者</h2><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a1.5 1.5 0 0 0 0-2.1l-1.9-1.9a1.5 1.5 0 0 0-2.1 0L4 15v5z"/></svg></button>
+          <p id="profileEmail">Cloud Life · V1.3</p>
+        </article>
         <div class="settings-list">
           <button data-open="bookDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 6 5.3v15L13 19z"/><path d="M13 4h5v16h-5"/><circle cx="10.3" cy="12.3" r="0.9" fill="currentColor" stroke="none"/></svg> 開新房間</span> <span>›</span></button>
           <button data-open="joinDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="9.5" r="3.3"/><path d="M9.9 11.9 18.5 20.5"/><path d="M15.5 17.5l-2 2M18 20l-1.7 1.7"/></svg> 加入房間</span> <span>›</span></button>
@@ -194,6 +199,8 @@
   <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>分類<select id="budgetCategory"><option>餐飲</option><option>交通</option><option>娛樂</option><option>購物</option><option>生活</option><option>旅行</option><option>其他</option></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><button class="primary" type="submit">儲存預算</button></form></dialog>
 
   <dialog id="switchRoomDialog"><div class="dialog-head"><div><p class="eyebrow">SWITCH ROOM</p><h3>切換房間</h3></div><button type="button" class="dialog-close" data-close="switchRoomDialog">×</button></div><div id="switchRoomList" class="switch-room-list"></div><button type="button" class="secondary" data-close="switchRoomDialog" data-open="bookDialog">🚪 開新房間</button></dialog>
+
+  <dialog id="editNameDialog"><form id="editNameForm"><div class="dialog-head"><div><p class="eyebrow">DISPLAY NAME</p><h3>編輯暱稱</h3></div><button type="button" class="dialog-close" data-close="editNameDialog">×</button></div><label>暱稱<input id="editNameInput" required maxlength="24" placeholder="例如：凱婷" /></label><button class="primary" type="submit">儲存</button></form></dialog>
 
   <div id="toast" class="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
