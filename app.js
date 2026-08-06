@@ -6,7 +6,17 @@ const escapeHTML = (v = "") => String(v).replace(/[&<>'"]/g, (c) => ({ "&": "&am
 const pad2 = (n) => String(n).padStart(2, "0");
 const localDateStr = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const currentMonth = () => localDateStr().slice(0, 7);
-const typeIcon = { couple: "❤️", family: "👨‍👩‍👧", friends: "🍻", travel: "✈️", other: "📒" };
+const typeIcon = {
+  home: "assets/room-icons/home.jpg", beach: "assets/room-icons/beach.jpg", cat: "assets/room-icons/cat.jpg",
+  couple: "assets/room-icons/couple.jpg", plant: "assets/room-icons/plant.jpg",
+  piggybank: "assets/room-icons/piggybank.jpg", shopping: "assets/room-icons/shopping.jpg", food: "assets/room-icons/food.jpg",
+  book: "assets/room-icons/book.jpg", fitness: "assets/room-icons/fitness.jpg",
+  camera: "assets/room-icons/camera.jpg", balloons: "assets/room-icons/balloons.jpg", movie: "assets/room-icons/movie.jpg",
+  game: "assets/room-icons/game.jpg", checklist: "assets/room-icons/checklist.jpg",
+  store: "assets/room-icons/store.jpg", baby: "assets/room-icons/baby.jpg", car: "assets/room-icons/car.jpg",
+  letter: "assets/room-icons/letter.jpg", gift: "assets/room-icons/gift.jpg",
+  family: "assets/room-icons/baby.jpg", friends: "assets/room-icons/balloons.jpg", travel: "assets/room-icons/beach.jpg", other: "assets/room-icons/home.jpg"
+};
 const categoryMeta = {
   餐飲: { icon: "🍜", color: "#e59b5f" }, 交通: { icon: "🚌", color: "#74a7b8" }, 娛樂: { icon: "🎬", color: "#967ac1" },
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
@@ -157,7 +167,7 @@ function renderProfile() {
 function renderBookSwitcher() {
   $("#roomEmptyHint").classList.toggle("hidden", books.length > 0);
   $("#roomCarousel").classList.toggle("hidden", books.length === 0);
-  $("#roomCarousel").innerHTML = books.map((b) => `<button class="room-card ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><span class="room-thumb">${typeIcon[b.type] || "📒"}</span><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></button>`).join("");
+  $("#roomCarousel").innerHTML = books.map((b) => `<button class="room-card ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><img class="room-thumb" src="${typeIcon[b.type] || typeIcon.other}" alt="" /><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></button>`).join("");
 }
 function monthRangeLabel() {
   const d = new Date(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -198,7 +208,7 @@ function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.togg
 function stickerById(id) { return stickers.find((s) => s.id === id); }
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
-  const b = activeBook(); $("#chatBookTitle").textContent = `${typeIcon[b.type] || "📒"} ${b.name}`;
+  const b = activeBook(); $("#chatBookTitle").textContent = b.name;
   $("#messageList").innerHTML = messages.length ? messages.map((m) => {
     const mine = m.user_id === session.user.id, name = m.profiles?.display_name || (mine ? profile?.display_name : "成員");
     if (m.message_type === "sticker") { const s = stickerById(m.sticker_id) || { emoji: "🐻", text: "BORI" }; return `<div class="message ${mine ? "mine" : "other"} sticker-message"><small class="sender">${escapeHTML(name)}</small><span>${s.emoji}</span><strong>${escapeHTML(s.text)}</strong><small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`; }
