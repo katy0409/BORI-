@@ -21,23 +21,26 @@ const categoryMeta = {
   餐飲: { icon: "🍜", color: "#e59b5f" }, 交通: { icon: "🚌", color: "#74a7b8" }, 娛樂: { icon: "🎬", color: "#967ac1" },
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
-const stickers = [
-  { id: "hi", img: "assets/stickers/hi.jpg", text: "嗨嗨！" },
-  { id: "there", img: "assets/stickers/there.jpg", text: "在嗎？" },
-  { id: "thankyou", img: "assets/stickers/thankyou.jpg", text: "謝謝你！" },
-  { id: "awesome", img: "assets/stickers/awesome.jpg", text: "太棒了！" },
-  { id: "please", img: "assets/stickers/please.jpg", text: "拜託拜託～" },
-  { id: "congrats", img: "assets/stickers/congrats.jpg", text: "恭喜！" },
-  { id: "whimper", img: "assets/stickers/whimper.jpg", text: "嗚嗚…" },
-  { id: "hug", img: "assets/stickers/hug.jpg", text: "抱抱～" },
-  { id: "gotit", img: "assets/stickers/gotit.jpg", text: "好的！" },
-  { id: "thinking", img: "assets/stickers/thinking.jpg", text: "我想想…" },
-  { id: "ok2", img: "assets/stickers/ok2.jpg", text: "OK！" },
-  { id: "goodnight", img: "assets/stickers/goodnight.jpg", text: "晚安～" },
-  { id: "hardwork", img: "assets/stickers/hardwork.jpg", text: "辛苦了！" },
-  { id: "yay", img: "assets/stickers/yay.jpg", text: "耶！" },
-  { id: "touched", img: "assets/stickers/touched.jpg", text: "感動" },
-  { id: "leaving", img: "assets/stickers/leaving.jpg", text: "先走囉～" },
+const stickerSets = [
+  { id: "cute", name: "可愛對話", stickers: [
+    { id: "hi", img: "assets/stickers/hi.jpg", text: "嗨嗨！" },
+    { id: "there", img: "assets/stickers/there.jpg", text: "在嗎？" },
+    { id: "thankyou", img: "assets/stickers/thankyou.jpg", text: "謝謝你！" },
+    { id: "awesome", img: "assets/stickers/awesome.jpg", text: "太棒了！" },
+    { id: "please", img: "assets/stickers/please.jpg", text: "拜託拜託～" },
+    { id: "congrats", img: "assets/stickers/congrats.jpg", text: "恭喜！" },
+    { id: "whimper", img: "assets/stickers/whimper.jpg", text: "嗚嗚…" },
+    { id: "hug", img: "assets/stickers/hug.jpg", text: "抱抱～" },
+    { id: "gotit", img: "assets/stickers/gotit.jpg", text: "好的！" },
+    { id: "thinking", img: "assets/stickers/thinking.jpg", text: "我想想…" },
+    { id: "ok2", img: "assets/stickers/ok2.jpg", text: "OK！" },
+    { id: "goodnight", img: "assets/stickers/goodnight.jpg", text: "晚安～" },
+    { id: "hardwork", img: "assets/stickers/hardwork.jpg", text: "辛苦了！" },
+    { id: "yay", img: "assets/stickers/yay.jpg", text: "耶！" },
+    { id: "touched", img: "assets/stickers/touched.jpg", text: "感動" },
+    { id: "leaving", img: "assets/stickers/leaving.jpg", text: "先走囉～" }
+  ]},
+  { id: "bookkeeping", name: "熊熊記帳", stickers: [
   { id: "hi2", img: "assets/stickers2/hi2.jpg", text: "嗨嗨！" },
   { id: "logging", img: "assets/stickers2/logging.jpg", text: "記帳中…" },
   { id: "calculating", img: "assets/stickers2/calculating.jpg", text: "算一算" },
@@ -58,7 +61,9 @@ const stickers = [
   { id: "walletcry", img: "assets/stickers2/walletcry.jpg", text: "荷包哭哭" },
   { id: "relax", img: "assets/stickers2/relax.jpg", text: "放鬆一下～" },
   { id: "goodnight2", img: "assets/stickers2/goodnight2.jpg", text: "晚安～" }
+  ]}
 ];
+const allStickers = stickerSets.flatMap((set) => set.stickers);
 
 let supabaseClient = null;
 let session = null;
@@ -255,7 +260,7 @@ function recordHTML(x) {
   return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${meta.icon}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
 }
 function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); }
-function stickerById(id) { return stickers.find((s) => s.id === id); }
+function stickerById(id) { return allStickers.find((s) => s.id === id); }
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
   const b = activeBook(); $("#chatBookTitle").textContent = b.name;
@@ -264,7 +269,12 @@ function renderChat() {
     if (m.message_type === "sticker") { const s = stickerById(m.sticker_id); return `<div class="message ${mine ? "mine" : "other"} sticker-message"><small class="sender">${escapeHTML(name)}</small>${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`; }
     return `<div class="message ${mine ? "mine" : "other"}"><small class="sender">${escapeHTML(name)}</small><p>${escapeHTML(m.content || "")}</p><small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`;
   }).join("") : `<div class="chat-welcome"><span>🐻</span><p>這裡是你們的即時聊天室。<br>先傳一句話或一張 BORI 貼圖吧。</p></div>`;
-  $("#stickerTray").innerHTML = stickers.map((s, i) => `<button type="button" data-sticker="${i}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
+  renderStickerTray();
+}
+let activeStickerSet = 0;
+function renderStickerTray() {
+  $("#stickerSetTabs").innerHTML = stickerSets.map((set, i) => `<button type="button" class="sticker-set-tab ${i === activeStickerSet ? "active" : ""}" data-set="${i}"><img src="${set.stickers[0].img}" alt="${escapeHTML(set.name)}" /></button>`).join("");
+  $("#stickerGrid").innerHTML = stickerSets[activeStickerSet].stickers.map((s) => `<button type="button" data-sticker="${s.id}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
 }
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
@@ -389,7 +399,8 @@ $("#incomeForm").addEventListener("submit", async (e) => { e.preventDefault(); t
 $("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
 $("#chatForm").addEventListener("submit", async (e) => { e.preventDefault(); const content = $("#messageInput").value.trim(); if (!content) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "text", content }); if (error) return toast(error.message); $("#messageInput").value = ""; });
 $("#stickerBtn").addEventListener("click", () => $("#stickerTray").classList.toggle("hidden"));
-$("#stickerTray").addEventListener("click", async (e) => { const btn = e.target.closest("[data-sticker]"); if (!btn) return; const s = stickers[Number(btn.dataset.sticker)]; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id }); if (error) return toast(error.message); $("#stickerTray").classList.add("hidden"); });
+$("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.closest("[data-set]"); if (!btn) return; activeStickerSet = Number(btn.dataset.set); renderStickerTray(); });
+$("#stickerGrid").addEventListener("click", async (e) => { const btn = e.target.closest("[data-sticker]"); if (!btn) return; const s = stickerById(btn.dataset.sticker); if (!s) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id }); if (error) return toast(error.message); $("#stickerTray").classList.add("hidden"); });
 
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }
 document.body.classList.add("splash-lock"); addEventListener("load", () => setTimeout(boot, 1150)); setTimeout(() => { if (!$("#splashScreen")?.dataset.done) boot(); }, 3200);
