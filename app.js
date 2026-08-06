@@ -37,7 +37,27 @@ const stickers = [
   { id: "hardwork", img: "assets/stickers/hardwork.jpg", text: "辛苦了！" },
   { id: "yay", img: "assets/stickers/yay.jpg", text: "耶！" },
   { id: "touched", img: "assets/stickers/touched.jpg", text: "感動" },
-  { id: "leaving", img: "assets/stickers/leaving.jpg", text: "先走囉～" }
+  { id: "leaving", img: "assets/stickers/leaving.jpg", text: "先走囉～" },
+  { id: "hi2", img: "assets/stickers2/hi2.jpg", text: "嗨嗨！" },
+  { id: "logging", img: "assets/stickers2/logging.jpg", text: "記帳中…" },
+  { id: "calculating", img: "assets/stickers2/calculating.jpg", text: "算一算" },
+  { id: "done2", img: "assets/stickers2/done2.jpg", text: "搞定！" },
+  { id: "saving_best", img: "assets/stickers2/saving_best.jpg", text: "存錢最棒！" },
+  { id: "spree", img: "assets/stickers2/spree.jpg", text: "買買買！" },
+  { id: "overspent", img: "assets/stickers2/overspent.jpg", text: "又花太多了…" },
+  { id: "ohno", img: "assets/stickers2/ohno.jpg", text: "天啊！" },
+  { id: "shouldbuy", img: "assets/stickers2/shouldbuy.jpg", text: "要買嗎？" },
+  { id: "planfirst", img: "assets/stickers2/planfirst.jpg", text: "先計畫！" },
+  { id: "tinyjoy", img: "assets/stickers2/tinyjoy.jpg", text: "小確幸～" },
+  { id: "summary", img: "assets/stickers2/summary.jpg", text: "本月總結" },
+  { id: "goalmet", img: "assets/stickers2/goalmet.jpg", text: "目標達成！" },
+  { id: "keepsaving", img: "assets/stickers2/keepsaving.jpg", text: "加油存錢！" },
+  { id: "saveit", img: "assets/stickers2/saveit.jpg", text: "存起來！" },
+  { id: "todayspend", img: "assets/stickers2/todayspend.jpg", text: "今日支出" },
+  { id: "waitbuy", img: "assets/stickers2/waitbuy.jpg", text: "等等再買！" },
+  { id: "walletcry", img: "assets/stickers2/walletcry.jpg", text: "荷包哭哭" },
+  { id: "relax", img: "assets/stickers2/relax.jpg", text: "放鬆一下～" },
+  { id: "goodnight2", img: "assets/stickers2/goodnight2.jpg", text: "晚安～" }
 ];
 
 let supabaseClient = null;
