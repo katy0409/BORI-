@@ -163,6 +163,8 @@ function renderProfile() {
   $("#leaveRoomBtn").classList.toggle("hidden", !book);
   $("#resetRoomBtn").classList.toggle("hidden", !book || !isOwner);
   $("#deleteRoomBtn").classList.toggle("hidden", !book || !isOwner);
+  $("#roomCodeBtn").classList.toggle("hidden", !book);
+  if (book) $("#roomCodeValue").textContent = book.invite_code;
 }
 function renderBookSwitcher() {
   $("#roomEmptyHint").classList.toggle("hidden", books.length > 0);
@@ -250,6 +252,12 @@ $$('[data-auth-tab]').forEach((b) => b.addEventListener("click", () => {
 $("#loginForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signInWithPassword({ email: $("#loginEmail").value.trim(), password: $("#loginPassword").value }); if (error) return toast(error.message); session = data.session; await enterApp(); toast("登入成功 🌾"); });
 $("#registerForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signUp({ email: $("#registerEmail").value.trim(), password: $("#registerPassword").value, options: { data: { display_name: $("#registerName").value.trim() } } }); if (error) return toast(error.message); if (data.session) { session = data.session; await enterApp(); } else { toast("註冊成功，請到信箱完成驗證"); $$('[data-auth-tab]')[0].click(); } });
 $("#signOutBtn").addEventListener("click", async () => { unsubscribeRealtime(); await supabaseClient.auth.signOut(); session = null; showOnly("authScreen"); toast("已登出"); });
+$("#roomCodeBtn").addEventListener("click", async () => {
+  const book = activeBook();
+  if (!book) return;
+  try { await navigator.clipboard.writeText(book.invite_code); toast("已複製房間代碼 📋"); }
+  catch { toast(`房間代碼：${book.invite_code}`); }
+});
 $("#leaveRoomBtn").addEventListener("click", async () => {
   const book = activeBook();
   if (!book) return;
