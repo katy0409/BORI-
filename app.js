@@ -21,6 +21,8 @@ const categoryMeta = {
   餐飲: { icon: "🍜", color: "#e59b5f" }, 交通: { icon: "🚌", color: "#74a7b8" }, 娛樂: { icon: "🎬", color: "#967ac1" },
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
+const defaultCategories = ["餐飲", "交通", "娛樂", "購物", "生活", "旅行", "其他"];
+function activeCategories() { const c = activeBook()?.categories; return c && c.length ? c : defaultCategories; }
 const stickerSets = [
   { id: "cute", name: "可愛對話", stickers: [
     { id: "hi", img: "assets/stickers/hi.jpg", text: "嗨嗨！" },
@@ -229,6 +231,21 @@ function renderBookSwitcher() {
   $("#roomEmptyHint").classList.toggle("hidden", books.length > 0);
   $("#roomCarousel").classList.toggle("hidden", books.length === 0);
   $("#roomCarousel").innerHTML = books.map((b) => `<button class="room-card ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><img class="room-thumb" src="${typeIcon[b.type] || typeIcon.other}" alt="" /><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></button>`).join("");
+  renderCategorySelects();
+}
+function renderCategorySelects() {
+  const opts = activeCategories().map((c) => `<option>${escapeHTML(c)}</option>`).join("");
+  $("#categoryInput").innerHTML = opts;
+  $("#budgetCategory").innerHTML = opts;
+}
+function renderCategoryManageList() {
+  $("#categoryManageList").innerHTML = activeCategories().map((c) => `<div class="category-manage-row"><span>${(categoryMeta[c] || categoryMeta.其他).icon} ${escapeHTML(c)}</span><button type="button" data-remove-category="${escapeHTML(c)}">×</button></div>`).join("");
+}
+async function updateCategories(list) {
+  const { error } = await supabaseClient.from("books").update({ categories: list }).eq("id", activeBookId);
+  if (error) return toast(error.message);
+  const b = books.find((x) => x.id === activeBookId); if (b) b.categories = list;
+  renderCategorySelects(); renderCategoryManageList();
 }
 function monthRangeLabel() {
   const d = new Date(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -396,6 +413,24 @@ $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); con
 $("#expenseForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("expense", $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim()); e.target.reset(); await loadActiveBookData(); renderAll(); goTo("homePage"); toast("支出已同步到房間 ☁️"); } catch (err) { toast(err.message); } });
 $("#incomeForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("income", $("#incomeTitle").value.trim(), $("#incomeAmount").value, $("#incomeCategory").value); e.target.reset(); closeDialog("incomeDialog"); await loadActiveBookData(); renderAll(); toast("收入已同步到房間 💰"); } catch (err) { toast(err.message); } });
 $("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
+$("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); openDialog("manageCategoriesDialog"); });
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) renderCategoryManageList(); });
+$("#categoryManageList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-remove-category]");
+  if (!btn) return;
+  const cur = activeCategories();
+  if (cur.length <= 1) return toast("至少要保留一個分類");
+  await updateCategories(cur.filter((c) => c !== btn.dataset.removeCategory));
+});
+$("#addCategoryForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("#newCategoryInput").value.trim();
+  if (!name) return;
+  const cur = activeCategories();
+  if (cur.includes(name)) return toast("這個分類已經有了");
+  await updateCategories([...cur, name]);
+  e.target.reset();
+});
 $("#chatForm").addEventListener("submit", async (e) => { e.preventDefault(); const content = $("#messageInput").value.trim(); if (!content) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "text", content }); if (error) return toast(error.message); $("#messageInput").value = ""; });
 $("#stickerBtn").addEventListener("click", () => $("#stickerTray").classList.toggle("hidden"));
 $("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.closest("[data-set]"); if (!btn) return; activeStickerSet = Number(btn.dataset.set); renderStickerTray(); });
