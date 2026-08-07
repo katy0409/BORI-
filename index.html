@@ -95,7 +95,7 @@
 
         <div id="homeDashboard" class="hidden">
           <article class="overview-card">
-            <div class="overview-head"><div><h2>本月總覽</h2><small id="overviewRange"></small></div><button class="text-button" data-page="analysisPage">查看分析 ›</button></div>
+            <div class="overview-head"><div><h2>本月總覽</h2><small id="overviewRange"></small></div><button class="text-button" data-page="ledgerPage">查看帳本 ›</button></div>
             <div class="overview-row">
               <div><span class="stat-icon income"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><span>總收入</span><b id="incomeTotal">$0</b></div>
               <div><span class="stat-icon expense"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l3 3v15H7z"/><path d="M15 3v3h3M9.5 12h5M9.5 15.5h5"/></svg></span><span>總支出</span><b id="expenseTotal">$0</b></div>
@@ -103,19 +103,6 @@
             </div>
             <small id="budgetHint">設定預算後會顯示提醒</small>
           </article>
-          <div class="payer-grid">
-            <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
-            <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
-          </div>
-          <div class="quick-grid">
-            <button data-open="incomeDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><strong>新增收入</strong><small>同步到房間</small></button>
-            <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><strong>設定預算</strong><small>分類管理本月額度</small></button>
-            <button data-page="chatPage"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/></svg></span><strong>房間聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
-          </div>
-          <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
-          <div id="budgetPreview" class="budget-list"></div>
-          <div class="section-head"><h2>最近紀錄</h2><button class="text-button" data-page="analysisPage">查看分析</button></div>
-          <div id="recentList" class="record-list"></div>
         </div>
       </section>
 
@@ -131,9 +118,22 @@
 
       <section id="ledgerPage" class="page">
         <div class="form-intro"><p class="eyebrow">ALL RECORDS</p><h2>帳本</h2></div>
-        <div id="ledgerEmpty" class="empty-state large-empty"><div class="empty-illustration">📒</div><h2>先開一個房間</h2><p>開房間後，這裡會列出所有收支紀錄。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
+        <div id="ledgerEmpty" class="empty-state large-empty"><div class="empty-illustration">📒</div><h2>先開一個房間</h2><p>開房間後，這裡會列出所有收支紀錄與分析。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
         <div id="ledgerContent" class="hidden">
-          <div class="section-head"><h2 id="ledgerBookTitle">交易紀錄</h2><small id="ledgerCount"></small></div>
+          <div class="payer-grid">
+            <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
+            <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
+          </div>
+          <div class="quick-grid">
+            <button data-open="incomeDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M14.5 9.8c0-1-1.1-1.8-2.5-1.8s-2.5.9-2.5 2 1.1 1.5 2.5 1.5 2.5.6 2.5 1.7-1.1 2-2.5 2-2.5-.7-2.5-1.7"/></svg></span><strong>新增收入</strong><small>同步到房間</small></button>
+            <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><strong>設定預算</strong><small>分類管理本月額度</small></button>
+            <button data-page="chatPage"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/></svg></span><strong>房間聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
+          </div>
+          <div class="analysis-summary"><article><span>收入</span><strong id="analysisIncome">$0</strong></article><article><span>支出</span><strong id="analysisExpense">$0</strong></article><article><span>結餘</span><strong id="analysisNet">$0</strong></article></div>
+          <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
+          <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
+          <div id="budgetPreview" class="budget-list"></div>
+          <div class="section-head"><h2 id="ledgerBookTitle">全部紀錄</h2><small id="ledgerCount"></small></div>
           <div id="ledgerList" class="record-list"></div>
         </div>
       </section>
@@ -151,15 +151,6 @@
         </div>
       </section>
 
-      <section id="analysisPage" class="page">
-        <div class="form-intro"><p class="eyebrow">MONTHLY VIEW</p><h2>本月財務</h2></div>
-        <div id="analysisEmpty" class="empty-state"><div class="empty-illustration">📊</div><h2>還沒有資料</h2><p>新增收入、支出或預算後，這裡會顯示完整分析。</p></div>
-        <div id="analysisContent" class="hidden">
-          <div class="analysis-summary"><article><span>收入</span><strong id="analysisIncome">$0</strong></article><article><span>支出</span><strong id="analysisExpense">$0</strong></article><article><span>結餘</span><strong id="analysisNet">$0</strong></article></div>
-          <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
-          <div class="section-head"><h2>收入紀錄</h2><button class="text-button" data-open="incomeDialog">＋新增</button></div><div id="incomeList" class="record-list"></div>
-        </div>
-      </section>
 
       <section id="profilePage" class="page">
         <article class="profile-card">
@@ -185,7 +176,7 @@
       <button class="nav-item active" data-page="homePage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>首頁</button>
       <button class="nav-item" data-page="ledgerPage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h12a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2z"/><path d="M8 4.5v15.2M11 8h5M11 11h5"/></svg>帳本</button>
       <button class="nav-add" data-page="addPage"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button class="nav-item" data-page="analysisPage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V10M12 19V5M19 19v-6"/></svg>分析</button>
+      <button class="nav-item" data-page="chatPage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/></svg>聊天室</button>
       <button class="nav-item" data-page="profilePage"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c1-3.5 3.8-5.5 6.5-5.5s5.5 2 6.5 5.5"/></svg>我的</button>
     </nav>
   </div>

@@ -198,8 +198,14 @@ function renderLedger() {
   $("#ledgerEmpty").classList.toggle("hidden", has);
   $("#ledgerContent").classList.toggle("hidden", !has);
   if (!has) return;
-  $("#ledgerBookTitle").textContent = activeBook()?.name || "交易紀錄";
   $("#ledgerCount").textContent = transactions.length ? `共 ${transactions.length} 筆` : "";
+  const expenses = monthTransactions("expense");
+  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
+  const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
+  const otherPaid = Math.max(exp - myPaid, 0);
+  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
+  const last = messages.at(-1); $("#chatSummary").textContent = last ? (last.message_type === "sticker" ? stickerById(last.sticker_id)?.text || "BORI 貼圖" : last.content) : "還沒有聊天訊息";
+  renderBudgets(expenses);
   $("#ledgerList").innerHTML = transactions.length ? transactions.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
 function renderProfile() {
@@ -238,12 +244,6 @@ function renderHome() {
   $("#incomeTotal").textContent = money(inc); $("#expenseTotal").textContent = money(exp);
   $("#availableAmount").textContent = money(bud ? Math.max(bud - exp, 0) : inc - exp);
   $("#budgetHint").textContent = bud ? `預算已使用 ${Math.min(100, Math.round((exp / bud) * 100 || 0))}%` : `目前結餘 ${money(inc - exp)}`;
-  const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
-  const otherPaid = Math.max(exp - myPaid, 0);
-  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
-  const last = messages.at(-1); $("#chatSummary").textContent = last ? (last.message_type === "sticker" ? stickerById(last.sticker_id)?.text || "BORI 貼圖" : last.content) : "還沒有聊天訊息";
-  renderBudgets(expenses);
-  const records = transactions.slice(0, 6); $("#recentList").innerHTML = records.length ? records.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
 function renderBudgets(expenses) {
   const el = $("#budgetPreview");
@@ -278,7 +278,7 @@ function renderStickerTray() {
 }
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
-  const has = transactions.length || budgets.length; $("#analysisEmpty").classList.toggle("hidden", !!has); $("#analysisContent").classList.toggle("hidden", !has); if (!has) return;
+  if (!activeBookId) return;
   const expenses = monthTransactions("expense"), incomes = monthTransactions("income");
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0);
   $("#analysisIncome").textContent = money(inc); $("#analysisExpense").textContent = money(exp); $("#analysisNet").textContent = money(inc - exp); $("#donutTotal").textContent = money(exp);
@@ -286,7 +286,6 @@ function renderAnalysis() {
   let cursor = 0; const segments = entries.map(([c, v]) => { const start = cursor; cursor += exp ? (v / exp) * 360 : 0; return `${(categoryMeta[c] || categoryMeta.其他).color} ${start}deg ${cursor}deg`; });
   $("#donutChart").style.background = segments.length ? `conic-gradient(${segments.join(",")})` : "#eee7dc";
   $("#categoryLegend").innerHTML = entries.length ? entries.map(([c, v]) => `<div class="legend-row"><i style="background:${(categoryMeta[c] || categoryMeta.其他).color}"></i><span>${escapeHTML(c)}</span><strong>${Math.round((v / exp) * 100)}%</strong></div>`).join("") : `<p class="muted">尚無支出分類</p>`;
-  $("#incomeList").innerHTML = incomes.length ? incomes.map(recordHTML).join("") : `<div class="empty-state compact"><p>本月尚無收入。</p></div>`;
 }
 
 async function createBook(name, type) {
