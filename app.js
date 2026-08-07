@@ -296,9 +296,9 @@ function renderStickerTray() {
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
   if (!activeBookId) return;
-  const expenses = monthTransactions("expense"), incomes = monthTransactions("income");
-  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0);
-  $("#analysisIncome").textContent = money(inc); $("#analysisExpense").textContent = money(exp); $("#analysisNet").textContent = money(inc - exp); $("#donutTotal").textContent = money(exp);
+  const expenses = monthTransactions("expense");
+  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
+  $("#donutTotal").textContent = money(exp);
   const grouped = {}; expenses.forEach((x) => grouped[x.category] = (grouped[x.category] || 0) + Number(x.amount)); const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
   let cursor = 0; const segments = entries.map(([c, v]) => { const start = cursor; cursor += exp ? (v / exp) * 360 : 0; return `${(categoryMeta[c] || categoryMeta.其他).color} ${start}deg ${cursor}deg`; });
   $("#donutChart").style.background = segments.length ? `conic-gradient(${segments.join(",")})` : "#eee7dc";
