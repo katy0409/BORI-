@@ -93,3 +93,4 @@ input,select,textarea{font-size:16px}
 .category-add-form{display:flex;gap:8px;align-items:center}
 .category-add-form input{flex:1;min-width:0;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card)}
 .category-add-form button{width:auto;flex-shrink:0;margin-top:0;padding:0 20px;height:46px}
+.dialog-subhead{margin:18px 0 8px;font-weight:800;font-size:13px}
