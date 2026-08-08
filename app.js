@@ -220,7 +220,10 @@ function renderProfile() {
   $("#headerAvatarEmoji").classList.toggle("hidden", hasAvatar);
   $("#headerAvatarImg").classList.toggle("hidden", !hasAvatar);
   if (hasAvatar) { $("#profileAvatarImg").src = profile.avatar_url; $("#headerAvatarImg").src = profile.avatar_url; }
+  $("#verifiedBadge").classList.toggle("hidden", !session?.user?.email_confirmed_at);
   const book = activeBook(), isOwner = book?.role === "owner";
+  $("#heroRoomSummary").classList.toggle("hidden", !book);
+  if (book) { $("#heroRoomIcon").src = typeIcon[book.type] || typeIcon.other; $("#heroRoomName").textContent = book.name; $("#heroRoomMembers").textContent = `${memberCounts[book.id] || 1} 位成員 · 同步中`; }
   $("#leaveRoomBtn").classList.toggle("hidden", !book);
   $("#resetRoomBtn").classList.toggle("hidden", !book || !isOwner);
   $("#deleteRoomBtn").classList.toggle("hidden", !book || !isOwner);
