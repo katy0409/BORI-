@@ -136,3 +136,7 @@ input,select,textarea{font-size:16px}
 .payment-picker small{font-size:9px;color:var(--muted)}
 .payment-picker label:has(input:checked) span{background:var(--green-soft);border-color:#a9bf8f;color:var(--green-dark)}
 .payment-picker label:has(input:checked) span small{color:var(--green-dark)}
+.quick-grid-single{grid-template-columns:1fr}
+.quick-grid-single button{display:grid;grid-template-columns:38px 1fr;align-items:center;text-align:left;padding:14px 16px}
+.quick-grid-single button span{grid-row:1/3}
+.quick-grid-single button strong{margin:0 0 2px}

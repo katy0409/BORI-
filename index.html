@@ -124,10 +124,8 @@
             <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
             <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
           </div>
-          <div class="quick-grid">
-            <button data-page="addPage"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><strong>記一筆</strong><small>支出或收入</small></button>
+          <div class="quick-grid quick-grid-single">
             <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><strong>設定預算</strong><small>分類管理本月額度</small></button>
-            <button data-page="chatPage"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5z"/></svg></span><strong>房間聊天</strong><small id="chatSummary">還沒有聊天訊息</small></button>
           </div>
           <div class="section-head"><h2>支出分類</h2><button class="text-button" id="manageCategoriesLink">管理分類</button></div>
           <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>

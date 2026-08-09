@@ -223,7 +223,6 @@ function renderLedger() {
   const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
   const otherPaid = Math.max(exp - myPaid, 0);
   $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
-  const last = messages.at(-1); $("#chatSummary").textContent = last ? (last.message_type === "sticker" ? stickerById(last.sticker_id)?.text || "BORI 貼圖" : last.content) : "還沒有聊天訊息";
   renderBudgets(expenses);
   $("#ledgerList").innerHTML = transactions.length ? transactions.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
