@@ -410,6 +410,7 @@ $("#leaveRoomBtn").addEventListener("click", async () => {
   if (!confirm(`確定要退出「${book.name}」嗎？`)) return;
   const { data, error } = await supabaseClient.rpc("leave_book", { p_book_id: book.id });
   if (error) return toast(error.message);
+  closeDialog("roomSettingsDialog");
   await loadBooks();
   await loadActiveBookData();
   renderAll();
@@ -432,6 +433,7 @@ $("#deleteRoomBtn").addEventListener("click", async () => {
   if (!confirm(`確定要刪除「${book.name}」嗎？所有成員與資料都會一併移除，此動作無法復原。`)) return;
   const { error } = await supabaseClient.rpc("delete_book", { p_book_id: book.id });
   if (error) return toast(error.message);
+  closeDialog("roomSettingsDialog");
   await loadBooks();
   await loadActiveBookData();
   renderAll();
