@@ -1,4 +1,5 @@
 const ACTIVE_BOOK_KEY = "bori-v13-active-book";
+document.documentElement.setAttribute("data-theme", localStorage.getItem("bori-theme") || "light");
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (n) => new Intl.NumberFormat("zh-TW", { style: "currency", currency: "TWD", maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -445,6 +446,43 @@ $("#iconPicker").addEventListener("click", (e) => {
 });
 $("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); renderIconPicker(); openDialog("manageCategoriesDialog"); });
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
+async function renderMemberList() {
+  if (!activeBookId) return;
+  const { data, error } = await supabaseClient.from("book_members").select("role, user_id, profiles(display_name, avatar_url)").eq("book_id", activeBookId).order("created_at", { ascending: true });
+  if (error) { $("#memberList").innerHTML = `<p class="muted-hint">載入失敗：${escapeHTML(error.message)}</p>`; return; }
+  $("#memberList").innerHTML = (data && data.length) ? data.map((m) => {
+    const name = m.profiles?.display_name || "BORI 使用者";
+    const avatar = m.profiles?.avatar_url ? `<img src="${m.profiles.avatar_url}" alt="" />` : `<span class="member-emoji">🐻</span>`;
+    return `<div class="member-row"><span class="member-avatar">${avatar}</span><span class="member-info"><strong>${escapeHTML(name)}</strong><small>${m.role === "owner" ? "擁有者" : "成員"}</small></span></div>`;
+  }).join("") : `<p class="muted-hint">目前沒有成員資料。</p>`;
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="memberListDialog"]')) renderMemberList(); });
+function renderAccountSecurity() {
+  const isGoogle = session?.user?.app_metadata?.provider === "google";
+  $("#loginMethodValue").textContent = isGoogle ? "Google 帳號" : "Email";
+  $("#changePasswordSection").classList.toggle("hidden", isGoogle);
+  $("#googleAccountNote").classList.toggle("hidden", !isGoogle);
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="accountSecurityDialog"]')) renderAccountSecurity(); });
+$("#changePasswordForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = $("#newPasswordInput").value;
+  if (pw.length < 6) return toast("密碼至少要 6 碼");
+  const { error } = await supabaseClient.auth.updateUser({ password: pw });
+  if (error) return toast(error.message);
+  e.target.reset();
+  toast("密碼已更新 🔒");
+});
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  $("#darkModeSwitch")?.classList.toggle("on", theme === "dark");
+}
+applyTheme(localStorage.getItem("bori-theme") || "light");
+$("#darkModeToggleBtn").addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem("bori-theme", next);
+  applyTheme(next);
+});
 $("#categoryManageList").addEventListener("click", async (e) => {
   const delBtn = e.target.closest("[data-remove-category]");
   if (!delBtn) return;

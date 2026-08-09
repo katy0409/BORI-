@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.3.3，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.3.3｜Cloud Life</title>
+  <meta name="description" content="BORI V1.3.4，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.3.4｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.3.3</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.3.4</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -60,7 +60,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.3.3</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.3.4</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -163,7 +163,9 @@
 
         <div class="settings-list">
           <button id="roomSettingsBtn" data-open="roomSettingsDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg> 房間設定</span> <span>›</span></button>
-          <button id="signOutBtn"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/></svg> 登出</span> <span>›</span></button>
+          <button data-open="appearanceDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-.9.7-1.5 1.5-1.5H16a4 4 0 0 0 4-4c0-4.4-3.6-8-8-8z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1" fill="currentColor" stroke="none"/></svg> 外觀設定</span> <span>›</span></button>
+          <button data-open="aboutDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg> 關於 BORI</span> <span>›</span></button>
+          <button data-open="accountSecurityDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg> 帳號與安全</span> <span>›</span></button>
         </div>
 
       </section>
@@ -192,10 +194,51 @@
 
   <dialog id="editNameDialog"><form id="editNameForm"><div class="dialog-head"><div><p class="eyebrow">DISPLAY NAME</p><h3>編輯暱稱</h3></div><button type="button" class="dialog-close" data-close="editNameDialog">×</button></div><label>暱稱<input id="editNameInput" required maxlength="24" placeholder="例如：凱婷" /></label><button class="primary" type="submit">儲存</button></form></dialog>
 
+  <dialog id="memberListDialog">
+    <div class="dialog-head"><div><p class="eyebrow">MEMBERS</p><h3>成員管理</h3></div><button type="button" class="dialog-close" data-close="memberListDialog">×</button></div>
+    <div id="memberList" class="member-list"></div>
+  </dialog>
+
+  <dialog id="aboutDialog">
+    <div class="dialog-head"><div><p class="eyebrow">ABOUT</p><h3>關於 BORI</h3></div><button type="button" class="dialog-close" data-close="aboutDialog">×</button></div>
+    <div class="about-content">
+      <div class="about-mascot">🐻🌾</div>
+      <h4>보리 BORI</h4>
+      <p class="about-version">Cloud Life · V1.3.4</p>
+      <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
+    </div>
+  </dialog>
+
+  <dialog id="accountSecurityDialog">
+    <div class="dialog-head"><div><p class="eyebrow">ACCOUNT</p><h3>帳號與安全</h3></div><button type="button" class="dialog-close" data-close="accountSecurityDialog">×</button></div>
+    <div class="settings-list">
+      <button type="button" class="static-row"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg> 登入方式</span> <span id="loginMethodValue">-</span></button>
+    </div>
+    <div id="changePasswordSection">
+      <p class="dialog-subhead">修改密碼</p>
+      <form id="changePasswordForm">
+        <input id="newPasswordInput" type="password" minlength="6" required placeholder="輸入新密碼（至少 6 碼）" autocomplete="new-password" />
+        <button class="primary" type="submit">更新密碼</button>
+      </form>
+    </div>
+    <p id="googleAccountNote" class="muted-hint hidden">你是用 Google 帳號登入，密碼由 Google 管理，這裡沒有可以修改的地方。</p>
+    <div class="settings-list danger-list" style="margin-top:16px">
+      <button id="signOutBtn"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/></svg> 登出</span> <span>›</span></button>
+    </div>
+  </dialog>
+
+  <dialog id="appearanceDialog">
+    <div class="dialog-head"><div><p class="eyebrow">APPEARANCE</p><h3>外觀設定</h3></div><button type="button" class="dialog-close" data-close="appearanceDialog">×</button></div>
+    <div class="settings-list">
+      <button type="button" id="darkModeToggleBtn" class="static-row"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg> 深色模式</span> <span id="darkModeSwitch" class="toggle-switch"><i></i></span></button>
+    </div>
+  </dialog>
+
   <dialog id="roomSettingsDialog">
     <div class="dialog-head"><div><p class="eyebrow">ROOM SETTINGS</p><h3>房間設定</h3></div><button type="button" class="dialog-close" data-close="roomSettingsDialog">×</button></div>
     <div class="settings-list">
       <button id="roomCodeBtn" class="hidden"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="12" rx="2"/><path d="M9 16v2a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg> 房間代碼</span> <span id="roomCodeValue">-</span></button>
+      <button data-close="roomSettingsDialog" data-open="memberListDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-3 2.9-5.5 6.5-5.5s6.5 2.5 6.5 5.5"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 13.2c2.7.4 4.5 2.4 4.5 4.8"/></svg> 成員管理</span> <span>›</span></button>
       <button data-close="roomSettingsDialog" data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg> 預算管理</span> <span>›</span></button>
       <button data-close="roomSettingsDialog" data-open="manageCategoriesDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4h6a2 2 0 0 1 2 2v6l-9 9-8-8z"/><circle cx="14.5" cy="9.5" r="1.3" fill="currentColor" stroke="none"/></svg> 自訂分類</span> <span>›</span></button>
     </div>
