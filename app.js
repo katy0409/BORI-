@@ -223,6 +223,7 @@ function renderLedger() {
   const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
   const otherPaid = Math.max(exp - myPaid, 0);
   $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
+  renderAccountBalances();
   renderBudgets(expenses);
   $("#ledgerList").innerHTML = transactions.length ? transactions.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
@@ -289,6 +290,26 @@ function renderBudgets(expenses) {
   }).join("");
 }
 const paymentMethodLabels = { cash: "現金", credit_card: "信用卡", bank: "銀行帳戶", ewallet: "電子支付" };
+const paymentMethodIcons = {
+  cash: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  credit_card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>',
+  bank: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M4.5 10v8M9 10v8M15 10v8M19.5 10v8"/><path d="M2.5 20h19"/></svg>',
+  ewallet: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5v9A2.5 2.5 0 0 1 16.5 19h-11A2.5 2.5 0 0 1 3 16.5z"/><path d="M15 12.5h3.5v2.5H15a1.25 1.25 0 0 1 0-2.5z"/></svg>'
+};
+function computeAccountBalances() {
+  const balances = { cash: 0, credit_card: 0, bank: 0, ewallet: 0 };
+  transactions.forEach((x) => {
+    const pm = balances.hasOwnProperty(x.payment_method) ? x.payment_method : "cash";
+    balances[pm] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
+  });
+  return balances;
+}
+function renderAccountBalances() {
+  const el = $("#accountBalances");
+  if (!el) return;
+  const balances = computeAccountBalances();
+  el.innerHTML = Object.keys(paymentMethodLabels).map((key) => `<div class="account-balance-card"><span class="account-icon">${paymentMethodIcons[key]}</span><small>${paymentMethodLabels[key]}</small><strong class="${balances[key] < 0 ? "negative" : ""}">${money(balances[key])}</strong></div>`).join("");
+}
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
   const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
@@ -434,14 +455,12 @@ const incomeCategories = ["薪水", "獎金", "副業", "投資", "退款", "禮
 let addType = "expense";
 function setAddType(type) {
   addType = type;
-  $("#addTypeExpense").classList.toggle("active", type === "expense");
-  $("#addTypeIncome").classList.toggle("active", type === "income");
+  $("#addTypeSelect").value = type;
   $("#addPageEyebrow").textContent = type === "expense" ? "NEW EXPENSE" : "NEW INCOME";
   $("#addPageTitle").textContent = type === "expense" ? "這次花了多少？" : "這次收入多少？";
   $("#categoryInput").innerHTML = (type === "expense" ? activeCategories().map((c) => c.name) : incomeCategories).map((n) => `<option>${escapeHTML(n)}</option>`).join("");
 }
-$("#addTypeExpense").addEventListener("click", () => setAddType("expense"));
-$("#addTypeIncome").addEventListener("click", () => setAddType("income"));
+$("#addTypeSelect").addEventListener("change", (e) => setAddType(e.target.value));
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "cash";
