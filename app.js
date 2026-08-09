@@ -21,8 +21,21 @@ const categoryMeta = {
   餐飲: { icon: "🍜", color: "#e59b5f" }, 交通: { icon: "🚌", color: "#74a7b8" }, 娛樂: { icon: "🎬", color: "#967ac1" },
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
-const defaultCategories = ["餐飲", "交通", "娛樂", "購物", "生活", "旅行", "其他"];
-function activeCategories() { const c = activeBook()?.categories; return c && c.length ? c : defaultCategories; }
+const defaultCategories = [
+  { name: "餐飲", icon: "ramen" }, { name: "交通", icon: "car" }, { name: "娛樂", icon: "movie" },
+  { name: "購物", icon: "shopping_bag" }, { name: "生活", icon: "house" }, { name: "旅行", icon: "luggage" }, { name: "其他", icon: "receipt" }
+];
+const categoryIconKeys = ["ramen","bubbletea","coffee","cake","burger","groceries","shopping_bag","cart","car","scooter","train","plane","gas","bus","taxi","parking","movie","game","headphones","gift","house","building","lightbulb","faucet","toiletries","bed_moon","firstaid","medicine","fitness","produce","pets","petfood","toiletries2","clothes","makeup","haircut","luggage","bedroom","laptop","phone","book","graduation","tv","calendar","wallet","creditcard","insurance","receipt","flowers","chat"];
+function activeCategories() {
+  const c = activeBook()?.categories;
+  if (!c || !c.length) return defaultCategories;
+  return c.map((x) => (typeof x === "string" ? { name: x, icon: null } : x));
+}
+function categoryIconHTML(name) {
+  const cat = activeCategories().find((c) => c.name === name);
+  const key = cat?.icon && categoryIconKeys.includes(cat.icon) ? cat.icon : "receipt";
+  return `<img class="category-icon-img" src="assets/category-icons/${key}.png" alt="" />`;
+}
 const stickerSets = [
   { id: "cute", name: "可愛對話", stickers: [
     { id: "hi", img: "assets/stickers/hi.jpg", text: "嗨嗨！" },
@@ -237,12 +250,13 @@ function renderBookSwitcher() {
   renderCategorySelects();
 }
 function renderCategorySelects() {
-  const opts = activeCategories().map((c) => `<option>${escapeHTML(c)}</option>`).join("");
+  const opts = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
   $("#categoryInput").innerHTML = opts;
   $("#budgetCategory").innerHTML = opts;
 }
 function renderCategoryManageList() {
-  $("#categoryManageList").innerHTML = activeCategories().map((c) => `<div class="category-manage-row"><span>${(categoryMeta[c] || categoryMeta.其他).icon} ${escapeHTML(c)}</span><button type="button" data-remove-category="${escapeHTML(c)}">×</button></div>`).join("");
+  const cats = activeCategories();
+  $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row">${categoryIconHTML(c.name)}<span>${escapeHTML(c.name)}</span><span class="category-reorder"><button type="button" data-move="-1" data-index="${i}" ${i === 0 ? "disabled" : ""}>▲</button><button type="button" data-move="1" data-index="${i}" ${i === cats.length - 1 ? "disabled" : ""}>▼</button></span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
 }
 async function updateCategories(list) {
   const { error } = await supabaseClient.from("books").update({ categories: list }).eq("id", activeBookId);
@@ -270,14 +284,14 @@ function renderBudgets(expenses) {
   if (!budgets.length) { el.innerHTML = `<div class="empty-state compact"><p>尚未設定預算，先為常用分類設定上限吧。</p></div>`; return; }
   el.innerHTML = budgets.map((b) => {
     const used = expenses.filter((x) => x.category === b.category).reduce((s, x) => s + Number(x.amount), 0), pct = Number(b.amount) ? Math.min(120, (used / Number(b.amount)) * 100) : 0;
-    const meta = categoryMeta[b.category] || categoryMeta.其他;
-    return `<article class="budget-card"><div class="budget-head"><span>${meta.icon} ${escapeHTML(b.category)}</span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
+    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}</span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
   }).join("");
 }
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
+  const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
-  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${meta.icon}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
+  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
 }
 function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
@@ -416,23 +430,43 @@ $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); con
 $("#expenseForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("expense", $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim()); e.target.reset(); await loadActiveBookData(); renderAll(); goTo("homePage"); toast("支出已同步到房間 ☁️"); } catch (err) { toast(err.message); } });
 $("#incomeForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("income", $("#incomeTitle").value.trim(), $("#incomeAmount").value, $("#incomeCategory").value); e.target.reset(); closeDialog("incomeDialog"); await loadActiveBookData(); renderAll(); toast("收入已同步到房間 💰"); } catch (err) { toast(err.message); } });
 $("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
-$("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); openDialog("manageCategoriesDialog"); });
-document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) renderCategoryManageList(); });
-$("#categoryManageList").addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-remove-category]");
+let selectedCategoryIcon = "receipt";
+function renderIconPicker() {
+  $("#iconPicker").innerHTML = categoryIconKeys.map((k) => `<button type="button" class="icon-picker-item ${k === selectedCategoryIcon ? "active" : ""}" data-icon="${k}"><img src="assets/category-icons/${k}.png" alt="" /></button>`).join("");
+}
+$("#iconPicker").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-icon]");
   if (!btn) return;
+  selectedCategoryIcon = btn.dataset.icon;
+  renderIconPicker();
+});
+$("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); renderIconPicker(); openDialog("manageCategoriesDialog"); });
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
+$("#categoryManageList").addEventListener("click", async (e) => {
+  const moveBtn = e.target.closest("[data-move]");
+  if (moveBtn) {
+    const cur = [...activeCategories()], i = Number(moveBtn.dataset.index), j = i + Number(moveBtn.dataset.move);
+    if (j < 0 || j >= cur.length) return;
+    [cur[i], cur[j]] = [cur[j], cur[i]];
+    await updateCategories(cur);
+    return;
+  }
+  const delBtn = e.target.closest("[data-remove-category]");
+  if (!delBtn) return;
   const cur = activeCategories();
   if (cur.length <= 1) return toast("至少要保留一個分類");
-  await updateCategories(cur.filter((c) => c !== btn.dataset.removeCategory));
+  await updateCategories(cur.filter((c) => c.name !== delBtn.dataset.removeCategory));
 });
 $("#addCategoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("#newCategoryInput").value.trim();
   if (!name) return;
   const cur = activeCategories();
-  if (cur.includes(name)) return toast("這個分類已經有了");
-  await updateCategories([...cur, name]);
+  if (cur.some((c) => c.name === name)) return toast("這個分類已經有了");
+  await updateCategories([...cur, { name, icon: selectedCategoryIcon }]);
   e.target.reset();
+  selectedCategoryIcon = "receipt";
+  renderIconPicker();
 });
 $("#chatForm").addEventListener("submit", async (e) => { e.preventDefault(); const content = $("#messageInput").value.trim(); if (!content) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "text", content }); if (error) return toast(error.message); $("#messageInput").value = ""; });
 $("#stickerBtn").addEventListener("click", () => $("#stickerTray").classList.toggle("hidden"));
