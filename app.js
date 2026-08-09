@@ -98,7 +98,7 @@ function toast(message) { const el = $("#toast"); el.textContent = message; el.c
 function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id)); }
 function openDialog(id) { if (!activeBookId && !["bookDialog", "joinDialog"].includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") scrollChat(); }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") scrollChat(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); } }
 function activeBook() { return books.find((b) => b.id === activeBookId) || books[0] || null; }
 function monthTransactions(type) { return transactions.filter((x) => x.transaction_type === type && String(x.transaction_date).slice(0, 7) === currentMonth()); }
 function inviteCode() { return `BORI-${Math.random().toString(36).slice(2, 8).toUpperCase()}`; }
@@ -254,9 +254,7 @@ function renderBookSwitcher() {
   renderCategorySelects();
 }
 function renderCategorySelects() {
-  const opts = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
-  $("#categoryInput").innerHTML = opts;
-  $("#budgetCategory").innerHTML = opts;
+  $("#budgetCategory").innerHTML = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
 }
 function renderCategoryManageList() {
   const cats = activeCategories();
@@ -291,13 +289,15 @@ function renderBudgets(expenses) {
     return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}</span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
   }).join("");
 }
+const paymentMethodLabels = { cash: "現金", credit_card: "信用卡", bank: "銀行帳戶", ewallet: "電子支付" };
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
   const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
-  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
+  const payLabel = paymentMethodLabels[x.payment_method] || "現金";
+  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${payLabel}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
 }
-function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); }
+function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) setAddType(addType); }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
@@ -334,8 +334,8 @@ async function createBook(name, type) {
   if (memberError) throw memberError;
   return data;
 }
-async function addTransaction(type, title, amount, category, note = "") {
-  const { error } = await supabaseClient.from("transactions").insert({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: localDateStr(), note });
+async function addTransaction(type, title, amount, category, note = "", date = null, paymentMethod = "cash") {
+  const { error } = await supabaseClient.from("transactions").insert({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: date || localDateStr(), note, payment_method: paymentMethod });
   if (error) throw error;
 }
 
@@ -431,8 +431,32 @@ $("#switchRoomList").addEventListener("click", (e) => { const btn = e.target.clo
 
 $("#bookForm").addEventListener("submit", async (e) => { e.preventDefault(); try { const name = $("#newBookName").value.trim(), type = document.querySelector('[name="bookType"]:checked').value; const book = await createBook(name, type); activeBookId = book.id; localStorage.setItem(ACTIVE_BOOK_KEY, activeBookId); e.target.reset(); closeDialog("bookDialog"); await loadBooks(); await loadActiveBookData(); renderAll(); toast(`房間開好了，房間代碼：${book.invite_code}`); } catch (err) { toast(err.message); } });
 $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); const code = $("#inviteCodeInput").value.trim().toUpperCase(); const { data, error } = await supabaseClient.rpc("join_book_by_code", { p_invite_code: code }); if (error) return toast(error.message); if (!data) return toast("找不到這個房間代碼"); closeDialog("joinDialog"); e.target.reset(); await loadBooks(); activeBookId = data; await loadActiveBookData(); renderAll(); toast("已加入房間 🎉"); });
-$("#expenseForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("expense", $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim()); e.target.reset(); await loadActiveBookData(); renderAll(); goTo("homePage"); toast("支出已同步到房間 ☁️"); } catch (err) { toast(err.message); } });
-$("#incomeForm").addEventListener("submit", async (e) => { e.preventDefault(); try { await addTransaction("income", $("#incomeTitle").value.trim(), $("#incomeAmount").value, $("#incomeCategory").value); e.target.reset(); closeDialog("incomeDialog"); await loadActiveBookData(); renderAll(); toast("收入已同步到房間 💰"); } catch (err) { toast(err.message); } });
+const incomeCategories = ["薪水", "獎金", "副業", "投資", "退款", "禮金", "其他"];
+let addType = "expense";
+function setAddType(type) {
+  addType = type;
+  $("#addTypeExpense").classList.toggle("active", type === "expense");
+  $("#addTypeIncome").classList.toggle("active", type === "income");
+  $("#addPageEyebrow").textContent = type === "expense" ? "NEW EXPENSE" : "NEW INCOME";
+  $("#addPageTitle").textContent = type === "expense" ? "這次花了多少？" : "這次收入多少？";
+  $("#categoryInput").innerHTML = (type === "expense" ? activeCategories().map((c) => c.name) : incomeCategories).map((n) => `<option>${escapeHTML(n)}</option>`).join("");
+}
+$("#addTypeExpense").addEventListener("click", () => setAddType("expense"));
+$("#addTypeIncome").addEventListener("click", () => setAddType("income"));
+$("#transactionForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "cash";
+  try {
+    await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, paymentMethod);
+    e.target.reset();
+    setAddType("expense");
+    $("#dateInput").value = localDateStr();
+    await loadActiveBookData();
+    renderAll();
+    goTo("homePage");
+    toast(addType === "expense" ? "支出已同步到房間 ☁️" : "收入已同步到房間 💰");
+  } catch (err) { toast(err.message); }
+});
 $("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
 let selectedCategoryIcon = "receipt";
 function renderIconPicker() {
