@@ -22,7 +22,7 @@ const categoryMeta = {
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
 const defaultCategories = [
-  { name: "食品", icon: "groceries" }, { name: "餐飲", icon: "ramen" }, { name: "日常用品", icon: "toiletries" },
+  { name: "餐飲", icon: "ramen" }, { name: "飲料", icon: "bubbletea" }, { name: "日常用品", icon: "toiletries" },
   { name: "住房", icon: "house" }, { name: "交通", icon: "bus" }, { name: "汽車", icon: "car" },
   { name: "水電瓦斯", icon: "lightbulb" }, { name: "通訊", icon: "phone" }, { name: "訂閱", icon: "tv" },
   { name: "服飾", icon: "clothes" }, { name: "休閒育樂", icon: "game" }, { name: "醫療保健", icon: "firstaid" },
