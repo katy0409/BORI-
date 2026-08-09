@@ -259,7 +259,7 @@ function renderCategorySelects() {
 }
 function renderCategoryManageList() {
   const cats = activeCategories();
-  $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row">${categoryIconHTML(c.name)}<span>${escapeHTML(c.name)}</span><span class="category-reorder"><button type="button" data-move="-1" data-index="${i}" ${i === 0 ? "disabled" : ""}>▲</button><button type="button" data-move="1" data-index="${i}" ${i === cats.length - 1 ? "disabled" : ""}>▼</button></span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
+  $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row" data-index="${i}"><span class="drag-handle">⠿</span>${categoryIconHTML(c.name)}<span class="category-name">${escapeHTML(c.name)}</span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
 }
 async function updateCategories(list) {
   const { error } = await supabaseClient.from("books").update({ categories: list }).eq("id", activeBookId);
@@ -446,20 +446,73 @@ $("#iconPicker").addEventListener("click", (e) => {
 $("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); renderIconPicker(); openDialog("manageCategoriesDialog"); });
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
 $("#categoryManageList").addEventListener("click", async (e) => {
-  const moveBtn = e.target.closest("[data-move]");
-  if (moveBtn) {
-    const cur = [...activeCategories()], i = Number(moveBtn.dataset.index), j = i + Number(moveBtn.dataset.move);
-    if (j < 0 || j >= cur.length) return;
-    [cur[i], cur[j]] = [cur[j], cur[i]];
-    await updateCategories(cur);
-    return;
-  }
   const delBtn = e.target.closest("[data-remove-category]");
   if (!delBtn) return;
   const cur = activeCategories();
   if (cur.length <= 1) return toast("至少要保留一個分類");
   await updateCategories(cur.filter((c) => c.name !== delBtn.dataset.removeCategory));
 });
+$("#categoryManageList").addEventListener("pointerdown", (e) => {
+  if (e.target.closest(".category-remove")) return;
+  const row = e.target.closest(".category-manage-row");
+  if (!row) return;
+  const startX = e.clientX, startY = e.clientY, pointerId = e.pointerId;
+  let activated = false;
+  const timer = setTimeout(() => { activated = true; beginCategoryDrag(row, pointerId, startY); }, 350);
+  const onMove = (ev) => { if (!activated && (Math.abs(ev.clientY - startY) > 10 || Math.abs(ev.clientX - startX) > 10)) cleanup(); };
+  const onUp = () => cleanup();
+  function cleanup() {
+    clearTimeout(timer);
+    row.removeEventListener("pointermove", onMove);
+    row.removeEventListener("pointerup", onUp);
+    row.removeEventListener("pointercancel", onUp);
+  }
+  row.addEventListener("pointermove", onMove);
+  row.addEventListener("pointerup", onUp);
+  row.addEventListener("pointercancel", onUp);
+});
+function beginCategoryDrag(startRow, pointerId, startY) {
+  const allRows = $$("#categoryManageList .category-manage-row");
+  const startIndex = allRows.indexOf(startRow);
+  const rowHeight = startRow.getBoundingClientRect().height + 8;
+  let currentIndex = startIndex;
+  try { startRow.setPointerCapture(pointerId); } catch {}
+  startRow.classList.add("dragging");
+  function onMove(ev) {
+    ev.preventDefault();
+    const deltaY = ev.clientY - startY;
+    startRow.style.transform = `translateY(${deltaY}px)`;
+    const slotShift = Math.round(deltaY / rowHeight);
+    const newIndex = Math.min(allRows.length - 1, Math.max(0, startIndex + slotShift));
+    if (newIndex !== currentIndex) {
+      allRows.forEach((r, i) => {
+        if (r === startRow) return;
+        let shift = 0;
+        if (newIndex > currentIndex && i > currentIndex && i <= newIndex) shift = -1;
+        else if (newIndex < currentIndex && i >= newIndex && i < currentIndex) shift = 1;
+        r.style.transform = shift ? `translateY(${shift * rowHeight}px)` : "";
+      });
+      currentIndex = newIndex;
+    }
+  }
+  function onUp() {
+    try { startRow.releasePointerCapture(pointerId); } catch {}
+    startRow.removeEventListener("pointermove", onMove);
+    startRow.removeEventListener("pointerup", onUp);
+    startRow.removeEventListener("pointercancel", onUp);
+    startRow.classList.remove("dragging");
+    allRows.forEach((r) => { r.style.transform = ""; });
+    if (currentIndex !== startIndex) {
+      const cur = [...activeCategories()];
+      const [moved] = cur.splice(startIndex, 1);
+      cur.splice(currentIndex, 0, moved);
+      updateCategories(cur);
+    }
+  }
+  startRow.addEventListener("pointermove", onMove);
+  startRow.addEventListener("pointerup", onUp);
+  startRow.addEventListener("pointercancel", onUp);
+}
 $("#addCategoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("#newCategoryInput").value.trim();
