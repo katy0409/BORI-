@@ -556,17 +556,19 @@ $("#categoryManageList").addEventListener("pointerdown", (e) => {
   row.addEventListener("pointercancel", onUp);
 });
 function beginCategoryDrag(startRow, pointerId, startY) {
+  const list = $("#categoryManageList");
   const allRows = $$("#categoryManageList .category-manage-row");
   const startIndex = allRows.indexOf(startRow);
   const rowHeight = startRow.getBoundingClientRect().height + 8;
+  const scrollStart = list.scrollTop;
   let currentIndex = startIndex;
+  let lastClientY = startY;
+  let autoScrollRAF = null;
   try { startRow.setPointerCapture(pointerId); } catch {}
   startRow.classList.add("dragging");
-  function onMove(ev) {
-    ev.preventDefault();
-    const deltaY = ev.clientY - startY;
-    startRow.style.transform = `translateY(${deltaY}px)`;
-    const slotShift = Math.round(deltaY / rowHeight);
+  function updatePositions(effectiveDeltaY) {
+    startRow.style.transform = `translateY(${effectiveDeltaY}px)`;
+    const slotShift = Math.round(effectiveDeltaY / rowHeight);
     const newIndex = Math.min(allRows.length - 1, Math.max(0, startIndex + slotShift));
     if (newIndex !== currentIndex) {
       allRows.forEach((r, i) => {
@@ -579,7 +581,27 @@ function beginCategoryDrag(startRow, pointerId, startY) {
       currentIndex = newIndex;
     }
   }
+  function autoScrollLoop() {
+    const rect = list.getBoundingClientRect();
+    const edge = 36;
+    let speed = 0;
+    if (lastClientY < rect.top + edge) speed = -Math.ceil((rect.top + edge - lastClientY) / 3);
+    else if (lastClientY > rect.bottom - edge) speed = Math.ceil((lastClientY - (rect.bottom - edge)) / 3);
+    if (speed !== 0) {
+      const before = list.scrollTop;
+      list.scrollTop = Math.max(0, Math.min(list.scrollHeight - list.clientHeight, list.scrollTop + speed));
+      if (list.scrollTop !== before) updatePositions((lastClientY - startY) + (list.scrollTop - scrollStart));
+    }
+    autoScrollRAF = requestAnimationFrame(autoScrollLoop);
+  }
+  autoScrollRAF = requestAnimationFrame(autoScrollLoop);
+  function onMove(ev) {
+    ev.preventDefault();
+    lastClientY = ev.clientY;
+    updatePositions((ev.clientY - startY) + (list.scrollTop - scrollStart));
+  }
   function onUp() {
+    if (autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
     try { startRow.releasePointerCapture(pointerId); } catch {}
     startRow.removeEventListener("pointermove", onMove);
     startRow.removeEventListener("pointerup", onUp);
