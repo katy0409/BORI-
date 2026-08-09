@@ -1,5 +1,5 @@
 const ACTIVE_BOOK_KEY = "bori-v13-active-book";
-document.documentElement.setAttribute("data-theme", localStorage.getItem("bori-theme") || "light");
+document.documentElement.setAttribute("data-color-theme", localStorage.getItem("bori-color-theme") || "green");
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (n) => new Intl.NumberFormat("zh-TW", { style: "currency", currency: "TWD", maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -517,15 +517,17 @@ $("#changePasswordForm").addEventListener("submit", async (e) => {
   e.target.reset();
   toast("密碼已更新 🔒");
 });
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  $("#darkModeSwitch")?.classList.toggle("on", theme === "dark");
+function applyColorTheme(theme) {
+  document.documentElement.setAttribute("data-color-theme", theme);
+  $$("#colorThemePicker .color-theme-item").forEach((b) => b.classList.toggle("active", b.dataset.themeColor === theme));
 }
-applyTheme(localStorage.getItem("bori-theme") || "light");
-$("#darkModeToggleBtn").addEventListener("click", () => {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  localStorage.setItem("bori-theme", next);
-  applyTheme(next);
+applyColorTheme(localStorage.getItem("bori-color-theme") || "green");
+$("#colorThemePicker").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-theme-color]");
+  if (!btn) return;
+  const theme = btn.dataset.themeColor;
+  localStorage.setItem("bori-color-theme", theme);
+  applyColorTheme(theme);
 });
 $("#categoryManageList").addEventListener("click", async (e) => {
   const delBtn = e.target.closest("[data-remove-category]");

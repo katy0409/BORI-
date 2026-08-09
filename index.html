@@ -235,8 +235,13 @@
 
   <dialog id="appearanceDialog">
     <div class="dialog-head"><div><p class="eyebrow">APPEARANCE</p><h3>外觀設定</h3></div><button type="button" class="dialog-close" data-close="appearanceDialog">×</button></div>
-    <div class="settings-list">
-      <button type="button" id="darkModeToggleBtn" class="static-row"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg> 深色模式</span> <span id="darkModeSwitch" class="toggle-switch"><i></i></span></button>
+    <p class="dialog-subhead">選一個喜歡的配色</p>
+    <div id="colorThemePicker" class="color-theme-picker">
+      <button type="button" class="color-theme-item" data-theme-color="green"><span class="theme-swatch" style="background:#78965e"></span><small>抹茶綠</small></button>
+      <button type="button" class="color-theme-item" data-theme-color="peach"><span class="theme-swatch" style="background:#e0899b"></span><small>蜜桃粉</small></button>
+      <button type="button" class="color-theme-item" data-theme-color="butter"><span class="theme-swatch" style="background:#d4a94a"></span><small>奶油黃</small></button>
+      <button type="button" class="color-theme-item" data-theme-color="lavender"><span class="theme-swatch" style="background:#9b8ec4"></span><small>薰衣草紫</small></button>
+      <button type="button" class="color-theme-item" data-theme-color="sky"><span class="theme-swatch" style="background:#6fa3c4"></span><small>天空藍</small></button>
     </div>
   </dialog>
 
