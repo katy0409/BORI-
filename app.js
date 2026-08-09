@@ -22,8 +22,11 @@ const categoryMeta = {
   購物: { icon: "🛍", color: "#dc8293" }, 生活: { icon: "🏠", color: "#84a86d" }, 旅行: { icon: "✈️", color: "#d3ad55" }, 其他: { icon: "◌", color: "#9b9388" }
 };
 const defaultCategories = [
-  { name: "餐飲", icon: "ramen" }, { name: "交通", icon: "car" }, { name: "娛樂", icon: "movie" },
-  { name: "購物", icon: "shopping_bag" }, { name: "生活", icon: "house" }, { name: "旅行", icon: "luggage" }, { name: "其他", icon: "receipt" }
+  { name: "食品", icon: "groceries" }, { name: "餐飲", icon: "ramen" }, { name: "日常用品", icon: "toiletries" },
+  { name: "住房", icon: "house" }, { name: "交通", icon: "bus" }, { name: "汽車", icon: "car" },
+  { name: "水電瓦斯", icon: "lightbulb" }, { name: "通訊", icon: "phone" }, { name: "訂閱", icon: "tv" },
+  { name: "服飾", icon: "clothes" }, { name: "休閒育樂", icon: "game" }, { name: "醫療保健", icon: "firstaid" },
+  { name: "寵物", icon: "pets" }, { name: "固定貸款", icon: "creditcard" }, { name: "其他", icon: "receipt" }
 ];
 const categoryIconKeys = ["ramen","bubbletea","coffee","cake","burger","groceries","shopping_bag","cart","car","scooter","train","plane","gas","bus","taxi","parking","movie","game","headphones","gift","house","building","lightbulb","faucet","toiletries","bed_moon","firstaid","medicine","fitness","produce","pets","petfood","toiletries2","clothes","makeup","haircut","luggage","bedroom","laptop","phone","book","graduation","tv","calendar","wallet","creditcard","insurance","receipt","flowers","chat"];
 function activeCategories() {
@@ -438,7 +441,7 @@ $("#iconPicker").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-icon]");
   if (!btn) return;
   selectedCategoryIcon = btn.dataset.icon;
-  renderIconPicker();
+  $$("#iconPicker .icon-picker-item").forEach((b) => b.classList.toggle("active", b.dataset.icon === selectedCategoryIcon));
 });
 $("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); renderIconPicker(); openDialog("manageCategoriesDialog"); });
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
