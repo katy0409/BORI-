@@ -266,6 +266,45 @@ async function updateCategories(list) {
   const b = books.find((x) => x.id === activeBookId); if (b) b.categories = list;
   renderCategorySelects(); renderCategoryManageList();
 }
+function renderAccountManageList() {
+  const accs = activeAccounts();
+  $("#accountManageList").innerHTML = accs.map((a) => `<div class="category-manage-row"><span class="category-icon-img account-manage-icon">${accountIconSvg[a.icon] || accountIconSvg.cash}</span><span class="category-name">${escapeHTML(a.name)}</span><button type="button" class="category-remove" data-remove-account="${escapeHTML(a.name)}">×</button></div>`).join("");
+}
+async function updateAccounts(list) {
+  const { error } = await supabaseClient.from("books").update({ accounts: list }).eq("id", activeBookId);
+  if (error) return toast(error.message);
+  const b = books.find((x) => x.id === activeBookId); if (b) b.accounts = list;
+  renderPaymentPicker(); renderAccountManageList(); renderAccountBalances();
+}
+let selectedAccountIcon = "cash";
+function renderAccountIconPicker() {
+  $("#accountIconPicker").innerHTML = Object.keys(accountIconSvg).map((k) => `<button type="button" class="icon-picker-item account-icon-picker-item ${k === selectedAccountIcon ? "active" : ""}" data-account-icon="${k}">${accountIconSvg[k]}<small>${accountIconLabels[k]}</small></button>`).join("");
+}
+$("#accountIconPicker").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-account-icon]");
+  if (!btn) return;
+  selectedAccountIcon = btn.dataset.accountIcon;
+  $$("#accountIconPicker .icon-picker-item").forEach((b) => b.classList.toggle("active", b.dataset.accountIcon === selectedAccountIcon));
+});
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageAccountsDialog"]')) { renderAccountManageList(); renderAccountIconPicker(); } });
+$("#accountManageList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-remove-account]");
+  if (!btn) return;
+  const cur = activeAccounts();
+  if (cur.length <= 1) return toast("至少要保留一個帳戶");
+  await updateAccounts(cur.filter((a) => a.name !== btn.dataset.removeAccount));
+});
+$("#addAccountForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("#newAccountInput").value.trim();
+  if (!name) return;
+  const cur = activeAccounts();
+  if (cur.some((a) => a.name === name)) return toast("這個帳戶已經有了");
+  await updateAccounts([...cur, { name, icon: selectedAccountIcon }]);
+  e.target.reset();
+  selectedAccountIcon = "cash";
+  renderAccountIconPicker();
+});
 function monthRangeLabel() {
   const d = new Date(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   return `${d.getMonth() + 1}月1日 - ${d.getMonth() + 1}月${last}日`;
@@ -289,18 +328,27 @@ function renderBudgets(expenses) {
     return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}</span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
   }).join("");
 }
-const paymentMethodLabels = { cash: "現金", credit_card: "信用卡", bank: "銀行帳戶", ewallet: "電子支付" };
-const paymentMethodIcons = {
+const accountIconSvg = {
   cash: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>',
   credit_card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>',
   bank: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M4.5 10v8M9 10v8M15 10v8M19.5 10v8"/><path d="M2.5 20h19"/></svg>',
   ewallet: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5v9A2.5 2.5 0 0 1 16.5 19h-11A2.5 2.5 0 0 1 3 16.5z"/><path d="M15 12.5h3.5v2.5H15a1.25 1.25 0 0 1 0-2.5z"/></svg>'
 };
+const accountIconLabels = { cash: "現金型", credit_card: "卡片型", bank: "銀行型", ewallet: "電子型" };
+const defaultAccounts = [{ name: "現金", icon: "cash" }, { name: "信用卡", icon: "credit_card" }, { name: "銀行帳戶", icon: "bank" }, { name: "電子支付", icon: "ewallet" }];
+function activeAccounts() {
+  const a = activeBook()?.accounts;
+  if (!a || !a.length) return defaultAccounts;
+  return a.map((x) => (typeof x === "string" ? { name: x, icon: "cash" } : x));
+}
+function accountByName(name) { return activeAccounts().find((a) => a.name === name); }
 function computeAccountBalances() {
-  const balances = { cash: 0, credit_card: 0, bank: 0, ewallet: 0 };
+  const balances = {};
+  activeAccounts().forEach((a) => { balances[a.name] = 0; });
+  const fallback = activeAccounts()[0]?.name || "現金";
   transactions.forEach((x) => {
-    const pm = balances.hasOwnProperty(x.payment_method) ? x.payment_method : "cash";
-    balances[pm] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
+    const key = balances.hasOwnProperty(x.payment_method) ? x.payment_method : fallback;
+    balances[key] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
   });
   return balances;
 }
@@ -308,16 +356,21 @@ function renderAccountBalances() {
   const el = $("#accountBalances");
   if (!el) return;
   const balances = computeAccountBalances();
-  el.innerHTML = Object.keys(paymentMethodLabels).map((key) => `<div class="account-balance-card"><span class="account-icon">${paymentMethodIcons[key]}</span><small>${paymentMethodLabels[key]}</small><strong class="${balances[key] < 0 ? "negative" : ""}">${money(balances[key])}</strong></div>`).join("");
+  el.innerHTML = activeAccounts().map((a) => `<div class="account-balance-card"><span class="account-icon">${accountIconSvg[a.icon] || accountIconSvg.cash}</span><small>${escapeHTML(a.name)}</small><strong class="${balances[a.name] < 0 ? "negative" : ""}">${money(balances[a.name] || 0)}</strong></div>`).join("");
+}
+function renderPaymentPicker() {
+  const el = $("#paymentPicker");
+  if (!el) return;
+  el.innerHTML = activeAccounts().map((a, i) => `<label><input type="radio" name="paymentMethod" value="${escapeHTML(a.name)}" ${i === 0 ? "checked" : ""}><span>${accountIconSvg[a.icon] || accountIconSvg.cash}<small>${escapeHTML(a.name)}</small></span></label>`).join("");
 }
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
   const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
-  const payLabel = paymentMethodLabels[x.payment_method] || "現金";
-  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${payLabel}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
+  const payLabel = x.payment_method || "現金";
+  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
 }
-function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) setAddType(addType); }
+function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); setAddType(addType); } }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
@@ -469,7 +522,7 @@ function setAddType(type) {
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "cash";
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || activeAccounts()[0]?.name || "現金";
   try {
     await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, paymentMethod);
     e.target.reset();
