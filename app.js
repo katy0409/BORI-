@@ -659,6 +659,49 @@ $("#colorThemePicker").addEventListener("click", (e) => {
   localStorage.setItem("bori-color-theme", theme);
   applyColorTheme(theme);
 });
+const VAPID_PUBLIC_KEY = "BLK15NGBGUl4g_96o29669bGL2WciLVS4LOAcD0YgE12YKaJ0fjsMOKfsYv7v5Z-B9Pi_ELJQNLZj6YH4Xikm0E";
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+async function renderNotificationSettings() {
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  $("#notifToggleRow").classList.toggle("hidden", !supported);
+  $("#notifUnsupportedNote").classList.toggle("hidden", supported);
+  if (!supported) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    $("#notifToggleSwitch").classList.toggle("on", !!sub);
+  } catch {}
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="notificationDialog"]')) renderNotificationSettings(); });
+$("#notifToggleBtn").addEventListener("click", async () => {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return toast("這個瀏覽器不支援推播通知");
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) {
+    await supabaseClient.from("push_subscriptions").delete().eq("endpoint", existing.endpoint);
+    await existing.unsubscribe();
+    renderNotificationSettings();
+    toast("已關閉推播通知");
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return toast("需要允許通知權限才能開啟");
+  try {
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    const json = sub.toJSON();
+    const { error } = await supabaseClient.from("push_subscriptions").upsert({ user_id: session.user.id, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }, { onConflict: "endpoint" });
+    if (error) throw error;
+    renderNotificationSettings();
+    toast("推播通知已開啟 🔔");
+  } catch (err) {
+    toast("開啟失敗：" + err.message);
+  }
+});
 $("#categoryManageList").addEventListener("click", async (e) => {
   const delBtn = e.target.closest("[data-remove-category]");
   if (!delBtn) return;
