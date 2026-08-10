@@ -457,12 +457,16 @@ const incomeCategories = ["薪水", "獎金", "副業", "投資", "退款", "禮
 let addType = "expense";
 function setAddType(type) {
   addType = type;
-  $("#addTypeSelect").value = type;
+  $$("#typeSwitch .type-switch-option").forEach((b) => b.classList.toggle("active", b.dataset.type === type));
   $("#addPageEyebrow").textContent = type === "expense" ? "NEW EXPENSE" : "NEW INCOME";
-  $("#addPageTitle").textContent = type === "expense" ? "這次花了多少？" : "這次收入多少？";
+  $("#addPageTitle").textContent = type === "expense" ? "這次花了多少？" : "這次賺了多少？";
+  $("#addPageTitle").classList.toggle("mode-expense", type === "expense");
+  $("#addPageTitle").classList.toggle("mode-income", type === "income");
+  $(".amount-field").classList.toggle("mode-expense", type === "expense");
+  $(".amount-field").classList.toggle("mode-income", type === "income");
   $("#categoryInput").innerHTML = (type === "expense" ? activeCategories().map((c) => c.name) : incomeCategories).map((n) => `<option>${escapeHTML(n)}</option>`).join("");
 }
-$("#addTypeSelect").addEventListener("change", (e) => setAddType(e.target.value));
+$("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "cash";
