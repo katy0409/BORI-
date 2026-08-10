@@ -92,6 +92,7 @@ let activeBookId = localStorage.getItem(ACTIVE_BOOK_KEY) || null;
 let transactions = [];
 let budgets = [];
 let messages = [];
+let memberPrivacy = {};
 let realtimeChannel = null;
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
@@ -163,11 +164,13 @@ async function fetchLedger() {
 
 async function loadActiveBookData() {
   unsubscribeRealtime();
-  transactions = []; budgets = []; messages = [];
+  transactions = []; budgets = []; messages = []; memberPrivacy = {};
   if (!activeBookId) return;
   const msPromise = supabaseClient.from("messages").select("*, profiles(display_name)").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
-  const [ms] = await Promise.all([msPromise, fetchLedger()]);
+  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance").eq("book_id", activeBookId);
+  const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
+  if (!mp.error) (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
   subscribeRealtime();
 }
 
@@ -346,7 +349,9 @@ function computeAccountBalances() {
   const balances = {};
   activeAccounts().forEach((a) => { balances[a.name] = 0; });
   const fallback = activeAccounts()[0]?.name || "現金";
+  const myId = session?.user?.id;
   transactions.forEach((x) => {
+    if (x.user_id !== myId && memberPrivacy[x.user_id]) return;
     const key = balances.hasOwnProperty(x.payment_method) ? x.payment_method : fallback;
     balances[key] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
   });
@@ -450,6 +455,21 @@ $("#editNameForm").addEventListener("submit", async (e) => {
   renderProfile();
   closeDialog("editNameDialog");
   toast("暱稱更新完成");
+});
+function renderHideBalanceToggle() {
+  const on = !!memberPrivacy[session?.user?.id];
+  $("#hideBalanceSwitch")?.classList.toggle("on", on);
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="roomSettingsDialog"]')) renderHideBalanceToggle(); });
+$("#hideBalanceToggleBtn").addEventListener("click", async () => {
+  if (!activeBookId || !session?.user?.id) return;
+  const next = !memberPrivacy[session.user.id];
+  const { error } = await supabaseClient.from("book_members").update({ hide_balance: next }).eq("book_id", activeBookId).eq("user_id", session.user.id);
+  if (error) return toast(error.message);
+  memberPrivacy[session.user.id] = next;
+  renderHideBalanceToggle();
+  renderAccountBalances();
+  toast(next ? "已隱藏你的帳戶餘額 🙈" : "已恢復顯示帳戶餘額");
 });
 $("#roomCodeBtn").addEventListener("click", async () => {
   const book = activeBook();
