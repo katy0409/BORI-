@@ -93,6 +93,8 @@ let transactions = [];
 let budgets = [];
 let messages = [];
 let memberPrivacy = {};
+let roomMembers = [];
+let memberFilterId = null;
 let realtimeChannel = null;
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
@@ -164,13 +166,16 @@ async function fetchLedger() {
 
 async function loadActiveBookData() {
   unsubscribeRealtime();
-  transactions = []; budgets = []; messages = []; memberPrivacy = {};
+  transactions = []; budgets = []; messages = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null;
   if (!activeBookId) return;
   const msPromise = supabaseClient.from("messages").select("*, profiles(display_name)").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
-  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance").eq("book_id", activeBookId);
+  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, profiles(display_name, avatar_url)").eq("book_id", activeBookId);
   const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
-  if (!mp.error) (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
+  if (!mp.error) {
+    (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
+    roomMembers = (mp.data || []).map((m) => ({ id: m.user_id, name: m.profiles?.display_name || "BORI 使用者", avatar: m.profiles?.avatar_url || null }));
+  }
   subscribeRealtime();
 }
 
@@ -215,12 +220,34 @@ function renderTopbarRoom() {
   $("#topbarRoomIcon").src = typeIcon[book.type] || typeIcon.other;
   $("#topbarRoomName").textContent = book.name;
 }
+function visibleTransactions() {
+  const myId = session?.user?.id;
+  let list = transactions.filter((x) => x.user_id === myId || !(memberPrivacy[x.user_id] && x.transaction_type === "income"));
+  if (memberFilterId) list = list.filter((x) => x.user_id === memberFilterId);
+  return list;
+}
+function renderMemberFilterRow() {
+  const chips = `<button type="button" class="member-chip ${!memberFilterId ? "active" : ""}" data-member="">全部</button>` +
+    roomMembers.map((m) => `<button type="button" class="member-chip ${memberFilterId === m.id ? "active" : ""}" data-member="${m.id}">${m.avatar ? `<img src="${m.avatar}" alt="" />` : "🐻"} ${escapeHTML(m.name)}</button>`).join("");
+  $("#memberFilterRow").innerHTML = chips;
+  $("#analysisFilterRow").innerHTML = chips;
+}
+function setMemberFilter(id) {
+  memberFilterId = id || null;
+  renderMemberFilterRow();
+  renderLedger();
+  renderAnalysis();
+}
+$("#memberFilterRow").addEventListener("click", (e) => { const btn = e.target.closest("[data-member]"); if (btn) setMemberFilter(btn.dataset.member); });
+$("#analysisFilterRow").addEventListener("click", (e) => { const btn = e.target.closest("[data-member]"); if (btn) setMemberFilter(btn.dataset.member); });
 function renderLedger() {
   const has = !!activeBookId;
   $("#ledgerEmpty").classList.toggle("hidden", has);
   $("#ledgerContent").classList.toggle("hidden", !has);
   if (!has) return;
-  $("#ledgerCount").textContent = transactions.length ? `共 ${transactions.length} 筆` : "";
+  const visible = visibleTransactions();
+  renderMemberFilterRow();
+  $("#ledgerCount").textContent = visible.length ? `共 ${visible.length} 筆` : "";
   const expenses = monthTransactions("expense");
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
   const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
@@ -228,7 +255,7 @@ function renderLedger() {
   $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
   renderAccountBalances();
   renderBudgets(expenses);
-  $("#ledgerList").innerHTML = transactions.length ? transactions.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
+  $("#ledgerList").innerHTML = visible.length ? visible.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
 function renderProfile() {
   $("#profileName").textContent = profile?.display_name || "BORI 使用者";
@@ -395,7 +422,7 @@ function renderStickerTray() {
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
   if (!activeBookId) return;
-  const expenses = monthTransactions("expense");
+  const expenses = visibleTransactions().filter((x) => x.transaction_type === "expense" && String(x.transaction_date).slice(0, 7) === currentMonth());
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
   $("#donutTotal").textContent = money(exp);
   const grouped = {}; expenses.forEach((x) => grouped[x.category] = (grouped[x.category] || 0) + Number(x.amount)); const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
@@ -713,5 +740,19 @@ $("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.clo
 $("#stickerGrid").addEventListener("click", async (e) => { const btn = e.target.closest("[data-sticker]"); if (!btn) return; const s = stickerById(btn.dataset.sticker); if (!s) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id }); if (error) return toast(error.message); $("#stickerTray").classList.add("hidden"); });
 
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  function adjustChatForKeyboard() {
+    const composer = $("#chatForm");
+    if (!composer) return;
+    const keyboardOffset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    composer.style.bottom = `${94 + keyboardOffset}px`;
+    const tray = $("#stickerTray");
+    if (tray) tray.style.bottom = `${164 + keyboardOffset}px`;
+    if ($("#chatPage")?.classList.contains("active")) scrollChat();
+  }
+  vv.addEventListener("resize", adjustChatForKeyboard);
+  vv.addEventListener("scroll", adjustChatForKeyboard);
+}
 document.body.classList.add("splash-lock"); addEventListener("load", () => setTimeout(boot, 1150)); setTimeout(() => { if (!$("#splashScreen")?.dataset.done) boot(); }, 3200);
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.warn));

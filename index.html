@@ -127,13 +127,12 @@
           <div class="section-head"><h2>帳戶餘額</h2><small class="muted-hint" style="margin:0">從記帳紀錄累計，非即時銀行資料</small></div>
           <div id="accountBalances" class="account-balance-grid"></div>
           <div class="quick-grid quick-grid-single">
-            <button data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><strong>設定預算</strong><small>分類管理本月額度</small></button>
+            <button data-open="expenseAnalysisDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-8.5-8.5"/><path d="M12 3.5V12h8.5"/></svg></span><strong>支出分析</strong><small>看分類佔比與趨勢</small></button>
           </div>
-          <div class="section-head"><h2>支出分類</h2><button class="text-button" id="manageCategoriesLink">管理分類</button></div>
-          <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
           <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
           <div id="budgetPreview" class="budget-list"></div>
           <div class="section-head"><h2 id="ledgerBookTitle">全部紀錄</h2><small id="ledgerCount"></small></div>
+          <div id="memberFilterRow" class="member-filter-row"></div>
           <div id="ledgerList" class="record-list"></div>
         </div>
       </section>
@@ -195,6 +194,13 @@
   <dialog id="manageCategoriesDialog"><div class="dialog-head"><div><p class="eyebrow">CATEGORIES</p><h3>自訂分類</h3></div><button type="button" class="dialog-close" data-close="manageCategoriesDialog">×</button></div><div id="categoryManageList" class="category-manage-list"></div><p class="dialog-subhead">新增分類</p><form id="addCategoryForm"><input id="newCategoryInput" maxlength="8" placeholder="分類名稱" required /><div id="iconPicker" class="icon-picker"></div><button class="primary" type="submit">新增</button></form></dialog>
 
   <dialog id="manageAccountsDialog"><div class="dialog-head"><div><p class="eyebrow">ACCOUNTS</p><h3>帳戶管理</h3></div><button type="button" class="dialog-close" data-close="manageAccountsDialog">×</button></div><div id="accountManageList" class="category-manage-list"></div><p class="dialog-subhead">新增帳戶</p><form id="addAccountForm"><input id="newAccountInput" maxlength="10" placeholder="例如：國泰信用卡、LINE Pay" required /><div id="accountIconPicker" class="icon-picker account-icon-picker"></div><button class="primary" type="submit">新增</button></form></dialog>
+
+  <dialog id="expenseAnalysisDialog">
+    <div class="dialog-head"><div><p class="eyebrow">EXPENSE ANALYSIS</p><h3>支出分析</h3></div><button type="button" class="dialog-close" data-close="expenseAnalysisDialog">×</button></div>
+    <div id="analysisFilterRow" class="member-filter-row"></div>
+    <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
+    <button type="button" class="text-button" id="manageCategoriesLink" style="margin-top:10px">管理分類 ›</button>
+  </dialog>
 
   <dialog id="switchRoomDialog"><div class="dialog-head"><div><p class="eyebrow">SWITCH ROOM</p><h3>切換房間</h3></div><button type="button" class="dialog-close" data-close="switchRoomDialog">×</button></div><div id="switchRoomList" class="switch-room-list"></div><button type="button" class="secondary" data-close="switchRoomDialog" data-open="bookDialog">🚪 開新房間</button></dialog>
 
