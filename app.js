@@ -95,13 +95,33 @@ let messages = [];
 let memberPrivacy = {};
 let roomMembers = [];
 let memberFilterId = null;
+let myLastReadAt = null;
 let realtimeChannel = null;
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
 function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id)); }
 function openDialog(id) { if (!activeBookId && !["bookDialog", "joinDialog"].includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") scrollChat(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { scrollChat(); markChatRead(); } if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); } }
+function unreadCount() {
+  const myId = session?.user?.id;
+  if (!myId || !myLastReadAt) return 0;
+  const cutoff = new Date(myLastReadAt).getTime();
+  return messages.filter((m) => m.user_id !== myId && new Date(m.created_at).getTime() > cutoff).length;
+}
+function renderUnreadBadge() {
+  const n = unreadCount();
+  const el = $("#unreadBadge");
+  if (!el) return;
+  el.textContent = n > 99 ? "99+" : n;
+  el.classList.toggle("hidden", n === 0);
+}
+async function markChatRead() {
+  if (!activeBookId || !session?.user?.id) return;
+  myLastReadAt = new Date().toISOString();
+  renderUnreadBadge();
+  await supabaseClient.from("book_members").update({ last_read_at: myLastReadAt }).eq("book_id", activeBookId).eq("user_id", session.user.id);
+}
 function activeBook() { return books.find((b) => b.id === activeBookId) || books[0] || null; }
 function monthTransactions(type) { return transactions.filter((x) => x.transaction_type === type && String(x.transaction_date).slice(0, 7) === currentMonth()); }
 function inviteCode() { return `BORI-${Math.random().toString(36).slice(2, 8).toUpperCase()}`; }
@@ -166,15 +186,17 @@ async function fetchLedger() {
 
 async function loadActiveBookData() {
   unsubscribeRealtime();
-  transactions = []; budgets = []; messages = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null;
+  transactions = []; budgets = []; messages = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
   if (!activeBookId) return;
   const msPromise = supabaseClient.from("messages").select("*, profiles(display_name)").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
-  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, profiles(display_name, avatar_url)").eq("book_id", activeBookId);
+  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at, profiles(display_name, avatar_url)").eq("book_id", activeBookId);
   const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
   if (!mp.error) {
     (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
     roomMembers = (mp.data || []).map((m) => ({ id: m.user_id, name: m.profiles?.display_name || "BORI 使用者", avatar: m.profiles?.avatar_url || null }));
+    const mine = (mp.data || []).find((m) => m.user_id === session?.user?.id);
+    myLastReadAt = mine?.last_read_at || null;
   }
   subscribeRealtime();
 }
@@ -194,7 +216,11 @@ function subscribeRealtime() {
   realtimeChannel = supabaseClient.channel(`bori-book-${activeBookId}`)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `book_id=eq.${activeBookId}` }, async (payload) => {
       const { data } = await supabaseClient.from("messages").select("*, profiles(display_name)").eq("id", payload.new.id).single();
-      if (data && !messages.some((m) => m.id === data.id)) { messages.push(data); renderChat(); renderHome(); scrollChat(); }
+      if (data && !messages.some((m) => m.id === data.id)) {
+        messages.push(data); renderChat(); renderHome(); scrollChat();
+        if ($("#chatPage")?.classList.contains("active") && data.user_id !== session?.user?.id) markChatRead();
+        else renderUnreadBadge();
+      }
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
     .on("postgres_changes", { event: "*", schema: "public", table: "budgets", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
@@ -209,7 +235,7 @@ async function switchBook(bookId) {
   renderAll();
 }
 
-function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); }
+function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); renderUnreadBadge(); }
 function renderSwitchRoomList() {
   $("#switchRoomList").innerHTML = books.map((b) => `<button class="switch-room-item ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><img src="${typeIcon[b.type] || typeIcon.other}" alt="" /><span><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></span>${b.id === activeBookId ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>' : ""}</button>`).join("");
 }
