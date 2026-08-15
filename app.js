@@ -100,7 +100,7 @@ let realtimeChannel = null;
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
 function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id)); }
-const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "manageAccountsDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "expenseAnalysisDialog"];
+const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "expenseAnalysisDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
 function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { scrollChat(); markChatRead(); } if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); } }
@@ -324,43 +324,44 @@ async function updateCategories(list) {
   renderCategorySelects(); renderCategoryManageList();
 }
 function renderAccountManageList() {
-  const accs = activeAccounts();
-  $("#accountManageList").innerHTML = accs.map((a) => `<div class="category-manage-row"><span class="category-icon-img account-manage-icon">${accountIconSvg[a.icon] || accountIconSvg.cash}</span><span class="category-name">${escapeHTML(a.name)}</span><button type="button" class="category-remove" data-remove-account="${escapeHTML(a.name)}">×</button></div>`).join("");
+  $("#accountManageList").innerHTML = baseCategories.map((c) => {
+    const subs = profile?.sub_accounts?.[c.key] || [];
+    const rows = subs.map((s) => `<div class="category-manage-row"><span class="category-icon-img account-manage-icon">${c.icon}</span><span class="category-name">${escapeHTML(s.name)}</span><button type="button" class="category-remove" data-remove-sub="${c.key}::${escapeHTML(s.name)}">×</button></div>`).join("");
+    return `<p class="dialog-subhead">${c.icon} ${c.label}</p>${rows || '<p class="muted-hint">還沒有新增子帳戶，會顯示為「' + c.label + '」</p>'}`;
+  }).join("");
 }
-async function updateAccounts(list) {
-  const { error } = await supabaseClient.from("books").update({ accounts: list }).eq("id", activeBookId);
+async function updateSubAccounts(newSubAccounts) {
+  const { error } = await supabaseClient.from("profiles").update({ sub_accounts: newSubAccounts }).eq("id", session.user.id);
   if (error) return toast(error.message);
-  const b = books.find((x) => x.id === activeBookId); if (b) b.accounts = list;
-  renderPaymentPicker(); renderAccountManageList(); renderAccountBalances();
+  profile.sub_accounts = newSubAccounts;
+  renderAccountManageList();
+  renderPaymentPicker();
+  renderAccountBalances();
 }
-let selectedAccountIcon = "cash";
-function renderAccountIconPicker() {
-  $("#accountIconPicker").innerHTML = Object.keys(accountIconSvg).map((k) => `<button type="button" class="icon-picker-item account-icon-picker-item ${k === selectedAccountIcon ? "active" : ""}" data-account-icon="${k}">${accountIconSvg[k]}<small>${accountIconLabels[k]}</small></button>`).join("");
+let addAccountCategory = "cash";
+function renderAddAccountCategoryPicker() {
+  $("#addAccountCategoryPicker").innerHTML = baseCategories.map((c) => `<label><input type="radio" name="addAccountCategory" value="${c.key}" ${c.key === addAccountCategory ? "checked" : ""}><span>${c.icon}<small>${c.label}</small></span></label>`).join("");
 }
-$("#accountIconPicker").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-account-icon]");
-  if (!btn) return;
-  selectedAccountIcon = btn.dataset.accountIcon;
-  $$("#accountIconPicker .icon-picker-item").forEach((b) => b.classList.toggle("active", b.dataset.accountIcon === selectedAccountIcon));
-});
-document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageAccountsDialog"]')) { renderAccountManageList(); renderAccountIconPicker(); } });
+$("#addAccountCategoryPicker").addEventListener("change", (e) => { if (e.target.name === "addAccountCategory") addAccountCategory = e.target.value; });
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageAccountsDialog"]')) { renderAccountManageList(); renderAddAccountCategoryPicker(); } });
 $("#accountManageList").addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-remove-account]");
+  const btn = e.target.closest("[data-remove-sub]");
   if (!btn) return;
-  const cur = activeAccounts();
-  if (cur.length <= 1) return toast("至少要保留一個帳戶");
-  await updateAccounts(cur.filter((a) => a.name !== btn.dataset.removeAccount));
+  const [catKey, name] = btn.dataset.removeSub.split("::");
+  const cur = structuredClone(profile.sub_accounts || {});
+  cur[catKey] = (cur[catKey] || []).filter((s) => s.name !== name);
+  await updateSubAccounts(cur);
 });
 $("#addAccountForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("#newAccountInput").value.trim();
   if (!name) return;
-  const cur = activeAccounts();
-  if (cur.some((a) => a.name === name)) return toast("這個帳戶已經有了");
-  await updateAccounts([...cur, { name, icon: selectedAccountIcon }]);
+  const cur = structuredClone(profile.sub_accounts || {});
+  cur[addAccountCategory] = cur[addAccountCategory] || [];
+  if (cur[addAccountCategory].some((s) => s.name === name)) return toast("這個子帳戶已經有了");
+  cur[addAccountCategory].push({ name });
+  await updateSubAccounts(cur);
   e.target.reset();
-  selectedAccountIcon = "cash";
-  renderAccountIconPicker();
 });
 function monthRangeLabel() {
   const d = new Date(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -391,22 +392,23 @@ const accountIconSvg = {
   bank: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M4.5 10v8M9 10v8M15 10v8M19.5 10v8"/><path d="M2.5 20h19"/></svg>',
   ewallet: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5v9A2.5 2.5 0 0 1 16.5 19h-11A2.5 2.5 0 0 1 3 16.5z"/><path d="M15 12.5h3.5v2.5H15a1.25 1.25 0 0 1 0-2.5z"/></svg>'
 };
-const accountIconLabels = { cash: "現金型", credit_card: "卡片型", bank: "銀行型", ewallet: "電子型" };
-const defaultAccounts = [{ name: "現金", icon: "cash" }, { name: "信用卡", icon: "credit_card" }, { name: "銀行帳戶", icon: "bank" }, { name: "電子支付", icon: "ewallet" }];
-function activeAccounts() {
-  const a = activeBook()?.accounts;
-  if (!a || !a.length) return defaultAccounts;
-  return a.map((x) => (typeof x === "string" ? { name: x, icon: "cash" } : x));
+const baseCategories = [
+  { key: "cash", label: "現金", icon: accountIconSvg.cash },
+  { key: "credit_card", label: "信用卡", icon: accountIconSvg.credit_card },
+  { key: "bank", label: "銀行帳戶", icon: accountIconSvg.bank },
+  { key: "ewallet", label: "電子支付", icon: accountIconSvg.ewallet }
+];
+function mySubAccounts(categoryKey) {
+  const subs = profile?.sub_accounts?.[categoryKey];
+  if (subs && subs.length) return subs;
+  return [{ name: baseCategories.find((c) => c.key === categoryKey)?.label || categoryKey }];
 }
-function accountByName(name) { return activeAccounts().find((a) => a.name === name); }
 function computeAccountBalances() {
-  const balances = {};
-  activeAccounts().forEach((a) => { balances[a.name] = 0; });
-  const fallback = activeAccounts()[0]?.name || "現金";
+  const balances = { cash: 0, credit_card: 0, bank: 0, ewallet: 0 };
   const myId = session?.user?.id;
   transactions.forEach((x) => {
     if (x.user_id !== myId && memberPrivacy[x.user_id]) return;
-    const key = balances.hasOwnProperty(x.payment_method) ? x.payment_method : fallback;
+    const key = balances.hasOwnProperty(x.payment_category) ? x.payment_category : "cash";
     balances[key] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
   });
   return balances;
@@ -415,18 +417,32 @@ function renderAccountBalances() {
   const el = $("#accountBalances");
   if (!el) return;
   const balances = computeAccountBalances();
-  el.innerHTML = activeAccounts().map((a) => `<div class="account-balance-card"><span class="account-icon">${accountIconSvg[a.icon] || accountIconSvg.cash}</span><small>${escapeHTML(a.name)}</small><strong class="${balances[a.name] < 0 ? "negative" : ""}">${money(balances[a.name] || 0)}</strong></div>`).join("");
+  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
 }
+let selectedPaymentCategory = "cash";
+let selectedSubAccount = "現金";
 function renderPaymentPicker() {
   const el = $("#paymentPicker");
   if (!el) return;
-  el.innerHTML = activeAccounts().map((a, i) => `<label><input type="radio" name="paymentMethod" value="${escapeHTML(a.name)}" ${i === 0 ? "checked" : ""}><span>${accountIconSvg[a.icon] || accountIconSvg.cash}<small>${escapeHTML(a.name)}</small></span></label>`).join("");
+  el.innerHTML = baseCategories.map((c) => `<label><input type="radio" name="paymentCategory" value="${c.key}" ${c.key === selectedPaymentCategory ? "checked" : ""}><span>${c.icon}<small>${c.label}</small></span></label>`).join("");
+  renderSubAccountPicker();
 }
+function renderSubAccountPicker() {
+  const subs = mySubAccounts(selectedPaymentCategory);
+  const el = $("#subAccountPicker");
+  if (subs.length <= 1) { el.classList.add("hidden"); selectedSubAccount = subs[0].name; return; }
+  if (!subs.some((s) => s.name === selectedSubAccount)) selectedSubAccount = subs[0].name;
+  el.classList.remove("hidden");
+  el.innerHTML = subs.map((s) => `<button type="button" class="member-chip ${selectedSubAccount === s.name ? "active" : ""}" data-sub-account="${escapeHTML(s.name)}">${escapeHTML(s.name)}</button>`).join("");
+}
+$("#paymentPicker").addEventListener("change", (e) => { if (e.target.name === "paymentCategory") { selectedPaymentCategory = e.target.value; renderSubAccountPicker(); } });
+$("#subAccountPicker").addEventListener("click", (e) => { const btn = e.target.closest("[data-sub-account]"); if (btn) { selectedSubAccount = btn.dataset.subAccount; renderSubAccountPicker(); } });
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
   const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
-  const payLabel = x.payment_method || "現金";
+  const catLabel = baseCategories.find((c) => c.key === x.payment_category)?.label || "現金";
+  const payLabel = x.user_id === session?.user?.id ? (x.payment_method || catLabel) : catLabel;
   return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
 }
 function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); setAddType(addType); } }
@@ -466,8 +482,8 @@ async function createBook(name, type) {
   if (memberError) throw memberError;
   return data;
 }
-async function addTransaction(type, title, amount, category, note = "", date = null, paymentMethod = "cash") {
-  const { error } = await supabaseClient.from("transactions").insert({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: date || localDateStr(), note, payment_method: paymentMethod });
+async function addTransaction(type, title, amount, category, note = "", date = null, paymentCategory = "cash", paymentMethod = "現金") {
+  const { error } = await supabaseClient.from("transactions").insert({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: date || localDateStr(), note, payment_category: paymentCategory, payment_method: paymentMethod });
   if (error) throw error;
 }
 
@@ -596,9 +612,8 @@ function setAddType(type) {
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || activeAccounts()[0]?.name || "現金";
   try {
-    await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, paymentMethod);
+    await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
     e.target.reset();
     setAddType("expense");
     $("#dateInput").value = localDateStr();
