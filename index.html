@@ -132,6 +132,7 @@
           <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
           <div id="budgetPreview" class="budget-list"></div>
           <div class="section-head"><h2 id="ledgerBookTitle">全部紀錄</h2><small id="ledgerCount"></small></div>
+          <p class="filter-label">依成員篩選</p>
           <div id="memberFilterRow" class="member-filter-row"></div>
           <div id="ledgerList" class="record-list"></div>
         </div>
@@ -198,6 +199,7 @@
 
   <dialog id="expenseAnalysisDialog">
     <div class="dialog-head"><div><p class="eyebrow">EXPENSE ANALYSIS</p><h3>支出分析</h3></div><button type="button" class="dialog-close" data-close="expenseAnalysisDialog">×</button></div>
+    <p class="filter-label">依成員篩選</p>
     <div id="analysisFilterRow" class="member-filter-row"></div>
     <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
     <button type="button" class="text-button" id="manageCategoriesLink" style="margin-top:10px">管理分類 ›</button>
