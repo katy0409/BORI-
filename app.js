@@ -254,6 +254,12 @@ function visibleTransactions() {
   return list;
 }
 function renderMemberFilterRow() {
+  const show = roomMembers.length > 1;
+  $("#memberFilterRow").classList.toggle("hidden", !show);
+  $("#memberFilterRow").previousElementSibling?.classList.toggle("hidden", !show);
+  $("#analysisFilterRow").classList.toggle("hidden", !show);
+  $("#analysisFilterRow").previousElementSibling?.classList.toggle("hidden", !show);
+  if (!show) return;
   const chips = `<button type="button" class="member-chip ${!memberFilterId ? "active" : ""}" data-member="">全部</button>` +
     roomMembers.map((m) => `<button type="button" class="member-chip ${memberFilterId === m.id ? "active" : ""}" data-member="${m.id}">${m.avatar ? `<img src="${m.avatar}" alt="" />` : "🐻"} ${escapeHTML(m.name)}</button>`).join("");
   $("#memberFilterRow").innerHTML = chips;
