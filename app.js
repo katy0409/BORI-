@@ -892,4 +892,12 @@ if (window.visualViewport) {
   vv.addEventListener("scroll", adjustChatForKeyboard);
 }
 document.body.classList.add("splash-lock"); addEventListener("load", () => setTimeout(boot, 1150)); setTimeout(() => { if (!$("#splashScreen")?.dataset.done) boot(); }, 3200);
-if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.warn));
+if ("serviceWorker" in navigator) {
+  let swRefreshed = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (swRefreshed) return;
+    swRefreshed = true;
+    location.reload();
+  });
+  addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.warn));
+}
