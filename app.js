@@ -309,6 +309,7 @@ function renderProfile() {
   $("#deleteRoomBtn").classList.toggle("hidden", !book || !isOwner);
   $("#roomCodeBtn").classList.toggle("hidden", !book);
   if (book) $("#roomCodeValue").textContent = book.invite_code;
+  renderHideBalanceToggle();
 }
 function renderBookSwitcher() {
   $("#roomEmptyHint").classList.toggle("hidden", books.length > 0);
