@@ -103,7 +103,7 @@ function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach(
 const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "expenseAnalysisDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { scrollChat(); markChatRead(); } if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { scrollChat(); markChatRead(); } if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -448,10 +448,13 @@ function recordHTML(x) {
   const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
   const catLabel = baseCategories.find((c) => c.key === x.payment_category)?.label || "現金";
-  const payLabel = x.user_id === session?.user?.id ? (x.payment_method || catLabel) : catLabel;
-  return `<article class="record"><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></article>`;
+  const isMine = x.user_id === session?.user?.id;
+  const payLabel = isMine ? (x.payment_method || catLabel) : catLabel;
+  const tag = isMine ? "button" : "article";
+  const attrs = isMine ? `type="button" class="record" data-edit-record="${x.id}"` : `class="record"`;
+  return `<${tag} ${attrs}><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></${tag}>`;
 }
-function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); setAddType(addType); } }
+function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); if (!editingTransactionId) setAddType(addType); } }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
@@ -604,6 +607,7 @@ $("#bookForm").addEventListener("submit", async (e) => { e.preventDefault(); try
 $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); const code = $("#inviteCodeInput").value.trim().toUpperCase(); const { data, error } = await supabaseClient.rpc("join_book_by_code", { p_invite_code: code }); if (error) return toast(error.message); if (!data) return toast("找不到這個房間代碼"); closeDialog("joinDialog"); e.target.reset(); await loadBooks(); activeBookId = data; await loadActiveBookData(); renderAll(); toast("已加入房間 🎉"); });
 const incomeCategories = ["薪水", "獎金", "副業", "投資", "退款", "禮金", "其他"];
 let addType = "expense";
+let editingTransactionId = null;
 function setAddType(type) {
   addType = type;
   $$("#typeSwitch .type-switch-option").forEach((b) => b.classList.toggle("active", b.dataset.type === type));
@@ -616,18 +620,59 @@ function setAddType(type) {
   $("#categoryInput").innerHTML = (type === "expense" ? activeCategories().map((c) => c.name) : incomeCategories).map((n) => `<option>${escapeHTML(n)}</option>`).join("");
 }
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
+async function updateTransaction(id, type, title, amount, category, note, date, paymentCategory, paymentMethod) {
+  const { error } = await supabaseClient.from("transactions").update({ transaction_type: type, title, amount: Number(amount), category, note, transaction_date: date, payment_category: paymentCategory, payment_method: paymentMethod }).eq("id", id);
+  if (error) throw error;
+}
+function openEditTransaction(id) {
+  const tx = transactions.find((t) => t.id === id);
+  if (!tx || tx.user_id !== session?.user?.id) return;
+  goTo("addPage");
+  editingTransactionId = id;
+  setAddType(tx.transaction_type);
+  $("#categoryInput").value = tx.category;
+  $("#amountInput").value = tx.amount;
+  $("#titleInput").value = tx.title;
+  $("#dateInput").value = tx.transaction_date;
+  $("#noteInput").value = tx.note || "";
+  selectedPaymentCategory = tx.payment_category || "cash";
+  selectedSubAccount = tx.payment_method || "現金";
+  renderPaymentPicker();
+  $("#addPageEyebrow").textContent = "EDIT RECORD";
+  $("#addPageTitle").textContent = "編輯這筆紀錄";
+  $("#deleteTransactionBtn").classList.remove("hidden");
+}
+$("#ledgerList").addEventListener("click", (e) => { const btn = e.target.closest("[data-edit-record]"); if (btn) openEditTransaction(btn.dataset.editRecord); });
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
-    await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
+    if (editingTransactionId) {
+      await updateTransaction(editingTransactionId, addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
+      toast("紀錄已更新 ✏️");
+    } else {
+      await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
+      toast(addType === "expense" ? "支出已同步到房間 ☁️" : "收入已同步到房間 💰");
+    }
     e.target.reset();
     setAddType("expense");
     $("#dateInput").value = localDateStr();
+    editingTransactionId = null;
+    $("#deleteTransactionBtn").classList.add("hidden");
     await loadActiveBookData();
     renderAll();
     goTo("homePage");
-    toast(addType === "expense" ? "支出已同步到房間 ☁️" : "收入已同步到房間 💰");
   } catch (err) { toast(err.message); }
+});
+$("#deleteTransactionBtn").addEventListener("click", async () => {
+  if (!editingTransactionId) return;
+  if (!confirm("確定要刪除這筆紀錄嗎？此動作無法復原。")) return;
+  const { error } = await supabaseClient.from("transactions").delete().eq("id", editingTransactionId);
+  if (error) return toast(error.message);
+  editingTransactionId = null;
+  await loadActiveBookData();
+  renderAll();
+  goTo("homePage");
+  toast("紀錄已刪除");
 });
 $("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
 let selectedCategoryIcon = "receipt";
