@@ -271,8 +271,8 @@ function subscribeRealtime() {
       await loadBooks();
       renderAll();
     })
-    .on("postgres_changes", { event: "*", schema: "public", table: "diaries", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDiary(); })
-    .on("postgres_changes", { event: "*", schema: "public", table: "daily_answers", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDailyQuestion(); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "diaries", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDiary(); renderTogetherHub(); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "daily_answers", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDailyQuestion(); renderTogetherHub(); })
     .subscribe();
 }
 function unsubscribeRealtime() { if (realtimeChannel && supabaseClient) supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
@@ -284,7 +284,7 @@ async function switchBook(bookId) {
   renderAll();
 }
 
-function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderInsights(); renderAnalysis(); renderDiary(); renderDailyQuestion(); renderUnreadBadge(); }
+function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderInsights(); renderAnalysis(); renderDiary(); renderDailyQuestion(); renderTogetherHub(); renderUnreadBadge(); }
 function renderSwitchRoomList() {
   $("#switchRoomList").innerHTML = books.map((b) => `<button class="switch-room-item ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><img src="${typeIcon[b.type] || typeIcon.other}" alt="" /><span><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></span>${b.id === activeBookId ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>' : ""}</button>`).join("");
 }
@@ -608,7 +608,7 @@ function renderDiary() {
 $("#diaryForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const content = $("#diaryContent").value.trim(); if (!content) return;
   const { error } = await supabaseClient.from("diaries").insert({ book_id: activeBookId, user_id: session.user.id, entry_date: taiwanToday(), content });
-  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDiary(); toast("日記已保存 📖");
+  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDiary(); renderTogetherHub(); toast("日記已保存 📖");
 });
 
 const dailyQuestionBank = [
@@ -617,6 +617,44 @@ const dailyQuestionBank = [
 function dailyQuestionFor(dateStr) {
   const dayNumber = Math.floor(Date.parse(`${dateStr}T00:00:00+08:00`) / 86400000);
   return dailyQuestionBank[Math.abs(dayNumber) % dailyQuestionBank.length];
+}
+function formatRelativeTime(ts) {
+  if (!ts) return "";
+  const diffMs = Date.now() - new Date(ts).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "剛剛";
+  if (min < 60) return `${min} 分鐘前`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} 小時前`;
+  const day = Math.floor(hr / 24);
+  if (day === 1) return "昨天";
+  if (day < 7) return `${day} 天前`;
+  return new Date(ts).toLocaleDateString("zh-TW");
+}
+function renderTogetherHub() {
+  const book = activeBook();
+  if (book?.created_at) {
+    const days = Math.max(1, Math.floor((Date.now() - new Date(book.created_at).getTime()) / 86400000) + 1);
+    $("#togetherDays").textContent = days;
+  }
+  const today = taiwanToday();
+  const todayCount = messages.filter((m) => m.created_at && m.created_at.slice(0, 10) === today).length;
+  $("#togetherTodayCount").textContent = `📨 今日 ${todayCount} 則`;
+  $("#diaryCountHint").textContent = diaries.length ? `${diaries.length} 篇回憶` : "留下今天的回憶";
+  const answeredToday = dailyAnswers.some((a) => a.question_date === today && a.user_id === session?.user?.id);
+  $("#questionStatusHint").textContent = answeredToday ? "今日已回答" : "今日未回答";
+  const feedItems = [
+    ...diaries.map((d) => ({ ts: d.created_at, type: "diary", data: d })),
+    ...dailyAnswers.map((a) => ({ ts: a.created_at, type: "answer", data: a }))
+  ].sort((a, b) => new Date(b.ts) - new Date(a.ts)).slice(0, 8);
+  $("#togetherFeed").innerHTML = feedItems.length ? feedItems.map((item) => {
+    const owner = roomMembers.find((m) => m.id === item.data.user_id);
+    const name = item.data.user_id === session?.user?.id ? "我" : (owner?.name || "成員");
+    const timeLabel = formatRelativeTime(item.ts);
+    const label = item.type === "diary" ? `${escapeHTML(name)} 新增了一篇日記` : `${escapeHTML(name)} 回答了每日一問`;
+    const quote = item.type === "diary" ? item.data.content : item.data.question_text;
+    return `<div class="together-feed-item"><div><strong>${label}</strong><small>「${escapeHTML(String(quote).slice(0, 30))}${String(quote).length > 30 ? "…" : ""}」</small></div><span class="together-feed-time">${timeLabel}</span></div>`;
+  }).join("") : `<p class="muted-hint">還沒有互動紀錄，開始寫日記或回答每日一問吧。</p>`;
 }
 function renderDailyQuestion() {
   const today = taiwanToday(), question = dailyQuestionFor(today);
@@ -635,7 +673,7 @@ $("#dailyAnswerForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const answer = $("#dailyAnswerInput").value.trim(); if (!answer) return;
   const today = taiwanToday();
   const { error } = await supabaseClient.from("daily_answers").insert({ book_id: activeBookId, user_id: session.user.id, question_date: today, question_text: dailyQuestionFor(today), answer });
-  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDailyQuestion(); toast("今天的答案已鎖定 💞");
+  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDailyQuestion(); renderTogetherHub(); toast("今天的答案已鎖定 💞");
 });
 
 async function createBook(name, type) {

@@ -206,3 +206,23 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .record-owner{color:var(--green-dark);font-weight:800}
 .interaction-icon-wrap{position:relative;display:inline-flex}
 .interaction-icon-wrap .unread-badge{top:-4px;right:-10px}
+.together-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px;border-radius:24px;background:linear-gradient(150deg,var(--card),var(--green-soft));border:1px solid var(--line);box-shadow:var(--shadow);margin-top:12px}
+.together-hero-title{margin:0;font-weight:800;font-size:14px}
+.together-hero-days{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.together-hero-days b{color:var(--green-dark);font-size:16px}
+.together-hero-pills{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.together-hero-pills span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:11px;font-weight:700}
+.together-hero-img{width:76px;height:76px;object-fit:contain;flex-shrink:0}
+.interaction-chat-card{width:100%;display:flex;align-items:center;gap:14px;padding:18px;margin-top:12px;border-radius:22px;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);text-align:left;color:var(--brown)}
+.interaction-chat-icon{font-size:30px;flex-shrink:0}
+.interaction-chat-text{flex:1;min-width:0}
+.interaction-chat-text strong{display:block;font-size:15px}
+.interaction-chat-text small{color:var(--muted)}
+.chat-card-count{flex-shrink:0;min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:var(--green-soft);color:var(--green-dark);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.interaction-chat-arrow{flex-shrink:0;color:var(--muted);font-size:18px}
+.interaction-grid-2{grid-template-columns:1fr 1fr}
+.together-feed{display:grid;gap:8px;margin-top:10px}
+.together-feed-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.together-feed-item strong{display:block;font-size:12.5px}
+.together-feed-item small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
+.together-feed-time{flex-shrink:0;font-size:10px;color:var(--muted);white-space:nowrap}
