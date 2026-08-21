@@ -451,9 +451,11 @@ function recordHTML(x) {
   const catLabel = baseCategories.find((c) => c.key === x.payment_category)?.label || "現金";
   const isMine = x.user_id === session?.user?.id;
   const payLabel = isMine ? (x.payment_method || catLabel) : catLabel;
+  const owner = roomMembers.find((m) => m.id === x.user_id);
+  const ownerName = isMine ? "我" : (owner?.name || "成員");
   const tag = isMine ? "button" : "article";
   const attrs = isMine ? `type="button" class="record" data-edit-record="${x.id}"` : `class="record"`;
-  return `<${tag} ${attrs}><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small>${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></${tag}>`;
+  return `<${tag} ${attrs}><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small><b class="record-owner">${escapeHTML(ownerName)}</b> · ${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></${tag}>`;
 }
 function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); if (!editingTransactionId) setAddType(addType); } }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }

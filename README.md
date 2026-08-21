@@ -1,4 +1,4 @@
-# BORI V1.3.4 — Production Cloud Life
+# BORI V1.4.0 — Production Cloud Life
 
 這是一般使用者正式版：使用者不需要輸入 Supabase Key。
 
