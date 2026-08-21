@@ -95,6 +95,8 @@ let messages = [];
 let memberPrivacy = {};
 let roomMembers = [];
 let memberFilterId = null;
+let ledgerTypeFilter = "";
+let ledgerCategoryFilter = "";
 let myLastReadAt = null;
 let realtimeChannel = null;
 
@@ -249,6 +251,10 @@ function subscribeRealtime() {
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
     .on("postgres_changes", { event: "*", schema: "public", table: "budgets", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "books", filter: `id=eq.${activeBookId}` }, async () => {
+      await loadBooks();
+      renderAll();
+    })
     .subscribe();
 }
 function unsubscribeRealtime() { if (realtimeChannel && supabaseClient) supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
@@ -275,6 +281,8 @@ function visibleTransactions() {
   const myId = session?.user?.id;
   let list = transactions.filter((x) => x.user_id === myId || !(memberPrivacy[x.user_id] && x.transaction_type === "income"));
   if (memberFilterId) list = list.filter((x) => x.user_id === memberFilterId);
+  if (ledgerTypeFilter) list = list.filter((x) => x.transaction_type === ledgerTypeFilter);
+  if (ledgerCategoryFilter) list = list.filter((x) => x.category === ledgerCategoryFilter);
   return list;
 }
 function renderMemberFilterRow() {
@@ -297,6 +305,8 @@ function setMemberFilter(id) {
 }
 $("#memberFilterRow").addEventListener("click", (e) => { const btn = e.target.closest("[data-member]"); if (btn) setMemberFilter(btn.dataset.member); });
 $("#analysisFilterRow").addEventListener("click", (e) => { const btn = e.target.closest("[data-member]"); if (btn) setMemberFilter(btn.dataset.member); });
+$("#ledgerTypeFilter").addEventListener("change", (e) => { ledgerTypeFilter = e.target.value; renderLedger(); });
+$("#ledgerCategoryFilter").addEventListener("change", (e) => { ledgerCategoryFilter = e.target.value; renderLedger(); });
 function renderLedger() {
   const has = !!activeBookId;
   $("#ledgerEmpty").classList.toggle("hidden", has);
@@ -343,13 +353,16 @@ function renderBookSwitcher() {
 }
 function renderCategorySelects() {
   $("#budgetCategory").innerHTML = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
+  const allNames = [...new Set([...activeCategories().map((c) => c.name), ...incomeCategories])];
+  $("#ledgerCategoryFilter").innerHTML = `<option value="">全部分類</option>` + allNames.map((name) => `<option value="${escapeHTML(name)}" ${ledgerCategoryFilter === name ? "selected" : ""}>${escapeHTML(name)}</option>`).join("");
+  $("#budgetMember").innerHTML = `<option value="">全房共用</option>` + roomMembers.map((m) => `<option value="${m.id}">${escapeHTML(m.name)}</option>`).join("");
 }
 function renderCategoryManageList() {
   const cats = activeCategories();
   $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row" data-index="${i}"><span class="drag-handle">⠿</span>${categoryIconHTML(c.name)}<span class="category-name">${escapeHTML(c.name)}</span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
 }
 async function updateCategories(list) {
-  const { error } = await supabaseClient.from("books").update({ categories: list }).eq("id", activeBookId);
+  const { error } = await supabaseClient.rpc("update_book_categories", { p_book_id: activeBookId, p_categories: list });
   if (error) return toast(error.message);
   const b = books.find((x) => x.id === activeBookId); if (b) b.categories = list;
   renderCategorySelects(); renderCategoryManageList();
@@ -413,8 +426,11 @@ function renderBudgets(expenses) {
   const el = $("#budgetPreview");
   if (!budgets.length) { el.innerHTML = `<div class="empty-state compact"><p>尚未設定預算，先為常用分類設定上限吧。</p></div>`; return; }
   el.innerHTML = budgets.map((b) => {
-    const used = expenses.filter((x) => x.category === b.category).reduce((s, x) => s + Number(x.amount), 0), pct = Number(b.amount) ? Math.min(120, (used / Number(b.amount)) * 100) : 0;
-    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}</span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
+    const scopedExpenses = b.assigned_user_id ? expenses.filter((x) => x.user_id === b.assigned_user_id) : expenses;
+    const used = scopedExpenses.filter((x) => x.category === b.category).reduce((s, x) => s + Number(x.amount), 0), pct = Number(b.amount) ? Math.min(120, (used / Number(b.amount)) * 100) : 0;
+    const member = roomMembers.find((m) => m.id === b.assigned_user_id);
+    const scopeLabel = member ? member.name : "全房共用";
+    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}<small class="budget-scope">${escapeHTML(scopeLabel)}</small></span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
   }).join("");
 }
 const accountIconSvg = {
@@ -501,13 +517,29 @@ function renderStickerTray() {
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
 function renderAnalysis() {
   if (!activeBookId) return;
-  const expenses = visibleTransactions().filter((x) => x.transaction_type === "expense" && String(x.transaction_date).slice(0, 7) === currentMonth());
+  let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === currentMonth());
+  if (memberFilterId) analysisTransactions = analysisTransactions.filter((x) => x.user_id === memberFilterId);
+  const expenses = analysisTransactions.filter((x) => x.transaction_type === "expense");
+  const incomes = analysisTransactions.filter((x) => x.transaction_type === "income");
   const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
+  const inc = incomes.reduce((s, x) => s + Number(x.amount), 0);
+  $("#analysisIncome").textContent = money(inc);
+  $("#analysisExpense").textContent = money(exp);
+  $("#analysisNet").textContent = money(inc - exp);
+  $("#analysisNet").classList.toggle("negative", inc - exp < 0);
+  $("#analysisCount").textContent = `${expenses.length} 筆`;
   $("#donutTotal").textContent = money(exp);
   const grouped = {}; expenses.forEach((x) => grouped[x.category] = (grouped[x.category] || 0) + Number(x.amount)); const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
   let cursor = 0; const segments = entries.map(([c, v]) => { const start = cursor; cursor += exp ? (v / exp) * 360 : 0; return `${(categoryMeta[c] || categoryMeta.其他).color} ${start}deg ${cursor}deg`; });
   $("#donutChart").style.background = segments.length ? `conic-gradient(${segments.join(",")})` : "#eee7dc";
   $("#categoryLegend").innerHTML = entries.length ? entries.map(([c, v]) => `<div class="legend-row"><i style="background:${(categoryMeta[c] || categoryMeta.其他).color}"></i><span>${escapeHTML(c)}</span><strong>${Math.round((v / exp) * 100)}%</strong></div>`).join("") : `<p class="muted">尚無支出分類</p>`;
+  const memberRows = roomMembers.map((member) => {
+    const rows = analysisTransactions.filter((x) => x.user_id === member.id);
+    const memberIncome = rows.filter((x) => x.transaction_type === "income").reduce((s, x) => s + Number(x.amount), 0);
+    const memberExpense = rows.filter((x) => x.transaction_type === "expense").reduce((s, x) => s + Number(x.amount), 0);
+    return `<article><strong>${escapeHTML(member.name)}</strong><span class="income-text">收入 ${money(memberIncome)}</span><span>支出 ${money(memberExpense)}</span><b class="${memberIncome - memberExpense < 0 ? "negative" : ""}">結餘 ${money(memberIncome - memberExpense)}</b></article>`;
+  });
+  $("#memberAnalysisList").innerHTML = memberRows.join("") || `<p class="muted">尚無成員資料</p>`;
 }
 
 async function createBook(name, type) {
@@ -701,7 +733,19 @@ $("#deleteTransactionBtn").addEventListener("click", async () => {
   goTo("homePage");
   toast("紀錄已刪除");
 });
-$("#budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); const row = { book_id: activeBookId, category: $("#budgetCategory").value, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id }; const { error } = await supabaseClient.from("budgets").upsert(row, { onConflict: "book_id,category,month" }); if (error) return toast(error.message); e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已更新 🎯"); });
+$("#budgetForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const assignedUserId = $("#budgetMember").value || null;
+  const category = $("#budgetCategory").value;
+  let deleteQuery = supabaseClient.from("budgets").delete().eq("book_id", activeBookId).eq("category", category).eq("month", currentMonth());
+  deleteQuery = assignedUserId ? deleteQuery.eq("assigned_user_id", assignedUserId) : deleteQuery.is("assigned_user_id", null);
+  const { error: deleteError } = await deleteQuery;
+  if (deleteError) return toast(deleteError.message);
+  const row = { book_id: activeBookId, category, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id, assigned_user_id: assignedUserId };
+  const { error } = await supabaseClient.from("budgets").insert(row);
+  if (error) return toast(error.message);
+  e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已同步到房間 🎯");
+});
 let selectedCategoryIcon = "receipt";
 function renderIconPicker() {
   $("#iconPicker").innerHTML = categoryIconKeys.map((k) => `<button type="button" class="icon-picker-item ${k === selectedCategoryIcon ? "active" : ""}" data-icon="${k}"><img src="assets/category-icons/${k}.png" alt="" /></button>`).join("");
@@ -712,7 +756,6 @@ $("#iconPicker").addEventListener("click", (e) => {
   selectedCategoryIcon = btn.dataset.icon;
   $$("#iconPicker .icon-picker-item").forEach((b) => b.classList.toggle("active", b.dataset.icon === selectedCategoryIcon));
 });
-$("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManageList(); renderIconPicker(); openDialog("manageCategoriesDialog"); });
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
 async function renderMemberList() {
   if (!activeBookId) return;
@@ -929,5 +972,5 @@ if ("serviceWorker" in navigator) {
     swRefreshed = true;
     location.reload();
   });
-  addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.warn));
+  addEventListener("load", () => navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).catch(console.warn));
 }

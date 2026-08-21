@@ -123,6 +123,20 @@ input,select,textarea{font-size:16px}
 .toggle-switch.on i{transform:translateX(18px)}
 #changePasswordForm{display:grid;gap:10px;margin-top:10px}
 #changePasswordForm input{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card)}
+.ledger-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 12px}
+.ledger-filter-grid label{display:grid;gap:5px;font-size:10px;font-weight:800;color:var(--muted)}
+.ledger-filter-grid select,#budgetMember{width:100%;border:1px solid var(--line);border-radius:13px;padding:10px;background:var(--card);color:var(--brown)}
+.analysis-metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.analysis-metrics article{padding:13px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.analysis-metrics small,.analysis-metrics strong{display:block}
+.analysis-metrics small{font-size:10px;color:var(--muted);margin-bottom:5px}
+.analysis-metrics strong{font-size:16px}
+.member-analysis-list{display:grid;gap:8px}
+.member-analysis-list article{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 14px;border:1px solid var(--line);border-radius:15px;background:var(--card);font-size:11px}
+.member-analysis-list article strong{grid-row:1 / span 3;align-self:center;font-size:13px}
+.member-analysis-list article span,.member-analysis-list article b{text-align:right}
+.budget-scope{display:block!important;margin:3px 0 0!important;color:var(--green-dark)!important}
+.negative{color:var(--danger)!important}
 .payment-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .payment-picker label{position:relative}
 .payment-picker input{position:absolute;opacity:0}

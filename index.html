@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.4.0，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.4.0｜Cloud Life</title>
+  <meta name="description" content="BORI V1.5.0，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.5.0｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.4.0</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.5.0</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -60,7 +60,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.4.0</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.5.0</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -127,11 +127,15 @@
           <div class="section-head"><h2>帳戶餘額</h2><small class="muted-hint" style="margin:0">從記帳紀錄累計，非即時銀行資料</small></div>
           <div id="accountBalances" class="account-balance-grid"></div>
           <div class="quick-grid quick-grid-single">
-            <button data-open="expenseAnalysisDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-8.5-8.5"/><path d="M12 3.5V12h8.5"/></svg></span><strong>支出分析</strong><small>看分類佔比與趨勢</small></button>
+            <button data-open="expenseAnalysisDialog"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-8.5-8.5"/><path d="M12 3.5V12h8.5"/></svg></span><strong>收支分析</strong><small>看收支、結餘與分類占比</small></button>
           </div>
           <div class="section-head"><h2>預算進度</h2><button class="text-button" data-open="budgetDialog">管理</button></div>
           <div id="budgetPreview" class="budget-list"></div>
           <div class="section-head"><h2 id="ledgerBookTitle">全部紀錄</h2><small id="ledgerCount"></small></div>
+          <div class="ledger-filter-grid">
+            <label>收支類型<select id="ledgerTypeFilter"><option value="">全部收支</option><option value="expense">支出</option><option value="income">收入</option></select></label>
+            <label>分類<select id="ledgerCategoryFilter"><option value="">全部分類</option></select></label>
+          </div>
           <p class="filter-label">依成員篩選</p>
           <div id="memberFilterRow" class="member-filter-row"></div>
           <div id="ledgerList" class="record-list"></div>
@@ -194,18 +198,26 @@
 
   <dialog id="joinDialog"><form id="joinForm"><div class="dialog-head"><div><p class="eyebrow">JOIN ROOM</p><h3>加入房間</h3></div><button type="button" class="dialog-close" data-close="joinDialog">×</button></div><label>房間代碼<input id="inviteCodeInput" required maxlength="20" placeholder="例如：BORI-ABC123" /></label><button class="primary" type="submit">🔑 加入房間</button></form></dialog>
 
-  <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>分類<select id="budgetCategory"></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><button class="primary" type="submit">儲存預算</button></form></dialog>
+  <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>預算對象<select id="budgetMember"><option value="">全房共用</option></select></label><label>分類<select id="budgetCategory"></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><button class="primary" type="submit">儲存預算</button></form></dialog>
 
   <dialog id="manageCategoriesDialog"><div class="dialog-head"><div><p class="eyebrow">CATEGORIES</p><h3>自訂分類</h3></div><button type="button" class="dialog-close" data-close="manageCategoriesDialog">×</button></div><div id="categoryManageList" class="category-manage-list"></div><p class="dialog-subhead">新增分類</p><form id="addCategoryForm"><input id="newCategoryInput" maxlength="8" placeholder="分類名稱" required /><div id="iconPicker" class="icon-picker"></div><button class="primary" type="submit">新增</button></form></dialog>
 
   <dialog id="manageAccountsDialog"><div class="dialog-head"><div><p class="eyebrow">ACCOUNTS</p><h3>帳戶管理</h3></div><button type="button" class="dialog-close" data-close="manageAccountsDialog">×</button></div><p class="muted-hint">四大類是共用的，其他成員只會看到這四類的總額；下面的子帳戶只有你自己看得到、自己管理。</p><div id="accountManageList" class="category-manage-list"></div><p class="dialog-subhead">新增子帳戶</p><form id="addAccountForm"><div id="addAccountCategoryPicker" class="payment-picker"></div><input id="newAccountInput" maxlength="10" placeholder="例如：國泰信用卡、LINE Pay" required /><button class="primary" type="submit">新增</button></form></dialog>
 
   <dialog id="expenseAnalysisDialog">
-    <div class="dialog-head"><div><p class="eyebrow">EXPENSE ANALYSIS</p><h3>支出分析</h3></div><button type="button" class="dialog-close" data-close="expenseAnalysisDialog">×</button></div>
+    <div class="dialog-head"><div><p class="eyebrow">INCOME & EXPENSE</p><h3>收支分析</h3></div><button type="button" class="dialog-close" data-close="expenseAnalysisDialog">×</button></div>
     <p class="filter-label">依成員篩選</p>
     <div id="analysisFilterRow" class="member-filter-row"></div>
+    <div class="analysis-metrics">
+      <article><small>本月收入</small><strong id="analysisIncome">$0</strong></article>
+      <article><small>本月支出</small><strong id="analysisExpense">$0</strong></article>
+      <article><small>本月結餘</small><strong id="analysisNet">$0</strong></article>
+      <article><small>支出筆數</small><strong id="analysisCount">0</strong></article>
+    </div>
+    <p class="dialog-subhead">支出分類占比</p>
     <article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article>
-    <button type="button" class="text-button" id="manageCategoriesLink" style="margin-top:10px">管理分類 ›</button>
+    <p class="dialog-subhead">成員收支</p>
+    <div id="memberAnalysisList" class="member-analysis-list"></div>
   </dialog>
 
   <dialog id="switchRoomDialog"><div class="dialog-head"><div><p class="eyebrow">SWITCH ROOM</p><h3>切換房間</h3></div><button type="button" class="dialog-close" data-close="switchRoomDialog">×</button></div><div id="switchRoomList" class="switch-room-list"></div><button type="button" class="secondary" data-close="switchRoomDialog" data-open="bookDialog">🚪 開新房間</button></dialog>
@@ -222,7 +234,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.4.0</p>
+      <p class="about-version">Cloud Life · V1.5.0</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>
@@ -287,6 +299,6 @@
   <div id="toast" class="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=1.5.0"></script>
 </body>
 </html>
