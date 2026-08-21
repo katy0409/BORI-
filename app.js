@@ -97,36 +97,36 @@ const stickerSets = [
   { id: "goodnight2", img: "assets/stickers2/goodnight2.jpg", text: "晚安～" }
   ]},
   { id: "couple", name: "情侶互動", stickers: [
-    { id: "im_here", img: "assets/stickers3/im_here.jpg", text: "我來啦" },
-    { id: "wake_up", img: "assets/stickers3/wake_up.jpg", text: "起床囉" },
-    { id: "eat_together", img: "assets/stickers3/eat_together.jpg", text: "一起吃飯" },
-    { id: "angry", img: "assets/stickers3/angry.jpg", text: "哼！生氣了" },
-    { id: "forgive_me", img: "assets/stickers3/forgive_me.jpg", text: "原諒我嘛" },
-    { id: "miss_you", img: "assets/stickers3/miss_you.jpg", text: "好想見你" },
-    { id: "take_meds", img: "assets/stickers3/take_meds.jpg", text: "要乖乖吃藥" },
-    { id: "hard_work", img: "assets/stickers3/hard_work.jpg", text: "辛苦了" },
-    { id: "you_rock", img: "assets/stickers3/you_rock.jpg", text: "你好棒" },
-    { id: "ill_protect", img: "assets/stickers3/ill_protect.jpg", text: "有我在" },
-    { id: "charging_you", img: "assets/stickers3/charging_you.jpg", text: "給你充電" },
-    { id: "clingy", img: "assets/stickers3/clingy.jpg", text: "黏著你" },
-    { id: "kiss_here", img: "assets/stickers3/kiss_here.jpg", text: "親這裡" },
-    { id: "jealous", img: "assets/stickers3/jealous.jpg", text: "吃醋了" },
-    { id: "love_you_lots", img: "assets/stickers3/love_you_lots.jpg", text: "愛你一萬次" },
-    { id: "hug_me", img: "assets/stickers3/hug_me.jpg", text: "抱我" },
-    { id: "good_morning", img: "assets/stickers3/good_morning.jpg", text: "早安呀" },
-    { id: "good_night", img: "assets/stickers3/good_night.jpg", text: "晚安寶貝" },
-    { id: "ignoring_you", img: "assets/stickers3/ignoring_you.jpg", text: "不理你了" },
-    { id: "dont_be_mad", img: "assets/stickers3/dont_be_mad.jpg", text: "別生氣嘛" },
-    { id: "made_up", img: "assets/stickers3/made_up.jpg", text: "和好囉" },
-    { id: "eat_on_time", img: "assets/stickers3/eat_on_time.jpg", text: "記得吃飯" },
-    { id: "stay_warm", img: "assets/stickers3/stay_warm.jpg", text: "不要著涼" },
-    { id: "sweet_today", img: "assets/stickers3/sweet_today.jpg", text: "今天也要甜甜的" },
-    { id: "why_late", img: "assets/stickers3/why_late.jpg", text: "你怎麼還沒來" },
-    { id: "surprise_for_you", img: "assets/stickers3/surprise_for_you.jpg", text: "給妳的小驚喜" },
-    { id: "date_time", img: "assets/stickers3/date_time.jpg", text: "約會時間" },
-    { id: "glad_you_here", img: "assets/stickers3/glad_you_here.jpg", text: "有你真好" },
-    { id: "love_you_most", img: "assets/stickers3/love_you_most.jpg", text: "最喜歡你" },
-    { id: "together_forever", img: "assets/stickers3/together_forever.jpg", text: "永遠在一起" }
+    { id: "im_here", img: "assets/stickers3/im_here.png", text: "我來啦" },
+    { id: "wake_up", img: "assets/stickers3/wake_up.png", text: "起床囉" },
+    { id: "eat_together", img: "assets/stickers3/eat_together.png", text: "一起吃飯" },
+    { id: "angry", img: "assets/stickers3/angry.png", text: "哼！生氣了" },
+    { id: "forgive_me", img: "assets/stickers3/forgive_me.png", text: "原諒我嘛" },
+    { id: "miss_you", img: "assets/stickers3/miss_you.png", text: "好想見你" },
+    { id: "take_meds", img: "assets/stickers3/take_meds.png", text: "要乖乖吃藥" },
+    { id: "hard_work", img: "assets/stickers3/hard_work.png", text: "辛苦了" },
+    { id: "you_rock", img: "assets/stickers3/you_rock.png", text: "你好棒" },
+    { id: "ill_protect", img: "assets/stickers3/ill_protect.png", text: "有我在" },
+    { id: "charging_you", img: "assets/stickers3/charging_you.png", text: "給你充電" },
+    { id: "clingy", img: "assets/stickers3/clingy.png", text: "黏著你" },
+    { id: "kiss_here", img: "assets/stickers3/kiss_here.png", text: "親這裡" },
+    { id: "jealous", img: "assets/stickers3/jealous.png", text: "吃醋了" },
+    { id: "love_you_lots", img: "assets/stickers3/love_you_lots.png", text: "愛你一萬次" },
+    { id: "hug_me", img: "assets/stickers3/hug_me.png", text: "抱我" },
+    { id: "good_morning", img: "assets/stickers3/good_morning.png", text: "早安呀" },
+    { id: "good_night", img: "assets/stickers3/good_night.png", text: "晚安寶貝" },
+    { id: "ignoring_you", img: "assets/stickers3/ignoring_you.png", text: "不理你了" },
+    { id: "dont_be_mad", img: "assets/stickers3/dont_be_mad.png", text: "別生氣嘛" },
+    { id: "made_up", img: "assets/stickers3/made_up.png", text: "和好囉" },
+    { id: "eat_on_time", img: "assets/stickers3/eat_on_time.png", text: "記得吃飯" },
+    { id: "stay_warm", img: "assets/stickers3/stay_warm.png", text: "不要著涼" },
+    { id: "sweet_today", img: "assets/stickers3/sweet_today.png", text: "今天也要甜甜的" },
+    { id: "why_late", img: "assets/stickers3/why_late.png", text: "你怎麼還沒來" },
+    { id: "surprise_for_you", img: "assets/stickers3/surprise_for_you.png", text: "給妳的小驚喜" },
+    { id: "date_time", img: "assets/stickers3/date_time.png", text: "約會時間" },
+    { id: "glad_you_here", img: "assets/stickers3/glad_you_here.png", text: "有你真好" },
+    { id: "love_you_most", img: "assets/stickers3/love_you_most.png", text: "最喜歡你" },
+    { id: "together_forever", img: "assets/stickers3/together_forever.png", text: "永遠在一起" }
   ]}
 ];
 const allStickers = stickerSets.flatMap((set) => set.stickers);
@@ -547,6 +547,7 @@ function computeAccountBalances() {
   const balances = { cash: 0, credit_card: 0, bank: 0, ewallet: 0 };
   const myId = session?.user?.id;
   transactions.forEach((x) => {
+    if (memberFilterId && x.user_id !== memberFilterId) return;
     if (x.user_id !== myId && memberPrivacy[x.user_id]) return;
     const key = balances.hasOwnProperty(x.payment_category) ? x.payment_category : "cash";
     balances[key] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
@@ -557,7 +558,9 @@ function renderAccountBalances() {
   const el = $("#accountBalances");
   if (!el) return;
   const balances = computeAccountBalances();
-  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
+  const selectedMember = memberFilterId ? roomMembers.find((m) => m.id === memberFilterId) : null;
+  const ownerLabel = selectedMember ? selectedMember.name : "全部成員";
+  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${escapeHTML(ownerLabel)} · ${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
 }
 let selectedPaymentCategory = "cash";
 let selectedSubAccount = "現金";

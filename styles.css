@@ -198,6 +198,7 @@ input,select,textarea{font-size:16px}
 .member-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
 .member-chip img{width:18px;height:18px;border-radius:50%;object-fit:cover}
 .member-chip.active{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+.ledger-member-filter-label{margin-top:2px}
 .nav-icon-wrap{position:relative;display:inline-flex}
 .unread-badge{position:absolute;top:-6px;right:-9px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
 .filter-label{margin:14px 0 -2px;font-size:11px;font-weight:800;color:var(--muted)}
@@ -221,3 +222,99 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .together-feed-item small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
 .together-feed-time{flex-shrink:0;font-size:10px;color:var(--muted);white-space:nowrap}
 @media(max-width:370px){.together-hero-img{right:-30px;width:52%}.together-hero-text{max-width:68%}.together-hero-pills span:first-child{display:none}.interaction-feature-card>.interaction-card-art{height:82px}.interaction-grid .interaction-feature-card{min-height:174px}}
+
+/* V1.6.5 — interaction hub responsive layout fixes */
+.interaction-page{padding-bottom:8px}
+.together-heading{padding-bottom:12px}
+.together-hero{
+  min-height:156px;
+  padding:22px 18px;
+  isolation:isolate;
+}
+.together-hero-text{max-width:64%}
+.together-hero-img{
+  right:0;
+  bottom:0;
+  width:46%;
+  height:92%;
+  object-fit:contain;
+  object-position:right bottom;
+}
+.interaction-chat-card{
+  display:grid;
+  grid-template-columns:minmax(92px,34%) minmax(0,1fr) auto auto;
+  gap:10px;
+  min-height:122px;
+  padding:0 16px 0 0;
+}
+.interaction-chat-art{
+  align-self:end;
+  width:100%;
+  height:112px;
+  margin:0;
+  object-fit:contain;
+  object-position:left bottom;
+}
+.interaction-chat-text{align-self:center}
+.interaction-grid-2{gap:12px}
+.interaction-grid .interaction-feature-card{
+  display:grid;
+  grid-template-rows:112px minmax(104px,auto);
+  min-width:0;
+  min-height:216px;
+}
+.interaction-feature-card>.interaction-card-art{
+  align-self:end;
+  width:100%;
+  height:112px;
+  margin:0;
+  padding:6px 8px 0;
+  object-fit:contain;
+  object-position:center bottom;
+}
+.interaction-feature-copy{
+  min-width:0;
+  padding:10px 30px 14px 14px;
+}
+.interaction-feature-copy strong{font-size:16px;line-height:1.35}
+.interaction-feature-copy small{line-height:1.45}
+.interaction-feature-copy em{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.interaction-feature-card>b{right:12px;bottom:13px;line-height:1}
+.bottom-nav{
+  bottom:max(10px,env(safe-area-inset-bottom));
+}
+
+@media(max-width:390px){
+  .together-hero{min-height:148px;padding:20px 16px}
+  .together-hero-text{max-width:67%}
+  .together-hero-img{width:44%}
+  .together-hero-pills{gap:5px}
+  .together-hero-pills span{padding:5px 8px;font-size:9.5px}
+  .interaction-chat-card{grid-template-columns:minmax(86px,33%) minmax(0,1fr) auto auto;padding-right:13px}
+  .interaction-chat-text strong{font-size:18px}
+  .interaction-chat-text small{font-size:11px}
+  .interaction-grid .interaction-feature-card{grid-template-rows:100px minmax(106px,auto);min-height:206px}
+  .interaction-feature-card>.interaction-card-art{height:100px;padding-inline:5px}
+  .interaction-feature-copy{padding:9px 27px 13px 12px}
+  .interaction-feature-copy strong{font-size:15px}
+  .interaction-feature-copy em{font-size:9px;padding:4px 7px}
+}
+
+@media(max-width:350px){
+  .together-hero-text{max-width:72%}
+  .together-hero-img{width:40%}
+  .together-hero-pills span:first-child{display:none}
+  .interaction-grid-2{grid-template-columns:1fr}
+  .interaction-grid .interaction-feature-card{
+    grid-template-columns:42% 1fr;
+    grid-template-rows:156px;
+    min-height:156px;
+  }
+  .interaction-feature-card>.interaction-card-art{height:156px;padding:10px 0 0}
+  .interaction-feature-copy{align-self:center;padding:14px 34px 14px 8px}
+}
