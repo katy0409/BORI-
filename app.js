@@ -194,7 +194,8 @@ async function loadActiveBookData() {
   const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
   if (mp.error) {
-    toast("無法載入房間成員，請確認 Supabase 權限設定");
+    console.error("Failed to load room members:", mp.error);
+    toast(`成員載入失敗：${mp.error.message}`);
   } else {
     (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
     roomMembers = (mp.data || []).map((m) => ({ id: m.user_id, name: m.profiles?.display_name || "BORI 使用者", avatar: m.profiles?.avatar_url || null }));
