@@ -178,7 +178,7 @@ async function loadBooks() {
 
 async function fetchLedger() {
   const [tx, bd] = await Promise.all([
-    supabaseClient.from("transactions").select("*").eq("book_id", activeBookId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
+    supabaseClient.from("transactions").select("*, profiles(display_name)").eq("book_id", activeBookId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
     supabaseClient.from("budgets").select("*").eq("book_id", activeBookId).eq("month", currentMonth())
   ]);
   if (tx.error) toast(tx.error.message); else transactions = tx.data || [];
@@ -193,7 +193,9 @@ async function loadActiveBookData() {
   const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at, profiles(display_name, avatar_url)").eq("book_id", activeBookId);
   const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
-  if (!mp.error) {
+  if (mp.error) {
+    toast("無法載入房間成員，請確認 Supabase 權限設定");
+  } else {
     (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
     roomMembers = (mp.data || []).map((m) => ({ id: m.user_id, name: m.profiles?.display_name || "BORI 使用者", avatar: m.profiles?.avatar_url || null }));
     const mine = (mp.data || []).find((m) => m.user_id === session?.user?.id);
@@ -452,7 +454,7 @@ function recordHTML(x) {
   const isMine = x.user_id === session?.user?.id;
   const payLabel = isMine ? (x.payment_method || catLabel) : catLabel;
   const owner = roomMembers.find((m) => m.id === x.user_id);
-  const ownerName = isMine ? "我" : (owner?.name || "成員");
+  const ownerName = isMine ? "我" : (x.profiles?.display_name || owner?.name || "BORI 使用者");
   const tag = isMine ? "button" : "article";
   const attrs = isMine ? `type="button" class="record" data-edit-record="${x.id}"` : `class="record"`;
   return `<${tag} ${attrs}><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small><b class="record-owner">${escapeHTML(ownerName)}</b> · ${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></${tag}>`;

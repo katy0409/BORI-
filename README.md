@@ -15,3 +15,8 @@
 ## 後端
 
 第一次部署仍需在 Supabase SQL Editor 執行 `backend-setup.sql`。
+
+## 成員暱稱與收入隱私修正
+
+既有專案請在 Supabase SQL Editor 執行一次 `supabase-fix-member-privacy.sql`。
+這會讓同一房間的成員能顯示彼此暱稱，並在資料庫層阻止其他成員讀取已開啟「隱藏我的帳戶餘額」者的收入紀錄。
