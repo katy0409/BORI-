@@ -35,10 +35,25 @@ function activeCategories() {
   if (!c || !c.length) return defaultCategories;
   return c.map((x) => (typeof x === "string" ? { name: x, icon: null } : x));
 }
+const defaultIncomeCategories = [
+  { name: "薪水", icon: "salary" }, { name: "獎金", icon: "achievement" }, { name: "副業", icon: "freelance" },
+  { name: "投資", icon: "investment_grow" }, { name: "退款", icon: "cashback" }, { name: "禮金", icon: "red_envelope" }, { name: "其他", icon: "wallet_gift" }
+];
+function activeIncomeCategories() {
+  const c = activeBook()?.income_categories;
+  if (!c || !c.length) return defaultIncomeCategories;
+  return c.map((x) => (typeof x === "string" ? { name: x, icon: null } : x));
+}
+function activeCategoriesForManage() { return manageCategoryType === "income" ? activeIncomeCategories() : activeCategories(); }
 function categoryIconHTML(name) {
   const cat = activeCategories().find((c) => c.name === name);
   const key = cat?.icon && categoryIconKeys.includes(cat.icon) ? cat.icon : "receipt";
   return `<img class="category-icon-img" src="assets/category-icons/${key}.png" alt="" />`;
+}
+function incomeCategoryIconHTML(name) {
+  const cat = activeIncomeCategories().find((c) => c.name === name);
+  const key = cat?.icon && incomeCategoryIconKeys.includes(cat.icon) ? cat.icon : "wallet_gift";
+  return `<img class="category-icon-img" src="assets/income-icons/${key}.png" alt="" />`;
 }
 const stickerSets = [
   { id: "cute", name: "可愛對話", stickers: [
@@ -80,6 +95,38 @@ const stickerSets = [
   { id: "walletcry", img: "assets/stickers2/walletcry.jpg", text: "荷包哭哭" },
   { id: "relax", img: "assets/stickers2/relax.jpg", text: "放鬆一下～" },
   { id: "goodnight2", img: "assets/stickers2/goodnight2.jpg", text: "晚安～" }
+  ]},
+  { id: "couple", name: "情侶互動", stickers: [
+    { id: "im_here", img: "assets/stickers3/im_here.jpg", text: "我來啦" },
+    { id: "wake_up", img: "assets/stickers3/wake_up.jpg", text: "起床囉" },
+    { id: "eat_together", img: "assets/stickers3/eat_together.jpg", text: "一起吃飯" },
+    { id: "angry", img: "assets/stickers3/angry.jpg", text: "哼！生氣了" },
+    { id: "forgive_me", img: "assets/stickers3/forgive_me.jpg", text: "原諒我嘛" },
+    { id: "miss_you", img: "assets/stickers3/miss_you.jpg", text: "好想見你" },
+    { id: "take_meds", img: "assets/stickers3/take_meds.jpg", text: "要乖乖吃藥" },
+    { id: "hard_work", img: "assets/stickers3/hard_work.jpg", text: "辛苦了" },
+    { id: "you_rock", img: "assets/stickers3/you_rock.jpg", text: "你好棒" },
+    { id: "ill_protect", img: "assets/stickers3/ill_protect.jpg", text: "有我在" },
+    { id: "charging_you", img: "assets/stickers3/charging_you.jpg", text: "給你充電" },
+    { id: "clingy", img: "assets/stickers3/clingy.jpg", text: "黏著你" },
+    { id: "kiss_here", img: "assets/stickers3/kiss_here.jpg", text: "親這裡" },
+    { id: "jealous", img: "assets/stickers3/jealous.jpg", text: "吃醋了" },
+    { id: "love_you_lots", img: "assets/stickers3/love_you_lots.jpg", text: "愛你一萬次" },
+    { id: "hug_me", img: "assets/stickers3/hug_me.jpg", text: "抱我" },
+    { id: "good_morning", img: "assets/stickers3/good_morning.jpg", text: "早安呀" },
+    { id: "good_night", img: "assets/stickers3/good_night.jpg", text: "晚安寶貝" },
+    { id: "ignoring_you", img: "assets/stickers3/ignoring_you.jpg", text: "不理你了" },
+    { id: "dont_be_mad", img: "assets/stickers3/dont_be_mad.jpg", text: "別生氣嘛" },
+    { id: "made_up", img: "assets/stickers3/made_up.jpg", text: "和好囉" },
+    { id: "eat_on_time", img: "assets/stickers3/eat_on_time.jpg", text: "記得吃飯" },
+    { id: "stay_warm", img: "assets/stickers3/stay_warm.jpg", text: "不要著涼" },
+    { id: "sweet_today", img: "assets/stickers3/sweet_today.jpg", text: "今天也要甜甜的" },
+    { id: "why_late", img: "assets/stickers3/why_late.jpg", text: "你怎麼還沒來" },
+    { id: "surprise_for_you", img: "assets/stickers3/surprise_for_you.jpg", text: "給妳的小驚喜" },
+    { id: "date_time", img: "assets/stickers3/date_time.jpg", text: "約會時間" },
+    { id: "glad_you_here", img: "assets/stickers3/glad_you_here.jpg", text: "有你真好" },
+    { id: "love_you_most", img: "assets/stickers3/love_you_most.jpg", text: "最喜歡你" },
+    { id: "together_forever", img: "assets/stickers3/together_forever.jpg", text: "永遠在一起" }
   ]}
 ];
 const allStickers = stickerSets.flatMap((set) => set.stickers);
@@ -371,18 +418,22 @@ function renderBookSwitcher() {
 }
 function renderCategorySelects() {
   $("#budgetCategory").innerHTML = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
-  const allNames = [...new Set([...activeCategories().map((c) => c.name), ...incomeCategories])];
+  const allNames = [...new Set([...activeCategories().map((c) => c.name), ...activeIncomeCategories().map((c) => c.name)])];
   $("#ledgerCategoryFilter").innerHTML = `<option value="">全部分類</option>` + allNames.map((name) => `<option value="${escapeHTML(name)}" ${ledgerCategoryFilter === name ? "selected" : ""}>${escapeHTML(name)}</option>`).join("");
   $("#budgetViewFilter").innerHTML = `<option value="">全部成員</option><option value="shared">全房共用</option>` + roomMembers.map((m) => `<option value="${m.id}" ${budgetViewFilter === m.id ? "selected" : ""}>${escapeHTML(m.name)}</option>`).join("");
 }
 function renderCategoryManageList() {
-  const cats = activeCategories();
-  $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row" data-index="${i}"><span class="drag-handle">⠿</span>${categoryIconHTML(c.name)}<span class="category-name">${escapeHTML(c.name)}</span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
+  const isIncome = manageCategoryType === "income";
+  const cats = activeCategoriesForManage();
+  const iconFn = isIncome ? incomeCategoryIconHTML : categoryIconHTML;
+  $("#categoryManageList").innerHTML = cats.map((c, i) => `<div class="category-manage-row" data-index="${i}"><span class="drag-handle">⠿</span>${iconFn(c.name)}<span class="category-name">${escapeHTML(c.name)}</span><button type="button" class="category-remove" data-remove-category="${escapeHTML(c.name)}">×</button></div>`).join("");
 }
 async function updateCategories(list) {
-  const { error } = await supabaseClient.rpc("update_book_categories", { p_book_id: activeBookId, p_categories: list });
+  const isIncome = manageCategoryType === "income";
+  const { error } = await supabaseClient.rpc(isIncome ? "update_book_income_categories" : "update_book_categories", { p_book_id: activeBookId, p_categories: list });
   if (error) return toast(error.message);
-  const b = books.find((x) => x.id === activeBookId); if (b) b.categories = list;
+  const b = books.find((x) => x.id === activeBookId);
+  if (b) { if (isIncome) b.income_categories = list; else b.categories = list; }
   renderCategorySelects(); renderCategoryManageList();
 }
 function renderAccountManageList() {
@@ -528,7 +579,7 @@ $("#paymentPicker").addEventListener("change", (e) => { if (e.target.name === "p
 $("#subAccountPicker").addEventListener("click", (e) => { const btn = e.target.closest("[data-sub-account]"); if (btn) { selectedSubAccount = btn.dataset.subAccount; renderSubAccountPicker(); } });
 function recordHTML(x) {
   const income = x.transaction_type === "income", meta = income ? { icon: "💰", color: "#7fa56a" } : (categoryMeta[x.category] || categoryMeta.其他);
-  const iconHTML = income ? meta.icon : categoryIconHTML(x.category);
+  const iconHTML = income ? incomeCategoryIconHTML(x.category) : categoryIconHTML(x.category);
   const noteHTML = x.note ? `<small class="record-note">📝 ${escapeHTML(x.note)}</small>` : "";
   const catLabel = baseCategories.find((c) => c.key === x.payment_category)?.label || "現金";
   const isMine = x.user_id === session?.user?.id;
@@ -726,7 +777,7 @@ function parseConversationalRecord(input) {
   cleaned = cleaned.replace(/(收入|支出|記帳|一筆)/g, " ").replace(/\s+/g, " ").trim();
 
   // 分類：先比對使用者自己實際設定的分類名稱，比對不到再用關鍵字猜，關鍵字猜出來的也要是使用者清單裡真的有的分類
-  const myCategoryNames = income ? incomeCategories : activeCategories().map((c) => c.name);
+  const myCategoryNames = income ? activeIncomeCategories().map((c) => c.name) : activeCategories().map((c) => c.name);
   let category = myCategoryNames.find((name) => cleaned.includes(name));
   if (!category) {
     const expenseRules = [{ re: /早餐|午餐|晚餐|餐|便當|咖啡|飲料|珍奶|飲品|吃/, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|停車|高鐵|火車|uber/i, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂|ktv/i, cat: "休閒育樂" }, { re: /房租|租金|房貸/, cat: "住房" }, { re: /水費|電費|瓦斯/, cat: "水電瓦斯" }, { re: /醫院|看醫生|藥局|藥/, cat: "醫療保健" }, { re: /寵物|貓|狗|飼料/, cat: "寵物" }, { re: /衣服|鞋|服飾/, cat: "服飾" }, { re: /日常用品|衛生紙|清潔/, cat: "日常用品" }];
@@ -885,7 +936,6 @@ $("#switchRoomList").addEventListener("click", (e) => { const btn = e.target.clo
 
 $("#bookForm").addEventListener("submit", async (e) => { e.preventDefault(); try { const name = $("#newBookName").value.trim(), type = document.querySelector('[name="bookType"]:checked').value; const book = await createBook(name, type); activeBookId = book.id; localStorage.setItem(ACTIVE_BOOK_KEY, activeBookId); e.target.reset(); closeDialog("bookDialog"); await loadBooks(); await loadActiveBookData(); renderAll(); toast(`房間開好了，房間代碼：${book.invite_code}`); } catch (err) { toast(err.message); } });
 $("#joinForm").addEventListener("submit", async (e) => { e.preventDefault(); const code = $("#inviteCodeInput").value.trim().toUpperCase(); const { data, error } = await supabaseClient.rpc("join_book_by_code", { p_invite_code: code }); if (error) return toast(error.message); if (!data) return toast("找不到這個房間代碼"); closeDialog("joinDialog"); e.target.reset(); await loadBooks(); activeBookId = data; await loadActiveBookData(); renderAll(); toast("已加入房間 🎉"); });
-const incomeCategories = ["薪水", "獎金", "副業", "投資", "退款", "禮金", "其他"];
 let addType = "expense";
 let editingTransactionId = null;
 function setAddType(type) {
@@ -897,7 +947,7 @@ function setAddType(type) {
   $("#addPageTitle").classList.toggle("mode-income", type === "income");
   $(".amount-field").classList.toggle("mode-expense", type === "expense");
   $(".amount-field").classList.toggle("mode-income", type === "income");
-  $("#categoryInput").innerHTML = (type === "expense" ? activeCategories().map((c) => c.name) : incomeCategories).map((n) => `<option>${escapeHTML(n)}</option>`).join("");
+  $("#categoryInput").innerHTML = (type === "expense" ? activeCategories() : activeIncomeCategories()).map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
 }
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
 async function updateTransaction(id, type, title, amount, category, note, date, paymentCategory, paymentMethod) {
@@ -968,15 +1018,31 @@ $("#budgetForm").addEventListener("submit", async (e) => {
   if (error) return toast(error.message);
   e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已同步到房間 🎯");
 });
+const incomeCategoryIconKeys = ["salary","red_packet_income","payday","coffee_earn","growth_chart","stock_chart","piggybank","wallet_gift","bank_income","love_donate","transfer","red_envelope","resell","cashback","lottery","content_income","freelance","tips","house_fund","investment_grow","gift_income","travel_fund","bonus_pet","achievement"];
+let manageCategoryType = "expense";
 let selectedCategoryIcon = "receipt";
+let selectedIncomeCategoryIcon = "wallet_gift";
 function renderIconPicker() {
-  $("#iconPicker").innerHTML = categoryIconKeys.map((k) => `<button type="button" class="icon-picker-item ${k === selectedCategoryIcon ? "active" : ""}" data-icon="${k}"><img src="assets/category-icons/${k}.png" alt="" /></button>`).join("");
+  const isIncome = manageCategoryType === "income";
+  const keys = isIncome ? incomeCategoryIconKeys : categoryIconKeys;
+  const folder = isIncome ? "income-icons" : "category-icons";
+  const selected = isIncome ? selectedIncomeCategoryIcon : selectedCategoryIcon;
+  $("#iconPicker").innerHTML = keys.map((k) => `<button type="button" class="icon-picker-item ${k === selected ? "active" : ""}" data-icon="${k}"><img src="assets/${folder}/${k}.png" alt="" /></button>`).join("");
 }
 $("#iconPicker").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-icon]");
   if (!btn) return;
-  selectedCategoryIcon = btn.dataset.icon;
-  $$("#iconPicker .icon-picker-item").forEach((b) => b.classList.toggle("active", b.dataset.icon === selectedCategoryIcon));
+  if (manageCategoryType === "income") selectedIncomeCategoryIcon = btn.dataset.icon;
+  else selectedCategoryIcon = btn.dataset.icon;
+  renderIconPicker();
+});
+$("#categoryTypeToggle").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-category-type]");
+  if (!btn) return;
+  manageCategoryType = btn.dataset.categoryType;
+  $$("#categoryTypeToggle .type-switch-option").forEach((b) => b.classList.toggle("active", b.dataset.categoryType === manageCategoryType));
+  renderCategoryManageList();
+  renderIconPicker();
 });
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
 async function renderMemberList() {
@@ -1076,7 +1142,7 @@ $("#notifToggleBtn").addEventListener("click", async () => {
 $("#categoryManageList").addEventListener("click", async (e) => {
   const delBtn = e.target.closest("[data-remove-category]");
   if (!delBtn) return;
-  const cur = activeCategories();
+  const cur = activeCategoriesForManage();
   if (cur.length <= 1) return toast("至少要保留一個分類");
   await updateCategories(cur.filter((c) => c.name !== delBtn.dataset.removeCategory));
 });
@@ -1153,7 +1219,7 @@ function beginCategoryDrag(startRow, pointerId, startY) {
     startRow.classList.remove("dragging");
     allRows.forEach((r) => { r.style.transform = ""; });
     if (currentIndex !== startIndex) {
-      const cur = [...activeCategories()];
+      const cur = [...activeCategoriesForManage()];
       const [moved] = cur.splice(startIndex, 1);
       cur.splice(currentIndex, 0, moved);
       updateCategories(cur);
@@ -1167,11 +1233,12 @@ $("#addCategoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("#newCategoryInput").value.trim();
   if (!name) return;
-  const cur = activeCategories();
+  const isIncome = manageCategoryType === "income";
+  const cur = activeCategoriesForManage();
   if (cur.some((c) => c.name === name)) return toast("這個分類已經有了");
-  await updateCategories([...cur, { name, icon: selectedCategoryIcon }]);
+  await updateCategories([...cur, { name, icon: isIncome ? selectedIncomeCategoryIcon : selectedCategoryIcon }]);
   e.target.reset();
-  selectedCategoryIcon = "receipt";
+  if (isIncome) selectedIncomeCategoryIcon = "wallet_gift"; else selectedCategoryIcon = "receipt";
   renderIconPicker();
 });
 $("#chatForm").addEventListener("submit", async (e) => { e.preventDefault(); const content = $("#messageInput").value.trim(); if (!content) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "text", content }); if (error) return toast(error.message); $("#messageInput").value = ""; });

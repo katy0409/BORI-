@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.6.2，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.6.2｜Cloud Life</title>
+  <meta name="description" content="BORI V1.6.3，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.6.3｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.6.2</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.6.3</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -63,7 +63,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.6.2</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.6.3</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -224,7 +224,7 @@
 
   <dialog id="budgetDialog"><form id="budgetForm"><div class="dialog-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h3>設定我的分類預算</h3></div><button type="button" class="dialog-close" data-close="budgetDialog">×</button></div><label>分類<select id="budgetCategory"></select></label><label>每月預算<input id="budgetAmount" type="number" min="0" step="0.01" required placeholder="例如：12000" /></label><label class="checkbox-row"><input id="sharedBudgetCheckbox" type="checkbox" /> 設為所有成員共用預算</label><p class="muted-hint">未勾選時，預算會自動歸屬目前登入的帳號。</p><button class="primary" type="submit">儲存預算</button></form></dialog>
 
-  <dialog id="manageCategoriesDialog"><div class="dialog-head"><div><p class="eyebrow">CATEGORIES</p><h3>自訂分類</h3></div><button type="button" class="dialog-close" data-close="manageCategoriesDialog">×</button></div><div id="categoryManageList" class="category-manage-list"></div><p class="dialog-subhead">新增分類</p><form id="addCategoryForm"><input id="newCategoryInput" maxlength="8" placeholder="分類名稱" required /><div id="iconPicker" class="icon-picker"></div><button class="primary" type="submit">新增</button></form></dialog>
+  <dialog id="manageCategoriesDialog"><div class="dialog-head"><div><p class="eyebrow">CATEGORIES</p><h3>自訂分類</h3></div><button type="button" class="dialog-close" data-close="manageCategoriesDialog">×</button></div><div class="type-switch" id="categoryTypeToggle"><button type="button" class="type-switch-option expense active" data-category-type="expense"><span>支出分類</span></button><button type="button" class="type-switch-option income" data-category-type="income"><span>收入分類</span></button></div><div id="categoryManageList" class="category-manage-list"></div><p class="dialog-subhead">新增分類</p><form id="addCategoryForm"><input id="newCategoryInput" maxlength="8" placeholder="分類名稱" required /><div id="iconPicker" class="icon-picker"></div><button class="primary" type="submit">新增</button></form></dialog>
 
   <dialog id="manageAccountsDialog"><div class="dialog-head"><div><p class="eyebrow">ACCOUNTS</p><h3>帳戶管理</h3></div><button type="button" class="dialog-close" data-close="manageAccountsDialog">×</button></div><p class="muted-hint">四大類是共用的，其他成員只會看到這四類的總額；下面的子帳戶只有你自己看得到、自己管理。</p><div id="accountManageList" class="category-manage-list"></div><p class="dialog-subhead">新增子帳戶</p><form id="addAccountForm"><div id="addAccountCategoryPicker" class="payment-picker"></div><input id="newAccountInput" maxlength="10" placeholder="例如：國泰信用卡、LINE Pay" required /><button class="primary" type="submit">新增</button></form></dialog>
 
@@ -242,7 +242,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.6.2</p>
+      <p class="about-version">Cloud Life · V1.6.3</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>
