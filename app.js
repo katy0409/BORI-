@@ -117,10 +117,12 @@ function unreadCount() {
 }
 function renderUnreadBadge() {
   const n = unreadCount();
-  const el = $("#unreadBadge");
-  if (!el) return;
-  el.textContent = n > 99 ? "99+" : n;
-  el.classList.toggle("hidden", n === 0);
+  const text = n > 99 ? "99+" : n;
+  [$("#unreadBadge"), $("#chatCardBadge")].forEach((el) => {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle("hidden", n === 0);
+  });
 }
 async function markChatRead() {
   if (!activeBookId || !session?.user?.id) return;
