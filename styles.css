@@ -242,8 +242,8 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 }
 .interaction-chat-card{
   display:grid;
-  grid-template-columns:minmax(92px,34%) minmax(0,1fr) auto auto;
-  gap:10px;
+  grid-template-columns:minmax(88px,31%) minmax(0,1fr) auto auto;
+  column-gap:12px;
   min-height:122px;
   padding:0 16px 0 0;
 }
@@ -259,6 +259,7 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .interaction-grid-2{gap:12px}
 .interaction-grid .interaction-feature-card{
   display:grid;
+  grid-template-columns:minmax(0,1fr);
   grid-template-rows:112px minmax(104px,auto);
   min-width:0;
   min-height:216px;
@@ -275,6 +276,12 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .interaction-feature-copy{
   min-width:0;
   padding:10px 30px 14px 14px;
+}
+.interaction-grid .interaction-feature-card>.interaction-feature-copy{
+  grid-column:1;
+  grid-row:2;
+  align-self:stretch;
+  font-size:inherit;
 }
 .interaction-feature-copy strong{font-size:16px;line-height:1.35}
 .interaction-feature-copy small{line-height:1.45}
@@ -295,7 +302,7 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
   .together-hero-img{width:44%}
   .together-hero-pills{gap:5px}
   .together-hero-pills span{padding:5px 8px;font-size:9.5px}
-  .interaction-chat-card{grid-template-columns:minmax(86px,33%) minmax(0,1fr) auto auto;padding-right:13px}
+  .interaction-chat-card{grid-template-columns:minmax(82px,30%) minmax(0,1fr) auto auto;padding-right:13px}
   .interaction-chat-text strong{font-size:18px}
   .interaction-chat-text small{font-size:11px}
   .interaction-grid .interaction-feature-card{grid-template-rows:100px minmax(106px,auto);min-height:206px}
@@ -317,4 +324,10 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
   }
   .interaction-feature-card>.interaction-card-art{height:156px;padding:10px 0 0}
   .interaction-feature-copy{align-self:center;padding:14px 34px 14px 8px}
+  .interaction-grid .interaction-feature-card>.interaction-feature-copy{grid-column:2;grid-row:1;align-self:center}
 }
+
+/* V1.6.7 — keep chat stickers comfortably inside every tile */
+.sticker-grid button{display:grid;place-items:center;aspect-ratio:1}
+.sticker-grid button img{width:100%;height:100%;padding:7px;object-fit:contain}
+.sticker-message img{width:112px;height:112px;object-fit:contain;background:transparent}
