@@ -162,6 +162,14 @@ async function loadProfile() {
   profile = data || { id: session.user.id, display_name: session.user.user_metadata?.display_name || session.user.email?.split("@")[0] || "BORI 使用者" };
 }
 
+async function fetchProfilesByIds(userIds) {
+  const ids = [...new Set((userIds || []).filter(Boolean))];
+  if (!ids.length) return new Map();
+  const { data, error } = await supabaseClient.from("profiles").select("id, display_name, avatar_url").in("id", ids);
+  if (error) throw error;
+  return new Map((data || []).map((p) => [p.id, p]));
+}
+
 let memberCounts = {};
 async function loadBooks() {
   const { data, error } = await supabaseClient.from("book_members").select("role, books(*)").eq("user_id", session.user.id);
@@ -178,7 +186,7 @@ async function loadBooks() {
 
 async function fetchLedger() {
   const [tx, bd] = await Promise.all([
-    supabaseClient.from("transactions").select("*, profiles(display_name)").eq("book_id", activeBookId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
+    supabaseClient.from("transactions").select("*").eq("book_id", activeBookId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
     supabaseClient.from("budgets").select("*").eq("book_id", activeBookId).eq("month", currentMonth())
   ]);
   if (tx.error) toast(tx.error.message); else transactions = tx.data || [];
@@ -189,18 +197,29 @@ async function loadActiveBookData() {
   unsubscribeRealtime();
   transactions = []; budgets = []; messages = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
   if (!activeBookId) return;
-  const msPromise = supabaseClient.from("messages").select("*, profiles(display_name)").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
-  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at, profiles(display_name, avatar_url)").eq("book_id", activeBookId);
+  const msPromise = supabaseClient.from("messages").select("*").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
+  const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at").eq("book_id", activeBookId);
   const [ms, mp] = await Promise.all([msPromise, mpPromise, fetchLedger()]);
   if (ms.error) toast(ms.error.message); else messages = ms.data || [];
   if (mp.error) {
     console.error("Failed to load room members:", mp.error);
     toast(`成員載入失敗：${mp.error.message}`);
   } else {
-    (mp.data || []).forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
-    roomMembers = (mp.data || []).map((m) => ({ id: m.user_id, name: m.profiles?.display_name || "BORI 使用者", avatar: m.profiles?.avatar_url || null }));
-    const mine = (mp.data || []).find((m) => m.user_id === session?.user?.id);
-    myLastReadAt = mine?.last_read_at || null;
+    try {
+      const members = mp.data || [];
+      const profileMap = await fetchProfilesByIds(members.map((m) => m.user_id));
+      members.forEach((m) => { memberPrivacy[m.user_id] = m.hide_balance; });
+      roomMembers = members.map((m) => {
+        const memberProfile = profileMap.get(m.user_id);
+        return { id: m.user_id, name: memberProfile?.display_name || "BORI 使用者", avatar: memberProfile?.avatar_url || null };
+      });
+      messages = messages.map((m) => ({ ...m, profiles: profileMap.get(m.user_id) || null }));
+      const mine = members.find((m) => m.user_id === session?.user?.id);
+      myLastReadAt = mine?.last_read_at || null;
+    } catch (error) {
+      console.error("Failed to load member profiles:", error);
+      toast(`暱稱載入失敗：${error.message}`);
+    }
   }
   subscribeRealtime();
 }
@@ -219,7 +238,9 @@ function subscribeRealtime() {
   if (!activeBookId) return;
   realtimeChannel = supabaseClient.channel(`bori-book-${activeBookId}`)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `book_id=eq.${activeBookId}` }, async (payload) => {
-      const { data } = await supabaseClient.from("messages").select("*, profiles(display_name)").eq("id", payload.new.id).single();
+      const { data: rawMessage } = await supabaseClient.from("messages").select("*").eq("id", payload.new.id).single();
+      const sender = roomMembers.find((m) => m.id === rawMessage?.user_id);
+      const data = rawMessage ? { ...rawMessage, profiles: sender ? { display_name: sender.name } : null } : null;
       if (data && !messages.some((m) => m.id === data.id)) {
         messages.push(data); renderChat(); renderHome(); scrollChat();
         if ($("#chatPage")?.classList.contains("active") && data.user_id !== session?.user?.id) markChatRead();
@@ -695,11 +716,15 @@ $("#manageCategoriesLink").addEventListener("click", () => { renderCategoryManag
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="manageCategoriesDialog"]')) { renderCategoryManageList(); renderIconPicker(); } });
 async function renderMemberList() {
   if (!activeBookId) return;
-  const { data, error } = await supabaseClient.from("book_members").select("role, user_id, profiles(display_name, avatar_url)").eq("book_id", activeBookId).order("created_at", { ascending: true });
+  const { data, error } = await supabaseClient.from("book_members").select("role, user_id").eq("book_id", activeBookId).order("created_at", { ascending: true });
   if (error) { $("#memberList").innerHTML = `<p class="muted-hint">載入失敗：${escapeHTML(error.message)}</p>`; return; }
+  let profileMap;
+  try { profileMap = await fetchProfilesByIds((data || []).map((m) => m.user_id)); }
+  catch (profileError) { $("#memberList").innerHTML = `<p class="muted-hint">暱稱載入失敗：${escapeHTML(profileError.message)}</p>`; return; }
   $("#memberList").innerHTML = (data && data.length) ? data.map((m) => {
-    const name = m.profiles?.display_name || "BORI 使用者";
-    const avatar = m.profiles?.avatar_url ? `<img src="${m.profiles.avatar_url}" alt="" />` : `<span class="member-emoji">🐻</span>`;
+    const memberProfile = profileMap.get(m.user_id);
+    const name = memberProfile?.display_name || "BORI 使用者";
+    const avatar = memberProfile?.avatar_url ? `<img src="${memberProfile.avatar_url}" alt="" />` : `<span class="member-emoji">🐻</span>`;
     return `<div class="member-row"><span class="member-avatar">${avatar}</span><span class="member-info"><strong>${escapeHTML(name)}</strong><small>${m.role === "owner" ? "擁有者" : "成員"}</small></span></div>`;
   }).join("") : `<p class="muted-hint">目前沒有成員資料。</p>`;
 }
