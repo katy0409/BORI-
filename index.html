@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.6.3，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.6.3｜Cloud Life</title>
+  <meta name="description" content="BORI V1.7.1，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.7.1｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.6.3</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.7.1</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -63,7 +63,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.6.3</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.7.1</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -113,30 +113,29 @@
         <div id="chatEmpty" class="empty-state large-empty"><div class="empty-illustration">♡</div><h2>先開一個房間</h2><p>開房間後，就能聊天、寫共同日記與回答每日一問。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
         <div id="chatContent" class="hidden">
           <div id="interactionHub">
-            <div class="form-intro"><p class="eyebrow">TOGETHER</p><h2>互動</h2></div>
+            <div class="form-intro together-heading"><p class="eyebrow">TOGETHER</p><h2>互動 <span aria-hidden="true">♡</span></h2></div>
             <article class="together-hero">
               <div class="together-hero-text">
-                <p class="together-hero-title">💗 我們的小日常 💗</p>
+                <p class="together-hero-title"><span>♥</span> 我們的小日常 <span>♥</span></p>
                 <p class="together-hero-days">一起使用 BORI 第 <b id="togetherDays">-</b> 天</p>
-                <div class="together-hero-pills"><span id="togetherTodayCount">📨 今日 0 則</span></div>
+                <div class="together-hero-pills"><span>🔥 一起累積幸福</span><span id="togetherTodayCount">💌 今日 0 則</span></div>
               </div>
-              <img class="together-hero-img" src="assets/bear-income.png" alt="" />
+              <img class="together-hero-img" src="assets/interaction/together-hero-v2.png" alt="兩隻抱著愛心的小熊" />
             </article>
             <button class="interaction-chat-card" data-interaction-view="chat">
-              <span class="interaction-chat-icon">💬</span>
+              <img class="interaction-card-art interaction-chat-art" src="assets/interaction/together-chat.png" alt="" />
               <span class="interaction-chat-text"><strong>聊天室</strong><small>今天也來聊聊天吧 ♡</small></span>
               <span id="chatCardBadge" class="chat-card-count hidden">0</span>
               <span class="interaction-chat-arrow">›</span>
             </button>
             <div class="interaction-grid interaction-grid-2">
-              <button data-interaction-view="diary"><span>📖</span><strong>共同日記</strong><small id="diaryCountHint">留下今天的回憶</small></button>
-              <button data-interaction-view="question"><span>💞</span><strong>每日一問</strong><small id="questionStatusHint">每天更了解彼此</small></button>
+              <button class="interaction-feature-card diary-feature" data-interaction-view="diary"><img class="interaction-card-art" src="assets/interaction/together-diary.png" alt="" /><span class="interaction-feature-copy"><strong>共同日記</strong><small>留下今天的回憶</small><em id="diaryCountHint">📖 開始第一篇</em></span><b aria-hidden="true">›</b></button>
+              <button class="interaction-feature-card question-feature" data-interaction-view="question"><img class="interaction-card-art" src="assets/interaction/together-question.png" alt="" /><span class="interaction-feature-copy"><strong>每日一問</strong><small>每天更了解彼此</small><em id="questionStatusHint">💞 今日未回答</em></span><b aria-hidden="true">›</b></button>
             </div>
-            <div class="section-head"><h2>🌱 今天的我們</h2></div>
-            <div id="togetherFeed" class="together-feed"></div>
+            <section class="together-feed-card"><div class="section-head"><h2>今天的我們 <span>🌷</span></h2></div><div id="togetherFeed" class="together-feed"></div></section>
           </div>
-          <div id="interactionChat" class="interaction-view hidden chat-layout"><button class="interaction-back" data-interaction-back>‹ 返回互動</button><div class="chat-head"><div><p class="eyebrow">REALTIME CHAT</p><h2 id="chatBookTitle">聊天室</h2></div><span class="live-dot">● 即時</span></div><div id="messageList" class="message-list"></div><div id="stickerTray" class="sticker-tray hidden"><div id="stickerSetTabs" class="sticker-set-tabs"></div><div id="stickerGrid" class="sticker-grid"></div></div><form id="chatForm" class="chat-composer"><button type="button" id="stickerBtn" class="round-button">🐻</button><input id="messageInput" maxlength="240" placeholder="輸入訊息…" /><button class="send-button" type="submit">送出</button></form></div>
-          <div id="interactionDiary" class="interaction-view hidden"><button class="interaction-back" data-interaction-back>‹ 返回互動</button><div class="form-intro"><p class="eyebrow">SHARED DIARY</p><h2>共同日記</h2></div><form id="diaryForm" class="expense-form"><label>今天想記下什麼？<textarea id="diaryContent" rows="5" maxlength="1000" required placeholder="寫下今天值得記住的事…"></textarea></label><button class="primary" type="submit">保存日記</button></form><div id="diaryList" class="diary-list"></div></div>
+          <div id="interactionChat" class="interaction-view hidden chat-layout"><button class="interaction-back" data-interaction-back aria-label="返回互動">‹ 返回</button><div class="chat-head"><div><p class="eyebrow">REALTIME CHAT</p><h2 id="chatBookTitle">聊天室</h2></div><span class="live-dot">● 即時</span></div><div id="messageList" class="message-list"></div><div id="stickerTray" class="sticker-tray hidden"><div id="stickerSetTabs" class="sticker-set-tabs"></div><div id="stickerGrid" class="sticker-grid"></div></div><form id="chatForm" class="chat-composer"><button type="button" id="stickerBtn" class="round-button" aria-label="選擇貼圖">🐻</button><input id="messageInput" maxlength="240" autocomplete="off" enterkeyhint="send" aria-label="輸入訊息" placeholder="輸入訊息…" /><button class="send-button" type="submit">送出</button></form></div>
+          <div id="interactionDiary" class="interaction-view hidden diary-view"><button class="interaction-back" data-interaction-back>‹ 返回互動</button><header class="diary-header"><p class="eyebrow">SHARED DIARY</p><h2>我們的共同日記</h2><p>把值得收藏的一天，慢慢寫成你們的故事。</p></header><form id="diaryForm" class="diary-editor"><div class="diary-editor-top"><label>日記日期<input id="diaryDate" type="date" required /></label><fieldset><legend>今天的心情</legend><div id="diaryMoodPicker" class="diary-mood-picker"><label><input type="radio" name="diaryMood" value="幸福" checked><span>🥰<small>幸福</small></span></label><label><input type="radio" name="diaryMood" value="開心"><span>😊<small>開心</small></span></label><label><input type="radio" name="diaryMood" value="平靜"><span>🌿<small>平靜</small></span></label><label><input type="radio" name="diaryMood" value="疲累"><span>😴<small>疲累</small></span></label><label><input type="radio" name="diaryMood" value="難過"><span>🥺<small>難過</small></span></label></div></fieldset></div><label class="diary-title-field">這一天的標題<input id="diaryTitle" maxlength="50" required placeholder="例如：一起吃晚餐的小幸福" /></label><label class="diary-content-field">今天發生了什麼？<textarea id="diaryContent" rows="6" maxlength="1000" required placeholder="寫下事情、感受，或想對彼此說的話…"></textarea><small><span id="diaryCharCount">0</span> / 1000</small></label><div class="diary-form-actions"><button id="diaryCancelEdit" class="diary-cancel hidden" type="button">取消編輯</button><button id="diarySaveButton" class="primary" type="submit">收藏這篇日記</button></div></form><div class="diary-book-head"><h3>回憶篇章</h3><span id="diaryTotalCount">0 篇</span></div><div id="diaryList" class="diary-list diary-timeline"></div></div>
           <div id="interactionQuestion" class="interaction-view hidden"><button class="interaction-back" data-interaction-back>‹ 返回互動</button><div class="form-intro"><p class="eyebrow">DAILY QUESTION</p><h2>每日一問</h2></div><article class="daily-question-card"><small id="questionDate"></small><h3 id="dailyQuestionText">載入今日問題…</h3><p id="questionLockHint">答案會在明天 00:00（台灣時間）一起解鎖。</p><form id="dailyAnswerForm"><textarea id="dailyAnswerInput" rows="4" maxlength="500" required placeholder="寫下你的答案…"></textarea><button class="primary" type="submit">送出今天的答案</button></form></article><div id="dailyAnswersList" class="daily-answers-list"></div></div>
         </div>
       </section>
@@ -145,6 +144,8 @@
         <div class="form-intro"><p class="eyebrow">ALL RECORDS</p><h2>帳本</h2></div>
         <div id="ledgerEmpty" class="empty-state large-empty"><div class="empty-illustration">📒</div><h2>先開一個房間</h2><p>開房間後，這裡會列出所有收支紀錄與分析。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
         <div id="ledgerContent" class="hidden">
+          <p class="filter-label ledger-member-filter-label">依成員查看帳戶餘額與紀錄</p>
+          <div id="memberFilterRow" class="member-filter-row"></div>
           <div class="payer-grid">
             <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
             <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
@@ -157,8 +158,6 @@
             <label>收支類型<select id="ledgerTypeFilter"><option value="">全部收支</option><option value="expense">支出</option><option value="income">收入</option></select></label>
             <label>分類<select id="ledgerCategoryFilter"><option value="">全部分類</option></select></label>
           </div>
-          <p class="filter-label">依成員篩選</p>
-          <div id="memberFilterRow" class="member-filter-row"></div>
           <div id="ledgerList" class="record-list"></div>
         </div>
       </section>
@@ -242,7 +241,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.6.3</p>
+      <p class="about-version">Cloud Life · V1.7.1</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>

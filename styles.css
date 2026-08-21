@@ -198,6 +198,7 @@ input,select,textarea{font-size:16px}
 .member-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
 .member-chip img{width:18px;height:18px;border-radius:50%;object-fit:cover}
 .member-chip.active{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+.ledger-member-filter-label{margin-top:2px}
 .nav-icon-wrap{position:relative;display:inline-flex}
 .unread-badge{position:absolute;top:-6px;right:-9px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
 .filter-label{margin:14px 0 -2px;font-size:11px;font-weight:800;color:var(--muted)}
@@ -206,23 +207,426 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .record-owner{color:var(--green-dark);font-weight:800}
 .interaction-icon-wrap{position:relative;display:inline-flex}
 .interaction-icon-wrap .unread-badge{top:-4px;right:-10px}
-.together-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px;border-radius:24px;background:linear-gradient(150deg,var(--card),var(--green-soft));border:1px solid var(--line);box-shadow:var(--shadow);margin-top:12px}
-.together-hero-title{margin:0;font-weight:800;font-size:14px}
-.together-hero-days{margin:8px 0 0;font-size:13px;color:var(--muted)}
-.together-hero-days b{color:var(--green-dark);font-size:16px}
-.together-hero-pills{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-.together-hero-pills span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:11px;font-weight:700}
-.together-hero-img{width:76px;height:76px;object-fit:contain;flex-shrink:0}
-.interaction-chat-card{width:100%;display:flex;align-items:center;gap:14px;padding:18px;margin-top:12px;border-radius:22px;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);text-align:left;color:var(--brown)}
-.interaction-chat-icon{font-size:30px;flex-shrink:0}
-.interaction-chat-text{flex:1;min-width:0}
-.interaction-chat-text strong{display:block;font-size:15px}
-.interaction-chat-text small{color:var(--muted)}
+.together-heading{position:relative;margin-bottom:4px}.together-heading h2{font-size:34px;letter-spacing:.04em}.together-heading h2 span{font-size:24px;color:#9dbd73;vertical-align:top}
+.together-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:150px;padding:22px 18px;overflow:hidden;border-radius:25px;background:linear-gradient(145deg,#fffaf0 0%,#fff8ea 65%,#f3f4d7 100%);border:1px solid #f1d8a5;box-shadow:0 8px 22px rgba(103,83,49,.09);margin-top:12px}
+.together-hero-text{position:relative;z-index:2;max-width:62%}.together-hero-title{margin:0;font-weight:900;font-size:16px;white-space:nowrap}.together-hero-title span{color:#ef8e73;font-size:12px}.together-hero-days{margin:10px 0 0;font-size:13px;color:var(--muted)}
+.together-hero-days b{color:var(--green-dark);font-size:18px}.together-hero-pills{margin-top:12px;display:flex;gap:7px;flex-wrap:wrap}.together-hero-pills span{background:rgba(255,255,255,.78);border:1px solid #f0dfbd;border-radius:99px;padding:5px 10px;font-size:10px;font-weight:800;white-space:nowrap}
+.together-hero-img{position:absolute;z-index:1;right:-20px;bottom:-12px;width:48%;height:138px;object-fit:contain;object-position:right bottom;flex-shrink:0}
+.interaction-chat-card{position:relative;width:100%;display:flex;align-items:center;gap:12px;min-height:120px;padding:18px 16px;margin-top:14px;overflow:hidden;border-radius:24px;border:1px solid #d5dfbd;background:linear-gradient(145deg,#fbfcf4,#f1f6e9);box-shadow:var(--shadow);text-align:left;color:var(--brown)}
+.interaction-card-art{display:block;object-fit:contain;pointer-events:none}.interaction-chat-art{align-self:flex-end;width:39%;height:104px;object-position:left bottom;margin:-5px 0 -18px -18px}.interaction-chat-text{position:relative;z-index:2;flex:1;min-width:0}.interaction-chat-text strong{display:block;font-size:20px}.interaction-chat-text small{display:block;margin-top:5px;color:var(--muted);font-size:12px}
 .chat-card-count{flex-shrink:0;min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:var(--green-soft);color:var(--green-dark);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
-.interaction-chat-arrow{flex-shrink:0;color:var(--muted);font-size:18px}
-.interaction-grid-2{grid-template-columns:1fr 1fr}
-.together-feed{display:grid;gap:8px;margin-top:10px}
-.together-feed-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.interaction-chat-arrow{flex-shrink:0;color:var(--green-dark);font-size:28px}.interaction-grid-2{grid-template-columns:1fr 1fr;margin-top:14px}.interaction-grid .interaction-feature-card{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:190px;padding:0;overflow:hidden;border-radius:23px;text-align:left}.interaction-grid .diary-feature{background:linear-gradient(145deg,#f7fbff,#eaf5fb);border-color:#cfe2ec}.interaction-grid .question-feature{background:linear-gradient(145deg,#fff8f8,#fdebec);border-color:#efc8c8}.interaction-feature-card>.interaction-card-art{width:100%;height:98px;object-fit:contain;object-position:left bottom;margin:-2px 0 -8px -10px}.interaction-feature-copy{display:flex;flex-direction:column;padding:2px 14px 14px}.interaction-feature-copy strong{font-size:16px}.interaction-feature-copy small{margin-top:3px;font-size:10.5px}.interaction-feature-copy em{align-self:flex-start;margin-top:9px;padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.7);border:1px solid rgba(122,122,122,.12);color:var(--green-dark);font-size:9.5px;font-style:normal;font-weight:800}.question-feature .interaction-feature-copy em{color:#d96c61}.interaction-feature-card>b{position:absolute;right:12px;bottom:12px;color:var(--green-dark);font-size:23px}.together-feed-card{margin-top:16px;padding:14px 12px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.68);box-shadow:var(--shadow)}.together-feed-card .section-head{margin:0 4px 4px}.together-feed-card .section-head h2{font-size:17px}.together-feed{display:grid;margin-top:6px}
+.together-feed-item{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}.together-feed-item:last-child{border-bottom:0}
+.together-feed-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;flex-shrink:0;border-radius:50%;background:#f1f5df;font-size:16px}.together-feed-copy{flex:1;min-width:0}
 .together-feed-item strong{display:block;font-size:12.5px}
 .together-feed-item small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
 .together-feed-time{flex-shrink:0;font-size:10px;color:var(--muted);white-space:nowrap}
+@media(max-width:370px){.together-hero-img{right:-30px;width:52%}.together-hero-text{max-width:68%}.together-hero-pills span:first-child{display:none}.interaction-feature-card>.interaction-card-art{height:82px}.interaction-grid .interaction-feature-card{min-height:174px}}
+
+/* V1.6.5 — interaction hub responsive layout fixes */
+.interaction-page{padding-bottom:8px}
+.together-heading{padding-bottom:12px}
+.together-hero{
+  min-height:156px;
+  padding:22px 18px;
+  isolation:isolate;
+}
+.together-hero-text{max-width:64%}
+.together-hero-img{
+  right:0;
+  bottom:0;
+  width:46%;
+  height:92%;
+  object-fit:contain;
+  object-position:right bottom;
+}
+.interaction-chat-card{
+  display:grid;
+  grid-template-columns:minmax(88px,31%) minmax(0,1fr) auto auto;
+  column-gap:12px;
+  min-height:122px;
+  padding:0 16px 0 0;
+}
+.interaction-chat-art{
+  align-self:end;
+  width:100%;
+  height:112px;
+  margin:0;
+  object-fit:contain;
+  object-position:left bottom;
+}
+.interaction-chat-text{align-self:center}
+.interaction-grid-2{gap:12px}
+.interaction-grid .interaction-feature-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:112px minmax(104px,auto);
+  min-width:0;
+  min-height:216px;
+}
+.interaction-feature-card>.interaction-card-art{
+  align-self:end;
+  width:100%;
+  height:112px;
+  margin:0;
+  padding:6px 8px 0;
+  object-fit:contain;
+  object-position:center bottom;
+}
+.interaction-feature-copy{
+  min-width:0;
+  padding:10px 30px 14px 14px;
+}
+.interaction-grid .interaction-feature-card>.interaction-feature-copy{
+  grid-column:1;
+  grid-row:2;
+  align-self:stretch;
+  font-size:inherit;
+}
+.interaction-feature-copy strong{font-size:16px;line-height:1.35}
+.interaction-feature-copy small{line-height:1.45}
+.interaction-feature-copy em{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.interaction-feature-card>b{right:12px;bottom:13px;line-height:1}
+.bottom-nav{
+  bottom:max(10px,env(safe-area-inset-bottom));
+}
+
+@media(max-width:390px){
+  .together-hero{min-height:148px;padding:20px 16px}
+  .together-hero-text{max-width:67%}
+  .together-hero-img{width:44%}
+  .together-hero-pills{gap:5px}
+  .together-hero-pills span{padding:5px 8px;font-size:9.5px}
+  .interaction-chat-card{grid-template-columns:minmax(82px,30%) minmax(0,1fr) auto auto;padding-right:13px}
+  .interaction-chat-text strong{font-size:18px}
+  .interaction-chat-text small{font-size:11px}
+  .interaction-grid .interaction-feature-card{grid-template-rows:100px minmax(106px,auto);min-height:206px}
+  .interaction-feature-card>.interaction-card-art{height:100px;padding-inline:5px}
+  .interaction-feature-copy{padding:9px 27px 13px 12px}
+  .interaction-feature-copy strong{font-size:15px}
+  .interaction-feature-copy em{font-size:9px;padding:4px 7px}
+}
+
+@media(max-width:350px){
+  .together-hero-text{max-width:72%}
+  .together-hero-img{width:40%}
+  .together-hero-pills span:first-child{display:none}
+  .interaction-grid-2{grid-template-columns:1fr}
+  .interaction-grid .interaction-feature-card{
+    grid-template-columns:42% 1fr;
+    grid-template-rows:156px;
+    min-height:156px;
+  }
+  .interaction-feature-card>.interaction-card-art{height:156px;padding:10px 0 0}
+  .interaction-feature-copy{align-self:center;padding:14px 34px 14px 8px}
+  .interaction-grid .interaction-feature-card>.interaction-feature-copy{grid-column:2;grid-row:1;align-self:center}
+}
+
+/* V1.6.7 — keep chat stickers comfortably inside every tile */
+.sticker-grid button{display:grid;place-items:center;aspect-ratio:1}
+.sticker-grid button img{width:100%;height:100%;padding:7px;object-fit:contain}
+.sticker-message img{width:112px;height:112px;object-fit:contain;background:transparent}
+
+/* V1.6.8 — stable rooms, sticker tray and compact interaction cards */
+.room-card{
+  flex:0 0 132px;
+  min-height:162px;
+  justify-content:flex-start;
+}
+.room-thumb{
+  width:100%;
+  height:76px;
+  min-height:76px;
+  flex:0 0 76px;
+  object-fit:cover;
+}
+.room-card strong{
+  min-height:2.8em;
+  white-space:normal;
+  overflow:hidden;
+  text-overflow:clip;
+  line-height:1.4;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.room-card small{margin-top:auto}
+
+.sticker-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-auto-flow:row;
+  align-items:start;
+  gap:8px;
+  max-height:min(360px,42dvh);
+}
+.sticker-grid button{
+  display:block;
+  width:100%;
+  min-width:0;
+  height:auto;
+  aspect-ratio:1;
+  padding:5px;
+  line-height:0;
+}
+.sticker-grid button img{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:1;
+  padding:0;
+  object-fit:contain;
+  object-position:center;
+}
+.sticker-set-tab img{object-fit:contain}
+
+.together-hero{
+  min-height:138px;
+  padding:18px 16px;
+}
+.together-hero-text{max-width:62%}
+.together-hero-img{
+  right:6px;
+  bottom:4px;
+  width:43%;
+  height:calc(100% - 8px);
+  padding:8px 2px 0;
+  object-fit:contain;
+  object-position:center bottom;
+}
+.interaction-chat-card{
+  grid-template-columns:34% minmax(0,1fr) auto auto;
+  min-height:108px;
+  height:108px;
+  padding-right:14px;
+}
+.interaction-chat-art{
+  width:100%;
+  height:100%;
+  padding:8px 0 0 4px;
+  object-fit:contain;
+  object-position:left bottom;
+}
+.interaction-chat-text strong{font-size:18px}
+.interaction-grid-2{gap:10px;margin-top:10px}
+.interaction-grid .interaction-feature-card{
+  grid-template-columns:46% minmax(0,1fr);
+  grid-template-rows:142px;
+  min-height:142px;
+  height:142px;
+}
+.interaction-feature-card>.interaction-card-art{
+  grid-column:1;
+  grid-row:1;
+  align-self:end;
+  width:100%;
+  height:100%;
+  padding:10px 0 8px 6px;
+  object-fit:contain;
+  object-position:center bottom;
+}
+.interaction-grid .interaction-feature-card>.interaction-feature-copy{
+  grid-column:2;
+  grid-row:1;
+  align-self:center;
+  padding:12px 25px 12px 5px;
+}
+.interaction-feature-copy strong{font-size:14px;white-space:nowrap}
+.interaction-feature-copy small{font-size:9.5px}
+.interaction-feature-copy em{
+  max-width:100%;
+  margin-top:7px;
+  padding:4px 6px;
+  font-size:8px;
+}
+.interaction-feature-card>b{right:9px;bottom:11px;font-size:20px}
+
+@media(max-width:370px){
+  .interaction-grid .interaction-feature-card{grid-template-columns:44% minmax(0,1fr);grid-template-rows:136px;min-height:136px;height:136px}
+  .interaction-feature-card>.interaction-card-art{height:100%;padding:10px 0 10px 4px}
+  .interaction-grid .interaction-feature-card>.interaction-feature-copy{grid-column:2;grid-row:1;padding:10px 22px 10px 3px}
+  .interaction-feature-copy strong{font-size:13px}
+  .interaction-feature-copy em{font-size:7.5px;padding-inline:4px}
+}
+
+/* V1.7.1 — shared diary as a memory book, not a message board */
+.diary-view{padding-bottom:92px}
+.diary-header{padding:18px 3px 16px}
+.diary-header h2{margin:0;font-size:27px;line-height:1.35}
+.diary-header>p:last-child{margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+.diary-editor{
+  position:relative;
+  display:grid;
+  gap:14px;
+  padding:18px;
+  border:1px solid #e4d7be;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,249,235,.9));
+  box-shadow:0 14px 36px rgba(100,83,52,.09);
+  overflow:hidden;
+}
+.diary-editor:before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:5px;
+  background:linear-gradient(90deg,#9fbc85,#e8bd91,#e7a6a2);
+}
+.diary-editor label,.diary-editor fieldset{display:grid;gap:7px;margin:0;font-size:11px;font-weight:800;color:#615a4e}
+.diary-editor input,.diary-editor textarea{
+  width:100%;
+  border:1px solid #e2d8c7;
+  border-radius:14px;
+  background:rgba(255,255,255,.82);
+  padding:12px 13px;
+  color:var(--brown);
+  outline:none;
+}
+.diary-editor input:focus,.diary-editor textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 13%,transparent)}
+.diary-editor-top{display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px;align-items:end}
+.diary-editor fieldset{min-width:0;padding:0;border:0}
+.diary-editor legend{padding:0;margin-bottom:7px}
+.diary-mood-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.diary-mood-picker label{display:block;position:relative}
+.diary-mood-picker input{position:absolute;opacity:0;pointer-events:none}
+.diary-mood-picker span{display:grid;place-items:center;gap:1px;min-height:48px;padding:5px 1px;border:1px solid #e8dfd0;border-radius:12px;background:#fff;filter:saturate(.8)}
+.diary-mood-picker small{font-size:7px;color:var(--muted)}
+.diary-mood-picker input:checked+span{border-color:var(--green);background:var(--green-soft);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 12%,transparent);filter:none}
+.diary-title-field input{font-weight:800}
+.diary-content-field{position:relative}
+.diary-content-field textarea{min-height:142px;resize:vertical;line-height:1.7}
+.diary-content-field>small{position:absolute;right:11px;bottom:9px;color:var(--muted);font-size:8px;font-weight:500}
+.diary-form-actions{display:flex;gap:8px;justify-content:flex-end}
+.diary-form-actions .primary{width:auto;min-width:148px;margin:0;padding:12px 18px}
+.diary-cancel{border:0;border-radius:14px;padding:11px 15px;background:#eee8dc;color:#756d60;font-weight:800}
+.diary-book-head{display:flex;align-items:center;justify-content:space-between;margin:24px 4px 10px}
+.diary-book-head h3{margin:0;font-size:19px}
+.diary-book-head span{padding:5px 10px;border-radius:99px;background:var(--green-soft);color:var(--green-dark);font-size:10px;font-weight:800}
+.diary-timeline{position:relative;gap:14px;margin-top:0;padding-left:3px}
+.diary-timeline:before{content:"";position:absolute;top:15px;bottom:15px;left:29px;width:1px;background:#d9ccb5}
+.diary-entry{position:relative;display:grid!important;grid-template-columns:54px minmax(0,1fr);gap:9px;padding:0!important;border:0!important;background:transparent!important}
+.diary-date-badge{z-index:1;align-self:start;display:grid;place-items:center;width:54px;height:54px;border:1px solid #d8c8aa;border-radius:17px;background:#fffaf0;box-shadow:0 5px 12px rgba(87,72,44,.07)}
+.diary-date-badge b{font-size:17px;line-height:1}
+.diary-date-badge small{margin-top:2px;font-size:8px!important;color:#9a8061!important}
+.diary-paper{min-width:0;padding:15px 16px 13px;border:1px solid var(--line);border-radius:5px 20px 20px 20px;background:rgba(255,255,255,.88);box-shadow:0 9px 24px rgba(92,77,52,.07)}
+.diary-entry-meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.diary-entry-meta>span{flex:none;padding:4px 8px;border-radius:99px;background:#f6efe3;color:#7f6851;font-size:9px;font-weight:800}
+.diary-entry-meta small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:8.5px!important}
+.diary-paper h4{margin:10px 0 0;font-size:17px;line-height:1.4}
+.diary-paper>p{margin:6px 0 0!important;color:#655e53;font-size:12px;line-height:1.75!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
+.diary-entry-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:10px;padding-top:8px;border-top:1px dashed #e6ddce}
+.diary-entry-actions button{border:0;border-radius:9px;padding:5px 9px;background:#f3eee4;color:#7a7165;font-size:9px;font-weight:800}
+.diary-entry-actions button:last-child{background:#f9e9e5;color:#c37268}
+.diary-empty{display:grid;place-items:center;padding:32px;border:1px dashed #d8cbb5;border-radius:20px;background:rgba(255,255,255,.5);color:var(--muted);text-align:center}
+.diary-empty span{font-size:35px}.diary-empty strong{margin-top:8px;color:var(--brown)}.diary-empty p{margin:5px 0 0;font-size:11px}
+
+@media(max-width:390px){
+  .diary-editor{padding:16px 14px}
+  .diary-editor-top{grid-template-columns:1fr}
+  .diary-mood-picker span{min-height:44px}
+  .diary-paper{padding:13px 12px 11px}
+  .diary-entry-meta{align-items:flex-start;flex-direction:column;gap:5px}
+  .diary-entry-meta small{text-align:left}
+}
+
+/* V1.7.0 — compact, stable mobile chat layout */
+.interaction-view.chat-layout{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr);
+  column-gap:10px;
+  height:calc(100dvh - 188px);
+  min-height:420px;
+  padding-bottom:0;
+  overflow:hidden;
+}
+.chat-layout>.interaction-back{
+  grid-column:1;
+  grid-row:1;
+  align-self:center;
+  padding:10px 2px;
+  white-space:nowrap;
+}
+.chat-layout>.chat-head{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  padding:9px 0 10px;
+  border-bottom:1px solid rgba(218,207,188,.65);
+}
+.chat-head>div{min-width:0}
+.chat-head .eyebrow{margin-bottom:2px;font-size:8px}
+.chat-head h2{
+  margin:0;
+  max-width:240px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:20px;
+  line-height:1.3;
+}
+.chat-head .live-dot{flex:none;font-size:10px;padding:6px 9px}
+.chat-layout>.message-list{
+  grid-column:1/-1;
+  grid-row:2;
+  min-height:0;
+  padding:14px 3px 92px;
+  gap:8px;
+  scroll-padding-bottom:96px;
+}
+.message{
+  width:max-content;
+  min-width:76px;
+  max-width:min(78%,330px);
+  padding:9px 12px 7px;
+  border-radius:17px 17px 5px 17px;
+  box-shadow:0 5px 14px rgba(83,74,57,.06);
+  overflow-wrap:anywhere;
+}
+.message.other{border-radius:17px 17px 17px 5px}
+.message p{font-size:14px;line-height:1.55}
+.message .sender{margin:0 0 3px;font-size:9px;text-align:left}
+.message>small:last-child{margin-top:3px;font-size:8.5px}
+.message.sticker-message{
+  width:154px;
+  min-width:0;
+  max-width:42vw;
+  padding:7px 8px 6px;
+  background:rgba(255,255,255,.86);
+}
+.sticker-message img{
+  width:138px;
+  max-width:100%;
+  height:138px;
+  object-fit:contain;
+  border-radius:10px;
+}
+.chat-composer{
+  bottom:calc(88px + env(safe-area-inset-bottom));
+  grid-template-columns:42px minmax(0,1fr) 60px;
+  min-height:62px;
+  padding:8px 10px;
+  border-radius:21px;
+}
+.chat-composer input{height:44px;padding:10px 15px;font-size:14px;outline:none}
+.chat-composer input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 14%,transparent)}
+.chat-composer .round-button{width:42px;height:42px;align-self:center}
+.chat-composer .send-button{height:42px;align-self:center;padding:8px 10px;font-size:14px}
+.sticker-tray{
+  bottom:calc(158px + env(safe-area-inset-bottom));
+  max-height:min(430px,52dvh);
+  border-radius:22px;
+}
+.sticker-grid{max-height:min(350px,42dvh);padding-bottom:12px}
+
+@media(max-width:370px){
+  .interaction-view.chat-layout{column-gap:5px}
+  .chat-head h2{max-width:170px;font-size:18px}
+  .message.sticker-message{width:142px;max-width:45vw}
+  .sticker-message img{height:126px}
+  .chat-composer{grid-template-columns:40px minmax(0,1fr) 54px}
+}

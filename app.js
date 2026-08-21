@@ -97,36 +97,36 @@ const stickerSets = [
   { id: "goodnight2", img: "assets/stickers2/goodnight2.jpg", text: "晚安～" }
   ]},
   { id: "couple", name: "情侶互動", stickers: [
-    { id: "im_here", img: "assets/stickers3/im_here.jpg", text: "我來啦" },
-    { id: "wake_up", img: "assets/stickers3/wake_up.jpg", text: "起床囉" },
-    { id: "eat_together", img: "assets/stickers3/eat_together.jpg", text: "一起吃飯" },
-    { id: "angry", img: "assets/stickers3/angry.jpg", text: "哼！生氣了" },
-    { id: "forgive_me", img: "assets/stickers3/forgive_me.jpg", text: "原諒我嘛" },
-    { id: "miss_you", img: "assets/stickers3/miss_you.jpg", text: "好想見你" },
-    { id: "take_meds", img: "assets/stickers3/take_meds.jpg", text: "要乖乖吃藥" },
-    { id: "hard_work", img: "assets/stickers3/hard_work.jpg", text: "辛苦了" },
-    { id: "you_rock", img: "assets/stickers3/you_rock.jpg", text: "你好棒" },
-    { id: "ill_protect", img: "assets/stickers3/ill_protect.jpg", text: "有我在" },
-    { id: "charging_you", img: "assets/stickers3/charging_you.jpg", text: "給你充電" },
-    { id: "clingy", img: "assets/stickers3/clingy.jpg", text: "黏著你" },
-    { id: "kiss_here", img: "assets/stickers3/kiss_here.jpg", text: "親這裡" },
-    { id: "jealous", img: "assets/stickers3/jealous.jpg", text: "吃醋了" },
-    { id: "love_you_lots", img: "assets/stickers3/love_you_lots.jpg", text: "愛你一萬次" },
-    { id: "hug_me", img: "assets/stickers3/hug_me.jpg", text: "抱我" },
-    { id: "good_morning", img: "assets/stickers3/good_morning.jpg", text: "早安呀" },
-    { id: "good_night", img: "assets/stickers3/good_night.jpg", text: "晚安寶貝" },
-    { id: "ignoring_you", img: "assets/stickers3/ignoring_you.jpg", text: "不理你了" },
-    { id: "dont_be_mad", img: "assets/stickers3/dont_be_mad.jpg", text: "別生氣嘛" },
-    { id: "made_up", img: "assets/stickers3/made_up.jpg", text: "和好囉" },
-    { id: "eat_on_time", img: "assets/stickers3/eat_on_time.jpg", text: "記得吃飯" },
-    { id: "stay_warm", img: "assets/stickers3/stay_warm.jpg", text: "不要著涼" },
-    { id: "sweet_today", img: "assets/stickers3/sweet_today.jpg", text: "今天也要甜甜的" },
-    { id: "why_late", img: "assets/stickers3/why_late.jpg", text: "你怎麼還沒來" },
-    { id: "surprise_for_you", img: "assets/stickers3/surprise_for_you.jpg", text: "給妳的小驚喜" },
-    { id: "date_time", img: "assets/stickers3/date_time.jpg", text: "約會時間" },
-    { id: "glad_you_here", img: "assets/stickers3/glad_you_here.jpg", text: "有你真好" },
-    { id: "love_you_most", img: "assets/stickers3/love_you_most.jpg", text: "最喜歡你" },
-    { id: "together_forever", img: "assets/stickers3/together_forever.jpg", text: "永遠在一起" }
+    { id: "im_here", img: "assets/stickers3/im_here.png", text: "我來啦" },
+    { id: "wake_up", img: "assets/stickers3/wake_up.png", text: "起床囉" },
+    { id: "eat_together", img: "assets/stickers3/eat_together.png", text: "一起吃飯" },
+    { id: "angry", img: "assets/stickers3/angry.png", text: "哼！生氣了" },
+    { id: "forgive_me", img: "assets/stickers3/forgive_me.png", text: "原諒我嘛" },
+    { id: "miss_you", img: "assets/stickers3/miss_you.png", text: "好想見你" },
+    { id: "take_meds", img: "assets/stickers3/take_meds.png", text: "要乖乖吃藥" },
+    { id: "hard_work", img: "assets/stickers3/hard_work.png", text: "辛苦了" },
+    { id: "you_rock", img: "assets/stickers3/you_rock.png", text: "你好棒" },
+    { id: "ill_protect", img: "assets/stickers3/ill_protect.png", text: "有我在" },
+    { id: "charging_you", img: "assets/stickers3/charging_you.png", text: "給你充電" },
+    { id: "clingy", img: "assets/stickers3/clingy.png", text: "黏著你" },
+    { id: "kiss_here", img: "assets/stickers3/kiss_here.png", text: "親這裡" },
+    { id: "jealous", img: "assets/stickers3/jealous.png", text: "吃醋了" },
+    { id: "love_you_lots", img: "assets/stickers3/love_you_lots.png", text: "愛你一萬次" },
+    { id: "hug_me", img: "assets/stickers3/hug_me.png", text: "抱我" },
+    { id: "good_morning", img: "assets/stickers3/good_morning.png", text: "早安呀" },
+    { id: "good_night", img: "assets/stickers3/good_night.png", text: "晚安寶貝" },
+    { id: "ignoring_you", img: "assets/stickers3/ignoring_you.png", text: "不理你了" },
+    { id: "dont_be_mad", img: "assets/stickers3/dont_be_mad.png", text: "別生氣嘛" },
+    { id: "made_up", img: "assets/stickers3/made_up.png", text: "和好囉" },
+    { id: "eat_on_time", img: "assets/stickers3/eat_on_time.png", text: "記得吃飯" },
+    { id: "stay_warm", img: "assets/stickers3/stay_warm.png", text: "不要著涼" },
+    { id: "sweet_today", img: "assets/stickers3/sweet_today.png", text: "今天也要甜甜的" },
+    { id: "why_late", img: "assets/stickers3/why_late.png", text: "你怎麼還沒來" },
+    { id: "surprise_for_you", img: "assets/stickers3/surprise_for_you.png", text: "給妳的小驚喜" },
+    { id: "date_time", img: "assets/stickers3/date_time.png", text: "約會時間" },
+    { id: "glad_you_here", img: "assets/stickers3/glad_you_here.png", text: "有你真好" },
+    { id: "love_you_most", img: "assets/stickers3/love_you_most.png", text: "最喜歡你" },
+    { id: "together_forever", img: "assets/stickers3/together_forever.png", text: "永遠在一起" }
   ]}
 ];
 const allStickers = stickerSets.flatMap((set) => set.stickers);
@@ -147,6 +147,7 @@ let ledgerCategoryFilter = "";
 let myLastReadAt = null;
 let realtimeChannel = null;
 let diaries = [];
+let editingDiaryId = null;
 let dailyAnswers = [];
 let budgetViewFilter = "";
 
@@ -547,6 +548,7 @@ function computeAccountBalances() {
   const balances = { cash: 0, credit_card: 0, bank: 0, ewallet: 0 };
   const myId = session?.user?.id;
   transactions.forEach((x) => {
+    if (memberFilterId && x.user_id !== memberFilterId) return;
     if (x.user_id !== myId && memberPrivacy[x.user_id]) return;
     const key = balances.hasOwnProperty(x.payment_category) ? x.payment_category : "cash";
     balances[key] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
@@ -557,7 +559,9 @@ function renderAccountBalances() {
   const el = $("#accountBalances");
   if (!el) return;
   const balances = computeAccountBalances();
-  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
+  const selectedMember = memberFilterId ? roomMembers.find((m) => m.id === memberFilterId) : null;
+  const ownerLabel = selectedMember ? selectedMember.name : "全部成員";
+  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${escapeHTML(ownerLabel)} · ${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
 }
 let selectedPaymentCategory = "cash";
 let selectedSubAccount = "現金";
@@ -644,22 +648,69 @@ $$('[data-interaction-view]').forEach((button) => button.addEventListener("click
   const target = { chat: "interactionChat", diary: "interactionDiary", question: "interactionQuestion" }[button.dataset.interactionView];
   $("#" + target).classList.remove("hidden");
   if (button.dataset.interactionView === "chat") { scrollChat(); markChatRead(); }
-  if (button.dataset.interactionView === "diary") renderDiary();
+  if (button.dataset.interactionView === "diary") { resetDiaryForm(); renderDiary(); }
   if (button.dataset.interactionView === "question") renderDailyQuestion();
 }));
 $$('[data-interaction-back]').forEach((button) => button.addEventListener("click", showInteractionHub));
 
+const DIARY_PREFIX = "[[BORI_DIARY_V2]]";
+function parseDiaryContent(raw = "") {
+  if (!raw.startsWith(DIARY_PREFIX)) return { title: "生活隨筆", mood: "回憶", emoji: "📖", body: raw };
+  try {
+    const data = JSON.parse(raw.slice(DIARY_PREFIX.length));
+    const moodEmoji = { 幸福: "🥰", 開心: "😊", 平靜: "🌿", 疲累: "😴", 難過: "🥺" };
+    return { title: data.title || "生活隨筆", mood: data.mood || "回憶", emoji: moodEmoji[data.mood] || "📖", body: data.body || "" };
+  } catch { return { title: "生活隨筆", mood: "回憶", emoji: "📖", body: raw }; }
+}
+function packDiaryContent(title, mood, body) { return DIARY_PREFIX + JSON.stringify({ title, mood, body }); }
+function resetDiaryForm() {
+  editingDiaryId = null;
+  const form = $("#diaryForm"); if (!form) return;
+  form.reset(); $("#diaryDate").value = taiwanToday();
+  $("#diarySaveButton").textContent = "收藏這篇日記";
+  $("#diaryCancelEdit").classList.add("hidden");
+  $("#diaryCharCount").textContent = "0";
+}
 function renderDiary() {
   const el = $("#diaryList"); if (!el) return;
+  $("#diaryTotalCount").textContent = `${diaries.length} 篇`;
   el.innerHTML = diaries.length ? diaries.map((entry) => {
     const owner = roomMembers.find((m) => m.id === entry.user_id);
-    return `<article><small>${escapeHTML(entry.entry_date)} · ${escapeHTML(owner?.name || "成員")}</small><p>${escapeHTML(entry.content)}</p></article>`;
-  }).join("") : `<div class="empty-state compact"><p>還沒有日記，寫下第一篇吧。</p></div>`;
+    const diary = parseDiaryContent(entry.content || ""), mine = entry.user_id === session?.user?.id;
+    const date = new Date(`${entry.entry_date}T00:00:00+08:00`);
+    const dateLabel = date.toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "short" });
+    return `<article class="diary-entry"><div class="diary-date-badge"><b>${String(date.getDate()).padStart(2,"0")}</b><small>${date.getMonth()+1}月</small></div><div class="diary-paper"><div class="diary-entry-meta"><span>${escapeHTML(diary.emoji)} ${escapeHTML(diary.mood)}</span><small>${escapeHTML(dateLabel)} · ${escapeHTML(owner?.name || (mine ? profile?.display_name : "成員") || "成員")}</small></div><h4>${escapeHTML(diary.title)}</h4><p>${escapeHTML(diary.body)}</p>${mine ? `<div class="diary-entry-actions"><button type="button" data-edit-diary="${entry.id}">編輯</button><button type="button" data-delete-diary="${entry.id}">刪除</button></div>` : ""}</div></article>`;
+  }).join("") : `<div class="diary-empty"><span>📖</span><strong>故事正要開始</strong><p>收藏第一篇屬於你們的回憶吧。</p></div>`;
 }
 $("#diaryForm").addEventListener("submit", async (e) => {
-  e.preventDefault(); const content = $("#diaryContent").value.trim(); if (!content) return;
-  const { error } = await supabaseClient.from("diaries").insert({ book_id: activeBookId, user_id: session.user.id, entry_date: taiwanToday(), content });
-  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDiary(); renderTogetherHub(); toast("日記已保存 📖");
+  e.preventDefault();
+  const title = $("#diaryTitle").value.trim(), body = $("#diaryContent").value.trim(), entryDate = $("#diaryDate").value, mood = document.querySelector('[name="diaryMood"]:checked')?.value || "幸福";
+  if (!title || !body || !entryDate) return;
+  const content = packDiaryContent(title, mood, body);
+  const query = editingDiaryId
+    ? supabaseClient.from("diaries").update({ entry_date: entryDate, content }).eq("id", editingDiaryId).eq("user_id", session.user.id)
+    : supabaseClient.from("diaries").insert({ book_id: activeBookId, user_id: session.user.id, entry_date: entryDate, content });
+  const { error } = await query;
+  if (error) return toast(error.message);
+  const wasEditing = !!editingDiaryId; resetDiaryForm(); await loadInteractionData(); renderDiary(); renderTogetherHub(); toast(wasEditing ? "日記已更新 ✨" : "日記已收藏 📖");
+});
+$("#diaryContent").addEventListener("input", (e) => { $("#diaryCharCount").textContent = e.target.value.length; });
+$("#diaryCancelEdit").addEventListener("click", resetDiaryForm);
+$("#diaryList").addEventListener("click", async (e) => {
+  const editBtn = e.target.closest("[data-edit-diary]"), deleteBtn = e.target.closest("[data-delete-diary]");
+  if (editBtn) {
+    const entry = diaries.find((d) => String(d.id) === editBtn.dataset.editDiary); if (!entry) return;
+    const diary = parseDiaryContent(entry.content || ""); editingDiaryId = entry.id;
+    $("#diaryDate").value = entry.entry_date; $("#diaryTitle").value = diary.title === "生活隨筆" ? "" : diary.title; $("#diaryContent").value = diary.body;
+    const mood = document.querySelector(`[name="diaryMood"][value="${diary.mood}"]`); if (mood) mood.checked = true;
+    $("#diaryCharCount").textContent = diary.body.length; $("#diarySaveButton").textContent = "儲存修改"; $("#diaryCancelEdit").classList.remove("hidden");
+    $("#diaryForm").scrollIntoView({ behavior: "smooth", block: "start" }); return;
+  }
+  if (deleteBtn) {
+    const entry = diaries.find((d) => String(d.id) === deleteBtn.dataset.deleteDiary); if (!entry || entry.user_id !== session.user.id || !confirm("確定要刪除這篇日記嗎？")) return;
+    const { error } = await supabaseClient.from("diaries").delete().eq("id", entry.id).eq("user_id", session.user.id);
+    if (error) return toast(error.message); if (editingDiaryId === entry.id) resetDiaryForm(); await loadInteractionData(); renderDiary(); renderTogetherHub(); toast("日記已刪除");
+  }
 });
 
 const dailyQuestionBank = [
@@ -690,10 +741,10 @@ function renderTogetherHub() {
   }
   const today = taiwanToday();
   const todayCount = messages.filter((m) => m.created_at && m.created_at.slice(0, 10) === today).length;
-  $("#togetherTodayCount").textContent = `📨 今日 ${todayCount} 則`;
-  $("#diaryCountHint").textContent = diaries.length ? `${diaries.length} 篇回憶` : "留下今天的回憶";
+  $("#togetherTodayCount").textContent = `💌 今日 ${todayCount} 則`;
+  $("#diaryCountHint").textContent = diaries.length ? `📖 ${diaries.length} 篇回憶` : "📖 開始第一篇";
   const answeredToday = dailyAnswers.some((a) => a.question_date === today && a.user_id === session?.user?.id);
-  $("#questionStatusHint").textContent = answeredToday ? "今日已回答" : "今日未回答";
+  $("#questionStatusHint").textContent = answeredToday ? "💞 今日已回答" : "💞 今日未回答";
   const feedItems = [
     ...diaries.map((d) => ({ ts: d.created_at, type: "diary", data: d })),
     ...dailyAnswers.map((a) => ({ ts: a.created_at, type: "answer", data: a }))
@@ -703,8 +754,9 @@ function renderTogetherHub() {
     const name = item.data.user_id === session?.user?.id ? "我" : (owner?.name || "成員");
     const timeLabel = formatRelativeTime(item.ts);
     const label = item.type === "diary" ? `${escapeHTML(name)} 新增了一篇日記` : `${escapeHTML(name)} 回答了每日一問`;
-    const quote = item.type === "diary" ? item.data.content : item.data.question_text;
-    return `<div class="together-feed-item"><div><strong>${label}</strong><small>「${escapeHTML(String(quote).slice(0, 30))}${String(quote).length > 30 ? "…" : ""}」</small></div><span class="together-feed-time">${timeLabel}</span></div>`;
+    const quote = item.type === "diary" ? `${parseDiaryContent(item.data.content || "").title}｜${parseDiaryContent(item.data.content || "").body}` : item.data.question_text;
+    const icon = item.type === "diary" ? "📖" : "💗";
+    return `<div class="together-feed-item"><span class="together-feed-icon">${icon}</span><div class="together-feed-copy"><strong>${label}</strong><small>「${escapeHTML(String(quote).slice(0, 30))}${String(quote).length > 30 ? "…" : ""}」</small></div><span class="together-feed-time">${timeLabel}　›</span></div>`;
   }).join("") : `<p class="muted-hint">還沒有互動紀錄，開始寫日記或回答每日一問吧。</p>`;
 }
 function renderDailyQuestion() {
@@ -1253,9 +1305,9 @@ if (window.visualViewport) {
     const composer = $("#chatForm");
     if (!composer) return;
     const keyboardOffset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    composer.style.bottom = `${94 + keyboardOffset}px`;
+    composer.style.bottom = `${88 + keyboardOffset}px`;
     const tray = $("#stickerTray");
-    if (tray) tray.style.bottom = `${164 + keyboardOffset}px`;
+    if (tray) tray.style.bottom = `${158 + keyboardOffset}px`;
     if ($("#chatPage")?.classList.contains("active")) scrollChat();
   }
   vv.addEventListener("resize", adjustChatForKeyboard);
