@@ -99,13 +99,16 @@ let ledgerTypeFilter = "";
 let ledgerCategoryFilter = "";
 let myLastReadAt = null;
 let realtimeChannel = null;
+let diaries = [];
+let dailyAnswers = [];
+let budgetViewFilter = "";
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
 function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id)); }
-const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "expenseAnalysisDialog"];
+const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { scrollChat(); markChatRead(); } if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") showInteractionHub(); if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -197,7 +200,7 @@ async function fetchLedger() {
 
 async function loadActiveBookData() {
   unsubscribeRealtime();
-  transactions = []; budgets = []; messages = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
+  transactions = []; budgets = []; messages = []; diaries = []; dailyAnswers = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
   if (!activeBookId) return;
   const msPromise = supabaseClient.from("messages").select("*").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
   const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at").eq("book_id", activeBookId);
@@ -223,7 +226,18 @@ async function loadActiveBookData() {
       toast(`暱稱載入失敗：${error.message}`);
     }
   }
+  await loadInteractionData();
   subscribeRealtime();
+}
+
+async function loadInteractionData() {
+  if (!activeBookId) return;
+  const [diaryResult, answerResult] = await Promise.all([
+    supabaseClient.from("diaries").select("*").eq("book_id", activeBookId).order("entry_date", { ascending: false }).order("created_at", { ascending: false }).limit(100),
+    supabaseClient.from("daily_answers").select("*").eq("book_id", activeBookId).order("question_date", { ascending: false }).limit(100)
+  ]);
+  if (!diaryResult.error) diaries = diaryResult.data || [];
+  if (!answerResult.error) dailyAnswers = answerResult.data || [];
 }
 
 let ledgerRefreshTimer = null;
@@ -255,6 +269,8 @@ function subscribeRealtime() {
       await loadBooks();
       renderAll();
     })
+    .on("postgres_changes", { event: "*", schema: "public", table: "diaries", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDiary(); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "daily_answers", filter: `book_id=eq.${activeBookId}` }, async () => { await loadInteractionData(); renderDailyQuestion(); })
     .subscribe();
 }
 function unsubscribeRealtime() { if (realtimeChannel && supabaseClient) supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
@@ -266,7 +282,7 @@ async function switchBook(bookId) {
   renderAll();
 }
 
-function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderAnalysis(); renderUnreadBadge(); }
+function renderAll() { renderProfile(); renderBookSwitcher(); renderTopbarRoom(); renderSwitchRoomList(); renderHome(); renderAdd(); renderChat(); renderLedger(); renderInsights(); renderAnalysis(); renderDiary(); renderDailyQuestion(); renderUnreadBadge(); }
 function renderSwitchRoomList() {
   $("#switchRoomList").innerHTML = books.map((b) => `<button class="switch-room-item ${b.id === activeBookId ? "active" : ""}" data-book="${b.id}"><img src="${typeIcon[b.type] || typeIcon.other}" alt="" /><span><strong>${escapeHTML(b.name)}</strong><small>${memberCounts[b.id] || 1} 位成員</small></span>${b.id === activeBookId ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>' : ""}</button>`).join("");
 }
@@ -355,7 +371,7 @@ function renderCategorySelects() {
   $("#budgetCategory").innerHTML = activeCategories().map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
   const allNames = [...new Set([...activeCategories().map((c) => c.name), ...incomeCategories])];
   $("#ledgerCategoryFilter").innerHTML = `<option value="">全部分類</option>` + allNames.map((name) => `<option value="${escapeHTML(name)}" ${ledgerCategoryFilter === name ? "selected" : ""}>${escapeHTML(name)}</option>`).join("");
-  $("#budgetMember").innerHTML = `<option value="">全房共用</option>` + roomMembers.map((m) => `<option value="${m.id}">${escapeHTML(m.name)}</option>`).join("");
+  $("#budgetViewFilter").innerHTML = `<option value="">全部成員</option><option value="shared">全房共用</option>` + roomMembers.map((m) => `<option value="${m.id}" ${budgetViewFilter === m.id ? "selected" : ""}>${escapeHTML(m.name)}</option>`).join("");
 }
 function renderCategoryManageList() {
   const cats = activeCategories();
@@ -416,7 +432,7 @@ function renderHome() {
   $("#homeDashboard").classList.toggle("hidden", !has);
   if (!has) return;
   const expenses = monthTransactions("expense"), incomes = monthTransactions("income");
-  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0), bud = budgets.reduce((s, x) => s + Number(x.amount), 0);
+  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0), inc = incomes.reduce((s, x) => s + Number(x.amount), 0), bud = budgets.filter((b) => b.is_shared || b.assigned_user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
   $("#overviewRange").textContent = monthRangeLabel();
   $("#incomeTotal").textContent = money(inc); $("#expenseTotal").textContent = money(exp);
   $("#availableAmount").textContent = money(bud ? Math.max(bud - exp, 0) : inc - exp);
@@ -424,15 +440,39 @@ function renderHome() {
 }
 function renderBudgets(expenses) {
   const el = $("#budgetPreview");
+  if (!el) return;
   if (!budgets.length) { el.innerHTML = `<div class="empty-state compact"><p>尚未設定預算，先為常用分類設定上限吧。</p></div>`; return; }
-  el.innerHTML = budgets.map((b) => {
-    const scopedExpenses = b.assigned_user_id ? expenses.filter((x) => x.user_id === b.assigned_user_id) : expenses;
-    const used = scopedExpenses.filter((x) => x.category === b.category).reduce((s, x) => s + Number(x.amount), 0), pct = Number(b.amount) ? Math.min(120, (used / Number(b.amount)) * 100) : 0;
-    const member = roomMembers.find((m) => m.id === b.assigned_user_id);
-    const scopeLabel = member ? member.name : "全房共用";
-    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(b.category)} ${escapeHTML(b.category)}<small class="budget-scope">${escapeHTML(scopeLabel)}</small></span><strong>${money(used)} / ${money(b.amount)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(Number(b.amount) - used, 0))}`}</small></article>`;
-  }).join("");
+  let filtered = budgets;
+  if (budgetViewFilter === "shared") filtered = filtered.filter((b) => b.is_shared);
+  else if (budgetViewFilter) filtered = filtered.filter((b) => b.assigned_user_id === budgetViewFilter);
+  const groups = new Map();
+  filtered.forEach((b) => { const list = groups.get(b.category) || []; list.push(b); groups.set(b.category, list); });
+  el.innerHTML = [...groups.entries()].map(([category, rows]) => {
+    const total = rows.reduce((s, b) => s + Number(b.amount), 0);
+    const scopes = rows.map((b) => b.is_shared ? "全房共用" : (roomMembers.find((m) => m.id === b.assigned_user_id)?.name || "成員"));
+    const ownerIds = new Set(rows.filter((b) => !b.is_shared).map((b) => b.assigned_user_id));
+    const hasShared = rows.some((b) => b.is_shared);
+    const used = expenses.filter((x) => x.category === category && (hasShared || ownerIds.has(x.user_id))).reduce((s, x) => s + Number(x.amount), 0);
+    const pct = total ? Math.min(120, (used / total) * 100) : 0;
+    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(category)} ${escapeHTML(category)}<small class="budget-scope">${escapeHTML([...new Set(scopes)].join("、"))}</small></span><strong>${money(used)} / ${money(total)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(total - used, 0))}`}</small></article>`;
+  }).join("") || `<div class="empty-state compact"><p>這個篩選沒有預算。</p></div>`;
 }
+
+function renderInsights() {
+  const has = !!activeBookId;
+  $("#insightsEmpty").classList.toggle("hidden", has);
+  $("#insightsContent").classList.toggle("hidden", !has);
+  if (!has) return;
+  renderMemberFilterRow();
+  renderAnalysis();
+  renderBudgets(monthTransactions("expense"));
+}
+$("#budgetViewFilter").addEventListener("change", (e) => { budgetViewFilter = e.target.value; renderInsights(); });
+$$('[data-insight-tab]').forEach((button) => button.addEventListener("click", () => {
+  $$('[data-insight-tab]').forEach((b) => b.classList.toggle("active", b === button));
+  $("#insightAnalysis").classList.toggle("hidden", button.dataset.insightTab !== "analysis");
+  $("#insightBudget").classList.toggle("hidden", button.dataset.insightTab !== "budget");
+}));
 const accountIconSvg = {
   cash: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>',
   credit_card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>',
@@ -541,6 +581,60 @@ function renderAnalysis() {
   });
   $("#memberAnalysisList").innerHTML = memberRows.join("") || `<p class="muted">尚無成員資料</p>`;
 }
+function showInteractionHub() {
+  $("#interactionHub")?.classList.remove("hidden");
+  $$(".interaction-view").forEach((view) => view.classList.add("hidden"));
+}
+$$('[data-interaction-view]').forEach((button) => button.addEventListener("click", () => {
+  $("#interactionHub").classList.add("hidden");
+  $$(".interaction-view").forEach((view) => view.classList.add("hidden"));
+  const target = { chat: "interactionChat", diary: "interactionDiary", question: "interactionQuestion" }[button.dataset.interactionView];
+  $("#" + target).classList.remove("hidden");
+  if (button.dataset.interactionView === "chat") { scrollChat(); markChatRead(); }
+  if (button.dataset.interactionView === "diary") renderDiary();
+  if (button.dataset.interactionView === "question") renderDailyQuestion();
+}));
+$$('[data-interaction-back]').forEach((button) => button.addEventListener("click", showInteractionHub));
+
+function renderDiary() {
+  const el = $("#diaryList"); if (!el) return;
+  el.innerHTML = diaries.length ? diaries.map((entry) => {
+    const owner = roomMembers.find((m) => m.id === entry.user_id);
+    return `<article><small>${escapeHTML(entry.entry_date)} · ${escapeHTML(owner?.name || "成員")}</small><p>${escapeHTML(entry.content)}</p></article>`;
+  }).join("") : `<div class="empty-state compact"><p>還沒有日記，寫下第一篇吧。</p></div>`;
+}
+$("#diaryForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const content = $("#diaryContent").value.trim(); if (!content) return;
+  const { error } = await supabaseClient.from("diaries").insert({ book_id: activeBookId, user_id: session.user.id, entry_date: taiwanToday(), content });
+  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDiary(); toast("日記已保存 📖");
+});
+
+const dailyQuestionBank = [
+  "最近有哪一件小事讓你感到被愛？", "你希望別人怎麼陪伴壓力大的你？", "童年最幸福的一段回憶是什麼？", "如果明天放假，你最想一起做什麼？", "你最欣賞房間裡每位成員的哪個特點？", "最近有什麼心願還沒告訴大家？", "什麼樣的一句話最能安慰你？", "你理想中的週末早晨是什麼樣子？", "最近學到關於自己的哪件事？", "有哪個習慣希望大家一起培養？", "你最想重新體驗哪一天？", "什麼事情會讓你很有安全感？", "最近最想感謝房間裡的誰、為什麼？", "如果可以一起旅行，你最想去哪裡？"
+];
+function dailyQuestionFor(dateStr) {
+  const dayNumber = Math.floor(Date.parse(`${dateStr}T00:00:00+08:00`) / 86400000);
+  return dailyQuestionBank[Math.abs(dayNumber) % dailyQuestionBank.length];
+}
+function renderDailyQuestion() {
+  const today = taiwanToday(), question = dailyQuestionFor(today);
+  $("#questionDate").textContent = today;
+  $("#dailyQuestionText").textContent = question;
+  const mine = dailyAnswers.find((a) => a.question_date === today && a.user_id === session?.user?.id);
+  $("#dailyAnswerForm").classList.toggle("hidden", !!mine);
+  $("#questionLockHint").textContent = mine ? "你已回答。所有人的答案會在明天 00:00（台灣時間）解鎖。" : "答案會在明天 00:00（台灣時間）一起解鎖。";
+  const unlocked = dailyAnswers.filter((a) => a.question_date < today);
+  $("#dailyAnswersList").innerHTML = unlocked.length ? unlocked.map((answer) => {
+    const owner = roomMembers.find((m) => m.id === answer.user_id);
+    return `<article><small>${escapeHTML(answer.question_date)} · ${escapeHTML(answer.question_text)}</small><strong>${escapeHTML(owner?.name || "成員")}</strong><p>${escapeHTML(answer.answer)}</p></article>`;
+  }).join("") : `<p class="muted-hint">過往解鎖的回答會出現在這裡。</p>`;
+}
+$("#dailyAnswerForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const answer = $("#dailyAnswerInput").value.trim(); if (!answer) return;
+  const today = taiwanToday();
+  const { error } = await supabaseClient.from("daily_answers").insert({ book_id: activeBookId, user_id: session.user.id, question_date: today, question_text: dailyQuestionFor(today), answer });
+  if (error) return toast(error.message); e.target.reset(); await loadInteractionData(); renderDailyQuestion(); toast("今天的答案已鎖定 💞");
+});
 
 async function createBook(name, type) {
   const code = inviteCode();
@@ -555,12 +649,79 @@ async function addTransaction(type, title, amount, category, note = "", date = n
   if (error) throw error;
 }
 
+function taiwanToday() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+function parseConversationalRecord(input) {
+  const text = String(input || "").trim();
+  if (!text) throw new Error("請先說或輸入一筆紀錄");
+  const today = taiwanToday();
+  let date = today, cleaned = text;
+  const fullDate = text.match(/(20\d{2})[年\/-](\d{1,2})[月\/-](\d{1,2})日?/);
+  const shortDate = text.match(/(?:^|\s)(\d{1,2})[月\/-](\d{1,2})日?/);
+  if (fullDate) { date = `${fullDate[1]}-${pad2(fullDate[2])}-${pad2(fullDate[3])}`; cleaned = cleaned.replace(fullDate[0], " "); }
+  else if (shortDate) { date = `${today.slice(0, 4)}-${pad2(shortDate[1])}-${pad2(shortDate[2])}`; cleaned = cleaned.replace(shortDate[0], " "); }
+  const amountMatch = cleaned.match(/(?:\$|NT\$?|元)?\s*(\d+(?:\.\d+)?)/i);
+  if (!amountMatch) throw new Error("找不到金額，例如：早餐 85 現金");
+  const amount = Number(amountMatch[1]);
+  cleaned = cleaned.replace(amountMatch[0], " ");
+  const income = /(收入|薪水|薪資|獎金|退款|入帳|賺)/.test(cleaned);
+  const type = income ? "income" : "expense";
+  const paymentRules = [{ words: /信用卡|刷卡/, key: "credit_card", name: "信用卡" }, { words: /銀行|轉帳/, key: "bank", name: "銀行帳戶" }, { words: /LINE\s*Pay|街口|電子支付/i, key: "ewallet", name: "電子支付" }, { words: /現金/, key: "cash", name: "現金" }];
+  const payment = paymentRules.find((rule) => rule.words.test(cleaned)) || paymentRules[3];
+  cleaned = cleaned.replace(payment.words, " ").replace(/(收入|支出|記帳|一筆)/g, " ").replace(/\s+/g, " ").trim();
+  const expenseRules = [{ re: /早餐|午餐|晚餐|餐|便當|咖啡|飲料/, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|停車/, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂/, cat: "休閒育樂" }, { re: /房租|租金|房貸/, cat: "住房" }, { re: /水費|電費|瓦斯/, cat: "水電瓦斯" }, { re: /醫院|看醫生|藥/, cat: "醫療保健" }, { re: /寵物|貓|狗/, cat: "寵物" }];
+  const incomeRules = [{ re: /薪水|薪資/, cat: "薪水" }, { re: /獎金/, cat: "獎金" }, { re: /退款/, cat: "退款" }, { re: /投資|股息/, cat: "投資" }];
+  const category = ((income ? incomeRules : expenseRules).find((rule) => rule.re.test(cleaned))?.cat) || (income ? "其他" : "其他");
+  return { type, title: cleaned || category, amount, category, date, paymentCategory: payment.key, paymentMethod: payment.name };
+}
+async function saveConversationalRecord() {
+  try {
+    const parsed = parseConversationalRecord($("#aiBookkeepingInput").value);
+    await addTransaction(parsed.type, parsed.title, parsed.amount, parsed.category, "對話記帳", parsed.date, parsed.paymentCategory, parsed.paymentMethod);
+    $("#aiBookkeepingResult").textContent = `已記錄：${parsed.date} ${parsed.title} ${money(parsed.amount)}（${parsed.category}／${parsed.paymentMethod}）`;
+    $("#aiBookkeepingInput").value = "";
+    await loadActiveBookData(); renderAll();
+    toast("對話記帳完成 ✨");
+  } catch (error) { $("#aiBookkeepingResult").textContent = error.message; }
+}
+$("#parseBookkeepingBtn").addEventListener("click", saveConversationalRecord);
+$("#aiBookkeepingInput").addEventListener("keydown", (e) => { if (e.key === "Enter") saveConversationalRecord(); });
+$("#voiceBookkeepingBtn").addEventListener("click", () => {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) return toast("此瀏覽器不支援語音辨識，請改用文字輸入");
+  const recognition = new Recognition(); recognition.lang = "zh-TW"; recognition.interimResults = false;
+  recognition.onstart = () => { $("#voiceBookkeepingBtn").classList.add("listening"); $("#aiBookkeepingResult").textContent = "正在聆聽…"; };
+  recognition.onend = () => $("#voiceBookkeepingBtn").classList.remove("listening");
+  recognition.onerror = () => { $("#aiBookkeepingResult").textContent = "沒有聽清楚，請再試一次"; };
+  recognition.onresult = (event) => { $("#aiBookkeepingInput").value = event.results[0][0].transcript; saveConversationalRecord(); };
+  recognition.start();
+});
+
 
 $$('[data-auth-tab]').forEach((b) => b.addEventListener("click", () => {
   $$('[data-auth-tab]').forEach((x) => x.classList.toggle("active", x === b));
   $("#loginForm").classList.toggle("hidden", b.dataset.authTab !== "login"); $("#registerForm").classList.toggle("hidden", b.dataset.authTab !== "register");
 }));
 $("#loginForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signInWithPassword({ email: $("#loginEmail").value.trim(), password: $("#loginPassword").value }); if (error) return toast(error.message); session = data.session; await enterApp(); toast("登入成功 🌾"); });
+let adminAccessCode = "";
+$("#adminEntryBtn").addEventListener("click", () => { adminAccessCode = ""; $("#adminCodeForm").classList.remove("hidden"); $("#adminPanel").classList.add("hidden"); $("#adminCodeForm").reset(); openDialog("adminDialog"); });
+
+async function openAdminPortal(code = adminAccessCode) {
+  const { data, error } = await supabaseClient.rpc("admin_list_rooms_by_code", { p_code: code });
+  if (error) return toast("管理碼錯誤");
+  adminAccessCode = code;
+  $("#adminCodeForm").classList.add("hidden"); $("#adminPanel").classList.remove("hidden");
+  $("#adminRoomList").innerHTML = (data || []).map((room) => `<article><div><strong>${escapeHTML(room.name)}</strong><small>${room.member_count} 位成員 · ${room.transaction_count} 筆紀錄</small></div><button type="button" data-admin-delete-room="${room.id}">刪除房間</button></article>`).join("") || `<p class="muted-hint">目前沒有房間。</p>`;
+}
+$("#adminCodeForm").addEventListener("submit", async (e) => { e.preventDefault(); const code = $("#adminCodeInput").value.trim(); if (!/^\d{8}$/.test(code)) return toast("請輸入 8 位數字"); await openAdminPortal(code); });
+$("#adminRoomList").addEventListener("click", async (e) => {
+  const button = e.target.closest("[data-admin-delete-room]"); if (!button) return;
+  if (!confirm("確定要永久刪除這個房間與所有相關資料嗎？此動作無法復原。")) return;
+  const { error } = await supabaseClient.rpc("admin_delete_room_by_code", { p_code: adminAccessCode, p_book_id: button.dataset.adminDeleteRoom });
+  if (error) return toast(error.message); await openAdminPortal(); toast("房間已刪除");
+});
 $("#registerForm").addEventListener("submit", async (e) => { e.preventDefault(); const { data, error } = await supabaseClient.auth.signUp({ email: $("#registerEmail").value.trim(), password: $("#registerPassword").value, options: { data: { display_name: $("#registerName").value.trim() } } }); if (error) return toast(error.message); if (data.session) { session = data.session; await enterApp(); } else { toast("註冊成功，請到信箱完成驗證"); $$('[data-auth-tab]')[0].click(); } });
 $("#signOutBtn").addEventListener("click", async () => { unsubscribeRealtime(); await supabaseClient.auth.signOut(); session = null; showOnly("authScreen"); toast("已登出"); });
 $("#editAvatarBtn").addEventListener("click", () => $("#avatarFileInput").click());
@@ -735,13 +896,14 @@ $("#deleteTransactionBtn").addEventListener("click", async () => {
 });
 $("#budgetForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const assignedUserId = $("#budgetMember").value || null;
+  const isShared = $("#sharedBudgetCheckbox").checked;
+  const assignedUserId = isShared ? null : session.user.id;
   const category = $("#budgetCategory").value;
   let deleteQuery = supabaseClient.from("budgets").delete().eq("book_id", activeBookId).eq("category", category).eq("month", currentMonth());
-  deleteQuery = assignedUserId ? deleteQuery.eq("assigned_user_id", assignedUserId) : deleteQuery.is("assigned_user_id", null);
+  deleteQuery = isShared ? deleteQuery.eq("is_shared", true) : deleteQuery.eq("assigned_user_id", assignedUserId).eq("is_shared", false);
   const { error: deleteError } = await deleteQuery;
   if (deleteError) return toast(deleteError.message);
-  const row = { book_id: activeBookId, category, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id, assigned_user_id: assignedUserId };
+  const row = { book_id: activeBookId, category, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id, assigned_user_id: assignedUserId, is_shared: isShared };
   const { error } = await supabaseClient.from("budgets").insert(row);
   if (error) return toast(error.message);
   e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已同步到房間 🎯");
@@ -768,10 +930,18 @@ async function renderMemberList() {
     const memberProfile = profileMap.get(m.user_id);
     const name = memberProfile?.display_name || "BORI 使用者";
     const avatar = memberProfile?.avatar_url ? `<img src="${memberProfile.avatar_url}" alt="" />` : `<span class="member-emoji">🐻</span>`;
-    return `<div class="member-row"><span class="member-avatar">${avatar}</span><span class="member-info"><strong>${escapeHTML(name)}</strong><small>${m.role === "owner" ? "擁有者" : "成員"}</small></span></div>`;
+    const canKick = activeBook()?.role === "owner" && m.user_id !== session?.user?.id;
+    return `<div class="member-row"><span class="member-avatar">${avatar}</span><span class="member-info"><strong>${escapeHTML(name)}</strong><small>${m.role === "owner" ? "擁有者" : "成員"}</small></span>${canKick ? `<button type="button" class="kick-member-btn" data-kick-member="${m.user_id}">移出</button>` : ""}</div>`;
   }).join("") : `<p class="muted-hint">目前沒有成員資料。</p>`;
 }
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="memberListDialog"]')) renderMemberList(); });
+$("#memberList").addEventListener("click", async (e) => {
+  const button = e.target.closest("[data-kick-member]"); if (!button) return;
+  const member = roomMembers.find((m) => m.id === button.dataset.kickMember);
+  if (!confirm(`確定要將 ${member?.name || "這位成員"} 移出房間嗎？`)) return;
+  const { error } = await supabaseClient.rpc("kick_room_member", { p_book_id: activeBookId, p_user_id: button.dataset.kickMember });
+  if (error) return toast(error.message); await loadBooks(); await loadActiveBookData(); renderAll(); renderMemberList(); toast("成員已移出房間");
+});
 function renderAccountSecurity() {
   const isGoogle = session?.user?.app_metadata?.provider === "google";
   $("#loginMethodValue").textContent = isGoogle ? "Google 帳號" : "Email";

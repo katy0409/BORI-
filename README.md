@@ -1,4 +1,4 @@
-# BORI V1.4.0 — Production Cloud Life
+# BORI V1.6.0 — Production Cloud Life
 
 這是一般使用者正式版：使用者不需要輸入 Supabase Key。
 
@@ -20,3 +20,7 @@
 
 既有專案請在 Supabase SQL Editor 執行一次 `supabase-fix-member-privacy.sql`。
 這會讓同一房間的成員能顯示彼此暱稱，並在資料庫層阻止其他成員讀取已開啟「隱藏我的帳戶餘額」者的收入紀錄。
+
+## V1.6 升級
+
+依序執行 `supabase-v1.5-upgrade.sql`、`supabase-v1.6-upgrade.sql`。詳細步驟與管理者 Email 設定請見 `UPDATE-INSTRUCTIONS.md`。
