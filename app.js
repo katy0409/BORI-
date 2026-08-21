@@ -668,13 +668,33 @@ function parseConversationalRecord(input) {
   cleaned = cleaned.replace(amountMatch[0], " ");
   const income = /(收入|薪水|薪資|獎金|退款|入帳|賺)/.test(cleaned);
   const type = income ? "income" : "expense";
-  const paymentRules = [{ words: /信用卡|刷卡/, key: "credit_card", name: "信用卡" }, { words: /銀行|轉帳/, key: "bank", name: "銀行帳戶" }, { words: /LINE\s*Pay|街口|電子支付/i, key: "ewallet", name: "電子支付" }, { words: /現金/, key: "cash", name: "現金" }];
-  const payment = paymentRules.find((rule) => rule.words.test(cleaned)) || paymentRules[3];
-  cleaned = cleaned.replace(payment.words, " ").replace(/(收入|支出|記帳|一筆)/g, " ").replace(/\s+/g, " ").trim();
-  const expenseRules = [{ re: /早餐|午餐|晚餐|餐|便當|咖啡|飲料/, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|停車/, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂/, cat: "休閒育樂" }, { re: /房租|租金|房貸/, cat: "住房" }, { re: /水費|電費|瓦斯/, cat: "水電瓦斯" }, { re: /醫院|看醫生|藥/, cat: "醫療保健" }, { re: /寵物|貓|狗/, cat: "寵物" }];
-  const incomeRules = [{ re: /薪水|薪資/, cat: "薪水" }, { re: /獎金/, cat: "獎金" }, { re: /退款/, cat: "退款" }, { re: /投資|股息/, cat: "投資" }];
-  const category = ((income ? incomeRules : expenseRules).find((rule) => rule.re.test(cleaned))?.cat) || (income ? "其他" : "其他");
-  return { type, title: cleaned || category, amount, category, date, paymentCategory: payment.key, paymentMethod: payment.name };
+
+  // 帳戶：先比對使用者自己實際新增過的子帳戶名稱（例如「國泰信用卡」「LINE Pay」），沒比對到才用大類關鍵字
+  let paymentCategory = null, paymentMethod = null;
+  for (const cat of baseCategories) {
+    const subs = mySubAccounts(cat.key);
+    const hit = subs.find((s) => s.name !== cat.label && cleaned.includes(s.name));
+    if (hit) { paymentCategory = cat.key; paymentMethod = hit.name; cleaned = cleaned.replace(hit.name, " "); break; }
+  }
+  if (!paymentCategory) {
+    const paymentRules = [{ words: /信用卡|刷卡/, key: "credit_card" }, { words: /銀行|轉帳|匯款|存款/, key: "bank" }, { words: /LINE\s*Pay|街口|電子支付|悠遊付|拍付|Apple\s*Pay/i, key: "ewallet" }, { words: /現金/, key: "cash" }];
+    const rule = paymentRules.find((r) => r.words.test(cleaned));
+    paymentCategory = rule?.key || "cash";
+    if (rule) cleaned = cleaned.replace(rule.words, " ");
+    paymentMethod = mySubAccounts(paymentCategory)[0]?.name || baseCategories.find((c) => c.key === paymentCategory)?.label || "現金";
+  }
+  cleaned = cleaned.replace(/(收入|支出|記帳|一筆)/g, " ").replace(/\s+/g, " ").trim();
+
+  // 分類：先比對使用者自己實際設定的分類名稱，比對不到再用關鍵字猜，關鍵字猜出來的也要是使用者清單裡真的有的分類
+  const myCategoryNames = income ? incomeCategories : activeCategories().map((c) => c.name);
+  let category = myCategoryNames.find((name) => cleaned.includes(name));
+  if (!category) {
+    const expenseRules = [{ re: /早餐|午餐|晚餐|餐|便當|咖啡|飲料|珍奶|飲品|吃/, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|停車|高鐵|火車|uber/i, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂|ktv/i, cat: "休閒育樂" }, { re: /房租|租金|房貸/, cat: "住房" }, { re: /水費|電費|瓦斯/, cat: "水電瓦斯" }, { re: /醫院|看醫生|藥局|藥/, cat: "醫療保健" }, { re: /寵物|貓|狗|飼料/, cat: "寵物" }, { re: /衣服|鞋|服飾/, cat: "服飾" }, { re: /日常用品|衛生紙|清潔/, cat: "日常用品" }];
+    const incomeRules = [{ re: /薪水|薪資/, cat: "薪水" }, { re: /獎金/, cat: "獎金" }, { re: /退款/, cat: "退款" }, { re: /投資|股息/, cat: "投資" }];
+    const guess = (income ? incomeRules : expenseRules).find((rule) => rule.re.test(cleaned))?.cat;
+    category = guess && myCategoryNames.includes(guess) ? guess : (myCategoryNames.includes("其他") ? "其他" : myCategoryNames[myCategoryNames.length - 1]);
+  }
+  return { type, title: cleaned || category, amount, category, date, paymentCategory, paymentMethod };
 }
 async function saveConversationalRecord() {
   try {
