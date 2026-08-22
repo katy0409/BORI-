@@ -493,8 +493,8 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .diary-mood-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .diary-mood-picker label{display:block;position:relative}
 .diary-mood-picker input{position:absolute;opacity:0;pointer-events:none}
-.diary-mood-picker span{display:grid;place-items:center;gap:1px;min-height:48px;padding:5px 1px;border:1px solid #e8dfd0;border-radius:12px;background:#fff;filter:saturate(.8)}
-.diary-mood-picker small{font-size:7px;color:var(--muted)}
+.diary-mood-picker span{display:grid;place-items:center;gap:2px;min-height:54px;padding:6px 2px;border:1px solid #e8dfd0;border-radius:12px;background:#fff;filter:saturate(.8)}
+.diary-mood-picker small{font-size:9.5px;color:var(--muted);font-weight:700}
 .diary-mood-picker input:checked+span{border-color:var(--green);background:var(--green-soft);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 12%,transparent);filter:none}
 .diary-title-field input{font-weight:800}
 .diary-content-field{position:relative}
@@ -518,8 +518,8 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .diary-entry-meta small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:8.5px!important}
 .diary-paper h4{margin:10px 0 0;font-size:17px;line-height:1.4}
 .diary-paper>p{margin:6px 0 0!important;color:#655e53;font-size:12px;line-height:1.75!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
-.diary-entry-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:10px;padding-top:8px;border-top:1px dashed #e6ddce}
-.diary-entry-actions button{border:0;border-radius:9px;padding:5px 9px;background:#f3eee4;color:#7a7165;font-size:9px;font-weight:800}
+.diary-entry-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:8px;border-top:1px dashed #e6ddce}
+.diary-entry-actions button{border:0;border-radius:12px;padding:9px 16px;min-height:34px;background:#f3eee4;color:#7a7165;font-size:12px;font-weight:800}
 .diary-entry-actions button:last-child{background:#f9e9e5;color:#c37268}
 .diary-empty{display:grid;place-items:center;padding:32px;border:1px dashed #d8cbb5;border-radius:20px;background:rgba(255,255,255,.5);color:var(--muted);text-align:center}
 .diary-empty span{font-size:35px}.diary-empty strong{margin-top:8px;color:var(--brown)}.diary-empty p{margin:5px 0 0;font-size:11px}
