@@ -487,7 +487,7 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
   outline:none;
 }
 .diary-editor input:focus,.diary-editor textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 13%,transparent)}
-.diary-editor-top{display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px;align-items:end}
+.diary-editor-top{display:grid;grid-template-columns:1fr;gap:14px}
 .diary-editor fieldset{min-width:0;padding:0;border:0}
 .diary-editor legend{padding:0;margin-bottom:7px}
 .diary-mood-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
@@ -526,7 +526,6 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 
 @media(max-width:390px){
   .diary-editor{padding:16px 14px}
-  .diary-editor-top{grid-template-columns:1fr}
   .diary-mood-picker span{min-height:44px}
   .diary-paper{padding:13px 12px 11px}
   .diary-entry-meta{align-items:flex-start;flex-direction:column;gap:5px}
@@ -612,7 +611,7 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
   padding:8px 10px;
   border-radius:21px;
 }
-.chat-composer input{height:44px;padding:10px 15px;font-size:14px;outline:none}
+.chat-composer input{height:44px;padding:10px 15px;font-size:16px;outline:none}
 .chat-composer input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 14%,transparent)}
 .chat-composer .round-button{width:42px;height:42px;align-self:center}
 .chat-composer .send-button{height:42px;align-self:center;padding:8px 10px;font-size:14px}
