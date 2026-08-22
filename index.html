@@ -92,6 +92,8 @@
           </button>
         </div>
 
+        <div class="quick-grid quick-grid-single"><button type="button" data-open="stickerShopDialog"><span>🛍️</span><strong>貼圖小舖</strong><small>收藏可愛貼圖，妝點你們的聊天室</small></button></div>
+
         <div class="section-head"><h2><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>最近的房間</h2></div>
         <p id="roomEmptyHint" class="muted-hint hidden">還沒有房間，開一個或輸入代碼加入吧。</p>
         <div id="roomCarousel" class="room-carousel hidden"></div>
@@ -280,8 +282,14 @@
 
   <dialog id="stickerManageDialog">
     <div class="dialog-head"><div><p class="eyebrow">STICKERS</p><h3>貼圖管理</h3></div><button type="button" class="dialog-close" data-close="stickerManageDialog">×</button></div>
-    <p class="muted-hint">關掉不想用的貼圖包，聊天室的貼圖選單就不會顯示它。至少要保留一組。</p>
+    <p class="muted-hint">長按拖曳可以排序，排最上面的會是聊天室預設顯示的貼圖包。關掉不想用的貼圖包，聊天室的貼圖選單就不會顯示它，至少要保留一組。</p>
     <div id="stickerManageList" class="sticker-manage-list"></div>
+  </dialog>
+
+  <dialog id="stickerShopDialog">
+    <div class="dialog-head"><div><p class="eyebrow">STICKER SHOP</p><h3>貼圖小舖</h3></div><button type="button" class="dialog-close" data-close="stickerShopDialog">×</button></div>
+    <p class="muted-hint">這裡收藏了 BORI 所有的貼圖包，目前全部都已經解鎖、免費使用。之後會陸續推出限定貼圖，敬請期待 ✨</p>
+    <div id="stickerShopList" class="sticker-shop-list"></div>
   </dialog>
 
   <dialog id="notificationDialog">

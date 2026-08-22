@@ -168,6 +168,17 @@ const stickerSets = [
   ]}
 ];
 const allStickers = stickerSets.flatMap((set) => set.stickers);
+(function applySavedStickerOrder() {
+  try {
+    const savedOrder = JSON.parse(localStorage.getItem("bori-sticker-order") || "[]");
+    if (!savedOrder.length) return;
+    const byId = new Map(stickerSets.map((s) => [s.id, s]));
+    const ordered = savedOrder.map((id) => byId.get(id)).filter(Boolean);
+    stickerSets.forEach((s) => { if (!savedOrder.includes(s.id)) ordered.push(s); });
+    stickerSets.length = 0;
+    stickerSets.push(...ordered);
+  } catch {}
+})();
 
 let supabaseClient = null;
 let session = null;
@@ -657,10 +668,28 @@ function renderStickerTray() {
   $("#stickerGrid").innerHTML = sets[activeStickerSet].stickers.map((s) => `<button type="button" data-sticker="${s.id}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
 }
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
+function renderStickerShopList() {
+  $("#stickerShopList").innerHTML = stickerSets.map((set) => {
+    const on = !hiddenStickerSets.has(set.id);
+    return `<button type="button" class="sticker-shop-card" data-shop-toggle="${set.id}"><img src="${set.stickers[0].img}" alt="" /><strong>${escapeHTML(set.name)}</strong><small>${set.stickers.length} 張</small><span class="sticker-shop-badge">${on ? "✓ 已擁有" : "已隱藏"}</span></button>`;
+  }).join("");
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="stickerShopDialog"]')) renderStickerShopList(); });
+$("#stickerShopList").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-shop-toggle]");
+  if (!btn) return;
+  const id = btn.dataset.shopToggle;
+  const willHide = !hiddenStickerSets.has(id);
+  if (willHide && hiddenStickerSets.size >= stickerSets.length - 1) return toast("至少要保留一組貼圖");
+  if (willHide) hiddenStickerSets.add(id); else hiddenStickerSets.delete(id);
+  localStorage.setItem("bori-hidden-stickers", JSON.stringify([...hiddenStickerSets]));
+  renderStickerShopList();
+  renderStickerTray();
+});
 function renderStickerManageList() {
   $("#stickerManageList").innerHTML = stickerSets.map((set) => {
     const on = !hiddenStickerSets.has(set.id);
-    return `<div class="sticker-manage-row"><img src="${set.stickers[0].img}" alt="" /><div class="sticker-manage-copy"><strong>${escapeHTML(set.name)}</strong><small>${set.stickers.length} 張貼圖</small></div><button type="button" class="toggle-switch ${on ? "on" : ""}" data-toggle-sticker-set="${set.id}"><i></i></button></div>`;
+    return `<div class="sticker-manage-row"><span class="drag-handle">⠿</span><img src="${set.stickers[0].img}" alt="" /><div class="sticker-manage-copy"><strong>${escapeHTML(set.name)}</strong><small>${set.stickers.length} 張貼圖</small></div><button type="button" class="toggle-switch ${on ? "on" : ""}" data-toggle-sticker-set="${set.id}"><i></i></button></div>`;
   }).join("");
 }
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="stickerManageDialog"]')) renderStickerManageList(); });
@@ -675,6 +704,35 @@ $("#stickerManageList").addEventListener("click", (e) => {
   renderStickerManageList();
   renderStickerTray();
 });
+$("#stickerManageList").addEventListener("pointerdown", (e) => {
+  if (e.target.closest(".toggle-switch")) return;
+  const row = e.target.closest(".sticker-manage-row");
+  if (!row) return;
+  const startX = e.clientX, startY = e.clientY, pointerId = e.pointerId;
+  let activated = false;
+  const timer = setTimeout(() => { activated = true; beginStickerSetDrag(row, pointerId, startY); }, 350);
+  const onMove = (ev) => { if (!activated && (Math.abs(ev.clientY - startY) > 10 || Math.abs(ev.clientX - startX) > 10)) cleanup(); };
+  const onUp = () => cleanup();
+  function cleanup() {
+    clearTimeout(timer);
+    row.removeEventListener("pointermove", onMove);
+    row.removeEventListener("pointerup", onUp);
+    row.removeEventListener("pointercancel", onUp);
+  }
+  row.addEventListener("pointermove", onMove);
+  row.addEventListener("pointerup", onUp);
+  row.addEventListener("pointercancel", onUp);
+});
+function beginStickerSetDrag(startRow, pointerId, startY) {
+  beginListDrag($("#stickerManageList"), ".sticker-manage-row", startRow, pointerId, startY, () => stickerSets, (newOrder) => {
+    stickerSets.length = 0;
+    stickerSets.push(...newOrder);
+    localStorage.setItem("bori-sticker-order", JSON.stringify(newOrder.map((s) => s.id)));
+    activeStickerSet = 0;
+    renderStickerManageList();
+    renderStickerTray();
+  });
+}
 function renderAnalysis() {
   if (!activeBookId) return;
   let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === currentMonth());
@@ -1299,12 +1357,11 @@ $("#categoryManageList").addEventListener("pointerdown", (e) => {
   row.addEventListener("pointerup", onUp);
   row.addEventListener("pointercancel", onUp);
 });
-function beginCategoryDrag(startRow, pointerId, startY) {
-  const list = $("#categoryManageList");
-  const allRows = $$("#categoryManageList .category-manage-row");
+function beginListDrag(listEl, rowSelector, startRow, pointerId, startY, getItems, onReorder) {
+  const allRows = Array.from(listEl.querySelectorAll(rowSelector));
   const startIndex = allRows.indexOf(startRow);
   const rowHeight = startRow.getBoundingClientRect().height + 8;
-  const scrollStart = list.scrollTop;
+  const scrollStart = listEl.scrollTop;
   let currentIndex = startIndex;
   let lastClientY = startY;
   let autoScrollRAF = null;
@@ -1326,15 +1383,15 @@ function beginCategoryDrag(startRow, pointerId, startY) {
     }
   }
   function autoScrollLoop() {
-    const rect = list.getBoundingClientRect();
+    const rect = listEl.getBoundingClientRect();
     const edge = 36;
     let speed = 0;
     if (lastClientY < rect.top + edge) speed = -Math.ceil((rect.top + edge - lastClientY) / 3);
     else if (lastClientY > rect.bottom - edge) speed = Math.ceil((lastClientY - (rect.bottom - edge)) / 3);
     if (speed !== 0) {
-      const before = list.scrollTop;
-      list.scrollTop = Math.max(0, Math.min(list.scrollHeight - list.clientHeight, list.scrollTop + speed));
-      if (list.scrollTop !== before) updatePositions((lastClientY - startY) + (list.scrollTop - scrollStart));
+      const before = listEl.scrollTop;
+      listEl.scrollTop = Math.max(0, Math.min(listEl.scrollHeight - listEl.clientHeight, listEl.scrollTop + speed));
+      if (listEl.scrollTop !== before) updatePositions((lastClientY - startY) + (listEl.scrollTop - scrollStart));
     }
     autoScrollRAF = requestAnimationFrame(autoScrollLoop);
   }
@@ -1342,7 +1399,7 @@ function beginCategoryDrag(startRow, pointerId, startY) {
   function onMove(ev) {
     ev.preventDefault();
     lastClientY = ev.clientY;
-    updatePositions((ev.clientY - startY) + (list.scrollTop - scrollStart));
+    updatePositions((ev.clientY - startY) + (listEl.scrollTop - scrollStart));
   }
   function onUp() {
     if (autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
@@ -1353,15 +1410,18 @@ function beginCategoryDrag(startRow, pointerId, startY) {
     startRow.classList.remove("dragging");
     allRows.forEach((r) => { r.style.transform = ""; });
     if (currentIndex !== startIndex) {
-      const cur = [...activeCategoriesForManage()];
+      const cur = [...getItems()];
       const [moved] = cur.splice(startIndex, 1);
       cur.splice(currentIndex, 0, moved);
-      updateCategories(cur);
+      onReorder(cur);
     }
   }
   startRow.addEventListener("pointermove", onMove);
   startRow.addEventListener("pointerup", onUp);
   startRow.addEventListener("pointercancel", onUp);
+}
+function beginCategoryDrag(startRow, pointerId, startY) {
+  beginListDrag($("#categoryManageList"), ".category-manage-row", startRow, pointerId, startY, activeCategoriesForManage, updateCategories);
 }
 $("#addCategoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();

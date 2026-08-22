@@ -645,3 +645,12 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .sticker-manage-copy{flex:1;min-width:0}
 .sticker-manage-copy strong{display:block;font-size:13.5px}
 .sticker-manage-copy small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
+.sticker-manage-row{touch-action:none;position:relative}
+.sticker-manage-row.dragging{transition:none;z-index:5;box-shadow:0 10px 24px rgba(79,61,43,.18);background:var(--green-soft)}
+.sticker-manage-row .drag-handle{cursor:grab}
+.sticker-shop-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.sticker-shop-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px;border:1px solid var(--line);border-radius:18px;background:var(--card);text-align:center}
+.sticker-shop-card img{width:64px;height:64px;border-radius:16px;object-fit:cover;margin-bottom:4px}
+.sticker-shop-card strong{font-size:13px}
+.sticker-shop-card small{color:var(--muted);font-size:10.5px}
+.sticker-shop-badge{margin-top:6px;padding:4px 10px;border-radius:99px;background:var(--green-soft);color:var(--green-dark);font-size:10px;font-weight:800}
