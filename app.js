@@ -1304,11 +1304,14 @@ if (window.visualViewport) {
   function adjustChatForKeyboard() {
     const composer = $("#chatForm");
     if (!composer) return;
-    const keyboardOffset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    const rawOffset = window.innerHeight - vv.height - vv.offsetTop;
+    // iOS Safari 滾動時網址列/工具列收合展開也會讓可視視窗高度變動，
+    // 真正的鍵盤高度通常遠大於這種誤差，所以小於 150px 一律當作沒有鍵盤。
+    const keyboardOffset = rawOffset > 150 ? rawOffset : 0;
     composer.style.bottom = `${88 + keyboardOffset}px`;
     const tray = $("#stickerTray");
     if (tray) tray.style.bottom = `${158 + keyboardOffset}px`;
-    if ($("#chatPage")?.classList.contains("active")) scrollChat();
+    if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
   }
   vv.addEventListener("resize", adjustChatForKeyboard);
   vv.addEventListener("scroll", adjustChatForKeyboard);
