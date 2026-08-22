@@ -630,3 +630,8 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
   .sticker-message img{height:126px}
   .chat-composer{grid-template-columns:40px minmax(0,1fr) 54px}
 }
+.record-form-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.record-form-art{width:84px;height:84px;object-fit:contain;flex-shrink:0;margin-bottom:-6px}
+.record-form-card{position:relative;padding:18px;border:1px solid #e4d7be;border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,249,235,.9));box-shadow:var(--shadow)}
+.record-form-card::before{content:"";position:absolute;top:0;left:16px;right:16px;height:4px;border-radius:0 0 8px 8px;background:linear-gradient(90deg,var(--green),var(--pink))}
+.record-save-btn{display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px}

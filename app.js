@@ -999,6 +999,7 @@ function setAddType(type) {
   $("#addPageTitle").classList.toggle("mode-income", type === "income");
   $(".amount-field").classList.toggle("mode-expense", type === "expense");
   $(".amount-field").classList.toggle("mode-income", type === "income");
+  $("#addPageArt").src = type === "expense" ? "assets/bear-expense.png" : "assets/bear-income.png";
   $("#categoryInput").innerHTML = (type === "expense" ? activeCategories() : activeIncomeCategories()).map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
 }
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
