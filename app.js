@@ -127,6 +127,44 @@ const stickerSets = [
     { id: "glad_you_here", img: "assets/stickers3/glad_you_here.png", text: "有你真好" },
     { id: "love_you_most", img: "assets/stickers3/love_you_most.png", text: "最喜歡你" },
     { id: "together_forever", img: "assets/stickers3/together_forever.png", text: "永遠在一起" }
+  ]},
+  { id: "shiba", name: "柴犬記帳日常", stickers: [
+    { id: "record_it", img: "assets/stickers4/record_it.jpg", text: "記一筆" },
+    { id: "income_in", img: "assets/stickers4/income_in.jpg", text: "收入入帳" },
+    { id: "todays_expense", img: "assets/stickers4/todays_expense.jpg", text: "今日支出" },
+    { id: "set_budget", img: "assets/stickers4/set_budget.jpg", text: "設定預算" },
+    { id: "saving_hard", img: "assets/stickers4/saving_hard.jpg", text: "努力存錢" },
+    { id: "broke_again", img: "assets/stickers4/broke_again.jpg", text: "又沒錢了" },
+    { id: "living_cost", img: "assets/stickers4/living_cost.jpg", text: "生活費" },
+    { id: "bill_due", img: "assets/stickers4/bill_due.jpg", text: "卡費來了" },
+    { id: "saved_success", img: "assets/stickers4/saved_success.jpg", text: "存入成功" },
+    { id: "monthly_recap", img: "assets/stickers4/monthly_recap.jpg", text: "月結算" },
+    { id: "resist_buying", img: "assets/stickers4/resist_buying.jpg", text: "忍住別買" },
+    { id: "goal_reached", img: "assets/stickers4/goal_reached.jpg", text: "目標達成" },
+    { id: "hug_shiba", img: "assets/stickers4/hug_shiba.jpg", text: "抱抱" },
+    { id: "kiss_one", img: "assets/stickers4/kiss_one.jpg", text: "親一個" },
+    { id: "walk_together", img: "assets/stickers4/walk_together.jpg", text: "一起走" },
+    { id: "glad_you_here_shiba", img: "assets/stickers4/glad_you_here_shiba.jpg", text: "有你真好" },
+    { id: "love_you_most2", img: "assets/stickers4/love_you_most2.jpg", text: "最愛你" },
+    { id: "sleep_together", img: "assets/stickers4/sleep_together.jpg", text: "一起睡" },
+    { id: "carry_you", img: "assets/stickers4/carry_you.jpg", text: "我背你" },
+    { id: "dont_cry", img: "assets/stickers4/dont_cry.jpg", text: "不哭不哭" },
+    { id: "eat_together2", img: "assets/stickers4/eat_together2.jpg", text: "一起吃" },
+    { id: "gift_for_you", img: "assets/stickers4/gift_for_you.jpg", text: "送給你" },
+    { id: "love_you2", img: "assets/stickers4/love_you2.jpg", text: "愛你喔" },
+    { id: "sorry_shiba", img: "assets/stickers4/sorry_shiba.jpg", text: "對不起嘛" },
+    { id: "good_morning2", img: "assets/stickers4/good_morning2.jpg", text: "早安" },
+    { id: "good_night2", img: "assets/stickers4/good_night2.jpg", text: "晚安" },
+    { id: "mealtime", img: "assets/stickers4/mealtime.jpg", text: "吃飯囉" },
+    { id: "drink_water", img: "assets/stickers4/drink_water.jpg", text: "多喝水" },
+    { id: "work_hard", img: "assets/stickers4/work_hard.jpg", text: "努力工作" },
+    { id: "exhausted", img: "assets/stickers4/exhausted.jpg", text: "累死了" },
+    { id: "bath_time", img: "assets/stickers4/bath_time.jpg", text: "洗澡去" },
+    { id: "wait_for_me", img: "assets/stickers4/wait_for_me.jpg", text: "等等我" },
+    { id: "raining", img: "assets/stickers4/raining.jpg", text: "下雨了" },
+    { id: "so_cold", img: "assets/stickers4/so_cold.jpg", text: "好冷喔" },
+    { id: "happy_shiba", img: "assets/stickers4/happy_shiba.jpg", text: "開心" },
+    { id: "here_we_come", img: "assets/stickers4/here_we_come.jpg", text: "我們來啦" }
   ]}
 ];
 const allStickers = stickerSets.flatMap((set) => set.stickers);
@@ -607,11 +645,36 @@ function renderChat() {
   renderStickerTray();
 }
 let activeStickerSet = 0;
+let hiddenStickerSets = new Set(JSON.parse(localStorage.getItem("bori-hidden-stickers") || "[]"));
+function visibleStickerSets() {
+  const shown = stickerSets.filter((s) => !hiddenStickerSets.has(s.id));
+  return shown.length ? shown : stickerSets;
+}
 function renderStickerTray() {
-  $("#stickerSetTabs").innerHTML = stickerSets.map((set, i) => `<button type="button" class="sticker-set-tab ${i === activeStickerSet ? "active" : ""}" data-set="${i}"><img src="${set.stickers[0].img}" alt="${escapeHTML(set.name)}" /></button>`).join("");
-  $("#stickerGrid").innerHTML = stickerSets[activeStickerSet].stickers.map((s) => `<button type="button" data-sticker="${s.id}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
+  const sets = visibleStickerSets();
+  if (activeStickerSet >= sets.length) activeStickerSet = 0;
+  $("#stickerSetTabs").innerHTML = sets.map((set, i) => `<button type="button" class="sticker-set-tab ${i === activeStickerSet ? "active" : ""}" data-set="${i}"><img src="${set.stickers[0].img}" alt="${escapeHTML(set.name)}" /></button>`).join("");
+  $("#stickerGrid").innerHTML = sets[activeStickerSet].stickers.map((s) => `<button type="button" data-sticker="${s.id}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
 }
 function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
+function renderStickerManageList() {
+  $("#stickerManageList").innerHTML = stickerSets.map((set) => {
+    const on = !hiddenStickerSets.has(set.id);
+    return `<div class="sticker-manage-row"><img src="${set.stickers[0].img}" alt="" /><div class="sticker-manage-copy"><strong>${escapeHTML(set.name)}</strong><small>${set.stickers.length} 張貼圖</small></div><button type="button" class="toggle-switch ${on ? "on" : ""}" data-toggle-sticker-set="${set.id}"><i></i></button></div>`;
+  }).join("");
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="stickerManageDialog"]')) renderStickerManageList(); });
+$("#stickerManageList").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-toggle-sticker-set]");
+  if (!btn) return;
+  const id = btn.dataset.toggleStickerSet;
+  const willHide = !hiddenStickerSets.has(id);
+  if (willHide && hiddenStickerSets.size >= stickerSets.length - 1) return toast("至少要保留一組貼圖");
+  if (willHide) hiddenStickerSets.add(id); else hiddenStickerSets.delete(id);
+  localStorage.setItem("bori-hidden-stickers", JSON.stringify([...hiddenStickerSets]));
+  renderStickerManageList();
+  renderStickerTray();
+});
 function renderAnalysis() {
   if (!activeBookId) return;
   let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === currentMonth());
