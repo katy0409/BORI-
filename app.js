@@ -1301,6 +1301,11 @@ $("#stickerGrid").addEventListener("click", async (e) => { const btn = e.target.
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }
 if (window.visualViewport) {
   const vv = window.visualViewport;
+  function safeBottomPx() {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom").trim();
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  }
   function adjustChatForKeyboard() {
     const composer = $("#chatForm");
     if (!composer) return;
@@ -1308,9 +1313,10 @@ if (window.visualViewport) {
     // iOS Safari 滾動時網址列/工具列收合展開也會讓可視視窗高度變動，
     // 真正的鍵盤高度通常遠大於這種誤差，所以小於 150px 一律當作沒有鍵盤。
     const keyboardOffset = rawOffset > 150 ? rawOffset : 0;
-    composer.style.bottom = `${88 + keyboardOffset}px`;
+    const safeBottom = safeBottomPx();
+    composer.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
     const tray = $("#stickerTray");
-    if (tray) tray.style.bottom = `${158 + keyboardOffset}px`;
+    if (tray) tray.style.bottom = `${158 + safeBottom + keyboardOffset}px`;
     if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
   }
   vv.addEventListener("resize", adjustChatForKeyboard);
