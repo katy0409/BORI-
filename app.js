@@ -156,7 +156,7 @@ function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach(
 const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") showInteractionHub(); if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); $("#dateInput").value = localDateStr(); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") showInteractionHub(); if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -666,7 +666,7 @@ function packDiaryContent(title, mood, body) { return DIARY_PREFIX + JSON.string
 function resetDiaryForm() {
   editingDiaryId = null;
   const form = $("#diaryForm"); if (!form) return;
-  form.reset(); $("#diaryDate").value = taiwanToday();
+  form.reset(); setDateValue("diaryDate", "diaryDateDisplay", taiwanToday());
   $("#diarySaveButton").textContent = "收藏這篇日記";
   $("#diaryCancelEdit").classList.add("hidden");
   $("#diaryCharCount").textContent = "0";
@@ -701,7 +701,7 @@ $("#diaryList").addEventListener("click", async (e) => {
   if (editBtn) {
     const entry = diaries.find((d) => String(d.id) === editBtn.dataset.editDiary); if (!entry) return;
     const diary = parseDiaryContent(entry.content || ""); editingDiaryId = entry.id;
-    $("#diaryDate").value = entry.entry_date; $("#diaryTitle").value = diary.title === "生活隨筆" ? "" : diary.title; $("#diaryContent").value = diary.body;
+    setDateValue("diaryDate", "diaryDateDisplay", entry.entry_date); $("#diaryTitle").value = diary.title === "生活隨筆" ? "" : diary.title; $("#diaryContent").value = diary.body;
     const mood = document.querySelector(`[name="diaryMood"][value="${diary.mood}"]`); if (mood) mood.checked = true;
     $("#diaryCharCount").textContent = diary.body.length; $("#diarySaveButton").textContent = "儲存修改"; $("#diaryCancelEdit").classList.remove("hidden");
     $("#diaryForm").scrollIntoView({ behavior: "smooth", block: "start" }); return;
@@ -796,6 +796,24 @@ function taiwanToday() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((part) => [part.type, part.value]));
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
+const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return "選擇日期";
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "選擇日期";
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${weekdayNames[d.getDay()]}）`;
+}
+function setDateValue(inputId, displayId, dateStr) {
+  const input = $("#" + inputId), display = $("#" + displayId);
+  if (input) input.value = dateStr;
+  if (display) display.textContent = formatDateDisplay(dateStr);
+}
+$$('input[type="date"]').forEach((input) => {
+  const display = $("#" + input.id + "Display");
+  if (!display) return;
+  input.addEventListener("input", () => { display.textContent = formatDateDisplay(input.value); });
+  input.addEventListener("change", () => { display.textContent = formatDateDisplay(input.value); });
+});
 function parseConversationalRecord(input) {
   const text = String(input || "").trim();
   if (!text) throw new Error("請先說或輸入一筆紀錄");
@@ -1016,7 +1034,7 @@ function openEditTransaction(id) {
   $("#categoryInput").value = tx.category;
   $("#amountInput").value = tx.amount;
   $("#titleInput").value = tx.title;
-  $("#dateInput").value = tx.transaction_date;
+  setDateValue("dateInput", "dateInputDisplay", tx.transaction_date);
   $("#noteInput").value = tx.note || "";
   selectedPaymentCategory = tx.payment_category || "cash";
   selectedSubAccount = tx.payment_method || "現金";
@@ -1038,7 +1056,7 @@ $("#transactionForm").addEventListener("submit", async (e) => {
     }
     e.target.reset();
     setAddType("expense");
-    $("#dateInput").value = localDateStr();
+    setDateValue("dateInput", "dateInputDisplay", localDateStr());
     editingTransactionId = null;
     $("#deleteTransactionBtn").classList.add("hidden");
     await loadActiveBookData();
