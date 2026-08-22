@@ -205,7 +205,7 @@ function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach(
 const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") showInteractionHub(); if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -913,6 +913,19 @@ async function addTransaction(type, title, amount, category, note = "", date = n
   if (error) throw error;
 }
 
+function safeBottomPx() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom").trim();
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function resetChatComposerBaseline() {
+  const composer = $("#chatForm");
+  if (!composer) return;
+  const safeBottom = safeBottomPx();
+  composer.style.bottom = `${88 + safeBottom}px`;
+  const tray = $("#stickerTray");
+  if (tray) tray.style.bottom = `${158 + safeBottom}px`;
+}
 function taiwanToday() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((part) => [part.type, part.value]));
   return `${parts.year}-${parts.month}-${parts.day}`;
@@ -1443,23 +1456,25 @@ $("#stickerGrid").addEventListener("click", async (e) => { const btn = e.target.
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }
 if (window.visualViewport) {
   const vv = window.visualViewport;
-  function safeBottomPx() {
-    const v = getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom").trim();
-    const n = parseFloat(v);
-    return Number.isFinite(n) ? n : 0;
-  }
+  let inputFocused = false;
   function adjustChatForKeyboard() {
     const composer = $("#chatForm");
     if (!composer) return;
+    // 只有在輸入框真的被聚焦時才考慮鍵盤高度，避免把 iOS Safari 滾動時
+    // 網址列/工具列收合展開造成的視窗高度變化誤判成鍵盤彈出。
+    if (!inputFocused) { resetChatComposerBaseline(); return; }
     const rawOffset = window.innerHeight - vv.height - vv.offsetTop;
-    // iOS Safari 滾動時網址列/工具列收合展開也會讓可視視窗高度變動，
-    // 真正的鍵盤高度通常遠大於這種誤差，所以小於 150px 一律當作沒有鍵盤。
-    const keyboardOffset = rawOffset > 150 ? rawOffset : 0;
+    const keyboardOffset = Math.max(0, rawOffset);
     const safeBottom = safeBottomPx();
     composer.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
     const tray = $("#stickerTray");
     if (tray) tray.style.bottom = `${158 + safeBottom + keyboardOffset}px`;
     if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
+  }
+  const messageInput = $("#messageInput");
+  if (messageInput) {
+    messageInput.addEventListener("focus", () => { inputFocused = true; adjustChatForKeyboard(); });
+    messageInput.addEventListener("blur", () => { inputFocused = false; adjustChatForKeyboard(); });
   }
   vv.addEventListener("resize", adjustChatForKeyboard);
   vv.addEventListener("scroll", adjustChatForKeyboard);
