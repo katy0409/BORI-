@@ -557,7 +557,7 @@ function renderBudgets(expenses) {
     const hasShared = rows.some((b) => b.is_shared);
     const used = expenses.filter((x) => x.category === category && (hasShared || ownerIds.has(x.user_id))).reduce((s, x) => s + Number(x.amount), 0);
     const pct = total ? Math.min(120, (used / total) * 100) : 0;
-    return `<article class="budget-card"><div class="budget-head"><span>${categoryIconHTML(category)} ${escapeHTML(category)}<small class="budget-scope">${escapeHTML([...new Set(scopes)].join("、"))}</small></span><strong>${money(used)} / ${money(total)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(total - used, 0))}`}</small></article>`;
+    return `<button type="button" class="budget-card" data-edit-budget-category="${escapeHTML(category)}"><div class="budget-head"><span>${categoryIconHTML(category)} ${escapeHTML(category)}<small class="budget-scope">${escapeHTML([...new Set(scopes)].join("、"))}</small></span><strong>${money(used)} / ${money(total)}</strong></div><div class="progress"><i class="${pct >= 100 ? "over" : ""}" style="width:${Math.min(100, pct)}%"></i></div><small>${pct >= 100 ? "已超出預算" : `還可以使用 ${money(Math.max(total - used, 0))}`}</small></button>`;
   }).join("") || `<div class="empty-state compact"><p>這個篩選沒有預算。</p></div>`;
 }
 
@@ -1209,6 +1209,47 @@ $("#deleteTransactionBtn").addEventListener("click", async () => {
   goTo("homePage");
   toast("紀錄已刪除");
 });
+let editingBudgetCategory = null;
+function resetBudgetForm() {
+  editingBudgetCategory = null;
+  $("#budgetForm").reset();
+  $("#budgetDialogTitle").textContent = "設定我的分類預算";
+  $("#budgetDialogEyebrow").textContent = "MONTHLY BUDGET";
+  $("#deleteBudgetBtn").classList.add("hidden");
+}
+function openEditBudget(category) {
+  const mine = budgets.find((b) => b.category === category && !b.is_shared && b.assigned_user_id === session?.user?.id);
+  const shared = budgets.find((b) => b.category === category && b.is_shared);
+  const target = mine || shared;
+  if (!target) return;
+  editingBudgetCategory = category;
+  renderCategorySelects();
+  $("#budgetCategory").value = category;
+  $("#budgetAmount").value = target.amount;
+  $("#sharedBudgetCheckbox").checked = target.is_shared;
+  $("#budgetDialogTitle").textContent = "編輯預算";
+  $("#budgetDialogEyebrow").textContent = "EDIT BUDGET";
+  $("#deleteBudgetBtn").classList.remove("hidden");
+  openDialog("budgetDialog");
+}
+$("#budgetPreview").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-edit-budget-category]");
+  if (btn) openEditBudget(btn.dataset.editBudgetCategory);
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest('[data-open="budgetDialog"]');
+  if (btn && !btn.closest("#budgetPreview")) resetBudgetForm();
+});
+$("#deleteBudgetBtn").addEventListener("click", async () => {
+  if (!editingBudgetCategory) return;
+  if (!confirm("確定要刪除這個預算嗎？")) return;
+  const isShared = $("#sharedBudgetCheckbox").checked;
+  let deleteQuery = supabaseClient.from("budgets").delete().eq("book_id", activeBookId).eq("category", editingBudgetCategory).eq("month", currentMonth());
+  deleteQuery = isShared ? deleteQuery.eq("is_shared", true) : deleteQuery.eq("assigned_user_id", session.user.id).eq("is_shared", false);
+  const { error } = await deleteQuery;
+  if (error) return toast(error.message);
+  resetBudgetForm(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已刪除");
+});
 $("#budgetForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const isShared = $("#sharedBudgetCheckbox").checked;
@@ -1221,7 +1262,8 @@ $("#budgetForm").addEventListener("submit", async (e) => {
   const row = { book_id: activeBookId, category, amount: Number($("#budgetAmount").value), month: currentMonth(), created_by: session.user.id, assigned_user_id: assignedUserId, is_shared: isShared };
   const { error } = await supabaseClient.from("budgets").insert(row);
   if (error) return toast(error.message);
-  e.target.reset(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast("預算已同步到房間 🎯");
+  const wasEditing = !!editingBudgetCategory;
+  resetBudgetForm(); closeDialog("budgetDialog"); await loadActiveBookData(); renderAll(); toast(wasEditing ? "預算已更新 ✏️" : "預算已同步到房間 🎯");
 });
 const incomeCategoryIconKeys = ["salary","red_packet_income","payday","coffee_earn","growth_chart","stock_chart","piggybank","wallet_gift","bank_income","love_donate","transfer","red_envelope","resell","cashback","lottery","content_income","freelance","tips","house_fund","investment_grow","gift_income","travel_fund","bonus_pet","achievement"];
 let manageCategoryType = "expense";
