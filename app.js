@@ -202,7 +202,7 @@ let budgetViewFilter = "";
 
 function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2300); }
 function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id)); }
-const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog"];
+const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "dataExportDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
 function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
@@ -1521,6 +1521,124 @@ if (window.visualViewport) {
   vv.addEventListener("resize", adjustChatForKeyboard);
   vv.addEventListener("scroll", adjustChatForKeyboard);
 }
+const importPaymentCategoryLabels = { "現金": "cash", "信用卡": "credit_card", "銀行帳戶": "bank", "電子支付": "ewallet" };
+function buildTemplateWorkbook() {
+  const wb = XLSX.utils.book_new();
+  const introRows = [
+    ["BORI 記帳匯入範本"], [],
+    ["① 填寫位置", "所有資料都填在「記帳紀錄」這張工作表，從第 2 列開始（第 1 列是欄位標題，不要刪除或更改）。"],
+    ["② 日期", "格式為 YYYY-MM-DD，例如 2026-08-24。"],
+    ["③ 類型", "只能填「支出」或「收入」兩者之一。"],
+    ["④ 分類", "要填「房間裡真的有的分類名稱」，跟 App 裡自訂分類的名字要一模一樣，對不到的話那一筆會匯入失敗。"],
+    ["⑤ 項目", "這筆紀錄的標題，例如「午餐」「薪水」，可自由填寫。"],
+    ["⑥ 金額", "只能填數字，不要加 $ 符號或逗號。"],
+    ["⑦ 帳戶類別", "只能填「現金」「信用卡」「銀行帳戶」「電子支付」其中一種。"],
+    ["⑧ 帳戶名稱", "選填。留空的話會直接顯示帳戶類別的名稱。"],
+    ["⑨ 備註", "選填，可自由填寫。"],
+  ];
+  const wsIntro = XLSX.utils.aoa_to_sheet(introRows);
+  wsIntro["!cols"] = [{ wch: 16 }, { wch: 62 }];
+  XLSX.utils.book_append_sheet(wb, wsIntro, "說明");
+  const header = ["日期", "類型", "分類", "項目", "金額", "帳戶類別", "帳戶名稱", "備註"];
+  const example = [
+    ["2026-08-20", "支出", activeCategories()[0]?.name || "餐飲", "午餐", 120, "現金", "", "跟同事一起吃"],
+    ["2026-08-20", "收入", activeIncomeCategories()[0]?.name || "薪水", "薪資", 45000, "銀行帳戶", "", ""],
+  ];
+  const wsRecords = XLSX.utils.aoa_to_sheet([header, ...example]);
+  wsRecords["!cols"] = [{ wch: 13 }, { wch: 8 }, { wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, wsRecords, "記帳紀錄");
+  return wb;
+}
+$("#downloadTemplateLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  XLSX.writeFile(buildTemplateWorkbook(), "BORI記帳匯入範本.xlsx");
+});
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="dataExportDialog"]')) $("#importResult").textContent = ""; });
+$("#exportDataBtn").addEventListener("click", () => {
+  if (!activeBookId) return;
+  const wb = XLSX.utils.book_new();
+  const txRows = transactions.map((x) => ({
+    日期: x.transaction_date,
+    類型: x.transaction_type === "income" ? "收入" : "支出",
+    分類: x.category,
+    項目: x.title,
+    金額: Number(x.amount),
+    帳戶類別: baseCategories.find((c) => c.key === x.payment_category)?.label || "現金",
+    帳戶名稱: x.payment_method || "",
+    備註: x.note || "",
+    記錄人: x.user_id === session?.user?.id ? "我" : (roomMembers.find((m) => m.id === x.user_id)?.name || "成員"),
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txRows.length ? txRows : [{ 日期: "", 類型: "", 分類: "", 項目: "", 金額: "", 帳戶類別: "", 帳戶名稱: "", 備註: "", 記錄人: "" }]), "記帳紀錄");
+  const budgetRows = budgets.map((b) => ({
+    分類: b.category,
+    月份: b.month,
+    金額: Number(b.amount),
+    範圍: b.is_shared ? "全房共用" : "個人",
+    歸屬成員: b.is_shared ? "" : (roomMembers.find((m) => m.id === b.assigned_user_id)?.name || ""),
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(budgetRows.length ? budgetRows : [{ 分類: "", 月份: "", 金額: "", 範圍: "", 歸屬成員: "" }]), "預算");
+  const catRows = [
+    ...activeCategories().map((c) => ({ 類型: "支出", 分類名稱: c.name })),
+    ...activeIncomeCategories().map((c) => ({ 類型: "收入", 分類名稱: c.name })),
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catRows), "分類設定");
+  const roomName = activeBook()?.name || "BORI";
+  XLSX.writeFile(wb, `${roomName}_記帳資料_${localDateStr()}.xlsx`);
+  toast("匯出完成 📤");
+});
+$("#importDataBtn").addEventListener("click", () => $("#importFileInput").click());
+$("#importFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file || !activeBookId) return;
+  $("#importResult").textContent = "匯入中…";
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array", cellDates: false });
+    const sheet = wb.Sheets["記帳紀錄"];
+    if (!sheet) throw new Error("找不到「記帳紀錄」工作表，請用範本格式");
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    const expenseCats = new Set(activeCategories().map((c) => c.name));
+    const incomeCats = new Set(activeIncomeCategories().map((c) => c.name));
+    const goodRows = [];
+    const errors = [];
+    rows.forEach((r, i) => {
+      const line = i + 2;
+      const dateRaw = String(r["日期"] || "").trim();
+      const typeRaw = String(r["類型"] || "").trim();
+      const category = String(r["分類"] || "").trim();
+      const title = String(r["項目"] || "").trim();
+      const amount = Number(r["金額"]);
+      const payCatLabel = String(r["帳戶類別"] || "現金").trim();
+      const payMethod = String(r["帳戶名稱"] || "").trim() || payCatLabel;
+      const note = String(r["備註"] || "").trim();
+      if (!dateRaw && !typeRaw && !category && !title) return;
+      const dateMatch = dateRaw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!dateMatch) return errors.push(`第 ${line} 列：日期格式錯誤`);
+      const date = `${dateMatch[1]}-${pad2(dateMatch[2])}-${pad2(dateMatch[3])}`;
+      const type = typeRaw === "收入" ? "income" : typeRaw === "支出" ? "expense" : null;
+      if (!type) return errors.push(`第 ${line} 列：類型要填「支出」或「收入」`);
+      const catSet = type === "income" ? incomeCats : expenseCats;
+      if (!catSet.has(category)) return errors.push(`第 ${line} 列：分類「${category}」不存在`);
+      if (!title) return errors.push(`第 ${line} 列：項目不能空白`);
+      if (!Number.isFinite(amount) || amount <= 0) return errors.push(`第 ${line} 列：金額不是有效數字`);
+      const payKey = importPaymentCategoryLabels[payCatLabel];
+      if (!payKey) return errors.push(`第 ${line} 列：帳戶類別「${payCatLabel}」不存在`);
+      goodRows.push({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount, transaction_date: date, payment_category: payKey, payment_method: payMethod, note });
+    });
+    if (goodRows.length) {
+      const { error } = await supabaseClient.from("transactions").insert(goodRows);
+      if (error) throw error;
+    }
+    let summary = `匯入完成：成功 ${goodRows.length} 筆`;
+    if (errors.length) summary += `，失敗 ${errors.length} 筆\n` + errors.slice(0, 10).join("\n") + (errors.length > 10 ? `\n…還有 ${errors.length - 10} 筆錯誤` : "");
+    $("#importResult").textContent = summary;
+    if (goodRows.length) { await loadActiveBookData(); renderAll(); toast(`已匯入 ${goodRows.length} 筆紀錄 📥`); }
+  } catch (err) {
+    $("#importResult").textContent = "匯入失敗：" + err.message;
+  } finally {
+    e.target.value = "";
+  }
+});
 document.body.classList.add("splash-lock"); addEventListener("load", () => setTimeout(boot, 1150)); setTimeout(() => { if (!$("#splashScreen")?.dataset.done) boot(); }, 3200);
 if ("serviceWorker" in navigator) {
   let swRefreshed = false;

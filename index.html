@@ -292,6 +292,18 @@
     <div id="stickerShopList" class="sticker-shop-list"></div>
   </dialog>
 
+  <dialog id="dataExportDialog">
+    <div class="dialog-head"><div><p class="eyebrow">EXPORT / IMPORT</p><h3>資料匯出／匯入</h3></div><button type="button" class="dialog-close" data-close="dataExportDialog">×</button></div>
+    <p class="dialog-subhead">匯出</p>
+    <p class="muted-hint">把這個房間目前的記帳紀錄、預算、分類設定，全部匯出成一份 Excel 檔案。</p>
+    <button type="button" id="exportDataBtn" class="secondary">📤 匯出這個房間的資料</button>
+    <p class="dialog-subhead" style="margin-top:22px">匯入</p>
+    <p class="muted-hint">用範本格式填好記帳紀錄後上傳，可以一次新增很多筆。<a href="#" id="downloadTemplateLink">下載範本</a></p>
+    <input type="file" id="importFileInput" accept=".xlsx" class="hidden" />
+    <button type="button" id="importDataBtn" class="secondary">📥 選擇檔案匯入</button>
+    <div id="importResult" class="muted-hint" style="margin-top:10px"></div>
+  </dialog>
+
   <dialog id="notificationDialog">
     <div class="dialog-head"><div><p class="eyebrow">NOTIFICATIONS</p><h3>通知設定</h3></div><button type="button" class="dialog-close" data-close="notificationDialog">×</button></div>
     <div id="notifToggleRow" class="settings-list">
@@ -307,6 +319,7 @@
       <button id="roomCodeBtn" class="hidden"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="12" rx="2"/><path d="M9 16v2a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg> 房間代碼</span> <span id="roomCodeValue">-</span></button>
       <button data-close="roomSettingsDialog" data-open="memberListDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c0-3 2.9-5.5 6.5-5.5s6.5 2.5 6.5 5.5"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 13.2c2.7.4 4.5 2.4 4.5 4.8"/></svg> 成員管理</span> <span>›</span></button>
       <button data-close="roomSettingsDialog" data-open="budgetDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg> 預算管理</span> <span>›</span></button>
+      <button data-close="roomSettingsDialog" data-open="dataExportDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg> 資料匯出／匯入</span> <span>›</span></button>
       <button data-close="roomSettingsDialog" data-open="manageCategoriesDialog"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4h6a2 2 0 0 1 2 2v6l-9 9-8-8z"/><circle cx="14.5" cy="9.5" r="1.3" fill="currentColor" stroke="none"/></svg> 自訂分類</span> <span>›</span></button>
       <button type="button" id="hideBalanceToggleBtn" class="static-row"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><path d="M4 4l16 16"/></svg> 隱藏我的帳戶餘額</span> <span id="hideBalanceSwitch" class="toggle-switch"><i></i></span></button>
     </div>
@@ -321,6 +334,7 @@
 
   <div id="toast" class="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js?v=1.6.0"></script>
 </body>

@@ -654,3 +654,5 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .sticker-shop-card strong{font-size:13px}
 .sticker-shop-card small{color:var(--muted);font-size:10.5px}
 .sticker-shop-badge{margin-top:6px;padding:4px 10px;border-radius:99px;background:var(--green-soft);color:var(--green-dark);font-size:10px;font-weight:800}
+#downloadTemplateLink{color:var(--green-dark);font-weight:800;text-decoration:underline}
+#importResult{white-space:pre-line;line-height:1.6}
