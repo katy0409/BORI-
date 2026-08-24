@@ -668,3 +668,4 @@ button.record{width:100%;text-align:left;font-family:inherit;cursor:pointer;colo
 .message-quote{margin-bottom:5px;padding:5px 8px;border-radius:10px;background:rgba(0,0,0,.06);border-left:2.5px solid currentColor;font-size:11px;opacity:.85}
 .message-quote small{display:block;font-weight:800}
 .message-quote p{margin:1px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.chat-keyboard-open .bottom-nav{display:none}

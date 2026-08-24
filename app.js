@@ -1630,17 +1630,17 @@ if (window.visualViewport) {
     if (!inputFocused) { resetChatComposerBaseline(); return; }
     const rawOffset = window.innerHeight - vv.height - vv.offsetTop;
     const keyboardOffset = Math.max(0, rawOffset);
-    const safeBottom = safeBottomPx();
-    wrap.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
+    // 鍵盤彈出時底部導航列已隱藏，不用再預留它的高度，輸入框可以貼近鍵盤一點。
+    wrap.style.bottom = `${12 + keyboardOffset}px`;
     const tray = $("#stickerTray");
-    if (tray) tray.style.bottom = `${158 + safeBottom + keyboardOffset}px`;
+    if (tray) tray.style.bottom = `${82 + keyboardOffset}px`;
     positionScrollToLatestBtn();
     if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
   }
   const messageInput = $("#messageInput");
   if (messageInput) {
-    messageInput.addEventListener("focus", () => { inputFocused = true; adjustChatForKeyboard(); });
-    messageInput.addEventListener("blur", () => { inputFocused = false; adjustChatForKeyboard(); });
+    messageInput.addEventListener("focus", () => { inputFocused = true; document.body.classList.add("chat-keyboard-open"); adjustChatForKeyboard(); });
+    messageInput.addEventListener("blur", () => { inputFocused = false; document.body.classList.remove("chat-keyboard-open"); adjustChatForKeyboard(); });
   }
   vv.addEventListener("resize", adjustChatForKeyboard);
   vv.addEventListener("scroll", adjustChatForKeyboard);
