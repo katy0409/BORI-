@@ -645,14 +645,42 @@ function recordHTML(x) {
 }
 function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); if (!editingTransactionId) setAddType(addType); } }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
+function formatDateDivider(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const target = new Date(d); target.setHours(0, 0, 0, 0);
+  if (target.getTime() === today.getTime()) return "今天";
+  if (target.getTime() === yesterday.getTime()) return "昨天";
+  const sameYear = target.getFullYear() === today.getFullYear();
+  return sameYear ? `${target.getMonth() + 1}月${target.getDate()}日` : `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日`;
+}
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
   const b = activeBook(); $("#chatBookTitle").textContent = b.name;
-  $("#messageList").innerHTML = messages.length ? messages.map((m) => {
+  const listEl = $("#messageList");
+  const distanceFromBottomBefore = userScrolledUpInChat ? listEl.scrollHeight - listEl.scrollTop : null;
+  if (!messages.length) {
+    listEl.innerHTML = `<div class="chat-welcome"><span>🐻</span><p>這裡是你們的即時聊天室。<br>先傳一句話或一張 BORI 貼圖吧。</p></div>`;
+    renderStickerTray();
+    return;
+  }
+  let html = "", lastDate = null;
+  messages.forEach((m) => {
+    const msgDate = String(m.created_at).slice(0, 10);
+    if (msgDate !== lastDate) { html += `<div class="chat-date-divider">${formatDateDivider(msgDate)}</div>`; lastDate = msgDate; }
     const mine = m.user_id === session.user.id, name = m.profiles?.display_name || (mine ? profile?.display_name : "成員");
-    if (m.message_type === "sticker") { const s = stickerById(m.sticker_id); return `<div class="message ${mine ? "mine" : "other"} sticker-message"><small class="sender">${escapeHTML(name)}</small>${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`; }
-    return `<div class="message ${mine ? "mine" : "other"}"><small class="sender">${escapeHTML(name)}</small><p>${escapeHTML(m.content || "")}</p><small>${new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}</small></div>`;
-  }).join("") : `<div class="chat-welcome"><span>🐻</span><p>這裡是你們的即時聊天室。<br>先傳一句話或一張 BORI 貼圖吧。</p></div>`;
+    const quoteHTML = m.reply_to_id ? `<div class="message-quote"><small>${escapeHTML(m.reply_preview_sender || "")}</small><p>${escapeHTML(m.reply_preview_text || "")}</p></div>` : "";
+    const timeStr = new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+    if (m.message_type === "sticker") {
+      const s = stickerById(m.sticker_id);
+      html += `<div class="message ${mine ? "mine" : "other"} sticker-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${timeStr}</small></div>`;
+    } else {
+      html += `<div class="message ${mine ? "mine" : "other"}" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<p>${escapeHTML(m.content || "")}</p><small>${timeStr}</small></div>`;
+    }
+  });
+  listEl.innerHTML = html;
+  if (distanceFromBottomBefore !== null) listEl.scrollTop = listEl.scrollHeight - distanceFromBottomBefore;
   renderStickerTray();
 }
 let activeStickerSet = 0;
@@ -667,7 +695,23 @@ function renderStickerTray() {
   $("#stickerSetTabs").innerHTML = sets.map((set, i) => `<button type="button" class="sticker-set-tab ${i === activeStickerSet ? "active" : ""}" data-set="${i}"><img src="${set.stickers[0].img}" alt="${escapeHTML(set.name)}" /></button>`).join("");
   $("#stickerGrid").innerHTML = sets[activeStickerSet].stickers.map((s) => `<button type="button" data-sticker="${s.id}"><img src="${s.img}" alt="${escapeHTML(s.text)}" /></button>`).join("");
 }
-function scrollChat() { setTimeout(() => { const el = $("#messageList"); if (el) el.scrollTop = el.scrollHeight; }, 30); }
+function scrollChat(force) {
+  const el = $("#messageList");
+  if (!el) return;
+  if (!force && userScrolledUpInChat) return;
+  const doScroll = () => { el.scrollTop = el.scrollHeight; };
+  requestAnimationFrame(doScroll);
+  setTimeout(doScroll, 120);
+  setTimeout(doScroll, 400);
+}
+let userScrolledUpInChat = false;
+$("#messageList").addEventListener("scroll", () => {
+  const el = $("#messageList");
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+  userScrolledUpInChat = distanceFromBottom > 220;
+  $("#scrollToLatestBtn").classList.toggle("hidden", !userScrolledUpInChat);
+});
+$("#scrollToLatestBtn").addEventListener("click", () => { userScrolledUpInChat = false; scrollChat(true); $("#scrollToLatestBtn").classList.add("hidden"); });
 function renderStickerShopList() {
   $("#stickerShopList").innerHTML = stickerSets.map((set) => {
     const on = !hiddenStickerSets.has(set.id);
@@ -768,7 +812,7 @@ $$('[data-interaction-view]').forEach((button) => button.addEventListener("click
   $$(".interaction-view").forEach((view) => view.classList.add("hidden"));
   const target = { chat: "interactionChat", diary: "interactionDiary", question: "interactionQuestion" }[button.dataset.interactionView];
   $("#" + target).classList.remove("hidden");
-  if (button.dataset.interactionView === "chat") { scrollChat(); markChatRead(); }
+  if (button.dataset.interactionView === "chat") { userScrolledUpInChat = false; $("#scrollToLatestBtn").classList.add("hidden"); scrollChat(true); markChatRead(); }
   if (button.dataset.interactionView === "diary") { resetDiaryForm(); renderDiary(); }
   if (button.dataset.interactionView === "question") renderDailyQuestion();
 }));
@@ -919,10 +963,10 @@ function safeBottomPx() {
   return Number.isFinite(n) ? n : 0;
 }
 function resetChatComposerBaseline() {
-  const composer = $("#chatForm");
-  if (!composer) return;
+  const wrap = $("#chatComposerWrap");
+  if (!wrap) return;
   const safeBottom = safeBottomPx();
-  composer.style.bottom = `${88 + safeBottom}px`;
+  wrap.style.bottom = `${88 + safeBottom}px`;
   const tray = $("#stickerTray");
   if (tray) tray.style.bottom = `${158 + safeBottom}px`;
 }
@@ -1490,25 +1534,93 @@ $("#addCategoryForm").addEventListener("submit", async (e) => {
   if (isIncome) selectedIncomeCategoryIcon = "wallet_gift"; else selectedCategoryIcon = "receipt";
   renderIconPicker();
 });
-$("#chatForm").addEventListener("submit", async (e) => { e.preventDefault(); const content = $("#messageInput").value.trim(); if (!content) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "text", content }); if (error) return toast(error.message); $("#messageInput").value = ""; });
+let replyingToMessage = null;
+function startReply(msg) {
+  if (!msg) return;
+  const mine = msg.user_id === session?.user?.id;
+  const senderName = mine ? "我" : (msg.profiles?.display_name || "成員");
+  const snippet = msg.message_type === "sticker" ? `[貼圖] ${stickerById(msg.sticker_id)?.text || ""}` : (msg.content || "");
+  replyingToMessage = { id: msg.id, senderName, snippet: snippet.slice(0, 60) };
+  $("#replyPreviewSender").textContent = `回覆 ${senderName}`;
+  $("#replyPreviewSnippet").textContent = snippet;
+  $("#replyPreviewBar").classList.remove("hidden");
+  $("#stickerTray").classList.add("hidden");
+  $("#messageInput").focus();
+}
+function cancelReply() {
+  replyingToMessage = null;
+  $("#replyPreviewBar").classList.add("hidden");
+}
+$("#cancelReplyBtn").addEventListener("click", cancelReply);
+$("#messageList").addEventListener("pointerdown", (e) => {
+  const bubble = e.target.closest(".message");
+  if (!bubble) return;
+  const startX = e.clientX, startY = e.clientY;
+  let fired = false;
+  const timer = setTimeout(() => {
+    fired = true;
+    bubble.classList.add("long-press-active");
+    if (navigator.vibrate) navigator.vibrate(12);
+  }, 420);
+  const cleanup = (didFire) => {
+    clearTimeout(timer);
+    bubble.classList.remove("long-press-active");
+    bubble.removeEventListener("pointermove", onMove);
+    bubble.removeEventListener("pointerup", onUp);
+    bubble.removeEventListener("pointercancel", onCancel);
+    if (didFire) {
+      const id = bubble.dataset.messageId;
+      const msg = messages.find((m) => String(m.id) === id);
+      startReply(msg);
+    }
+  };
+  function onMove(ev) { if (!fired && (Math.abs(ev.clientX - startX) > 10 || Math.abs(ev.clientY - startY) > 10)) cleanup(false); }
+  function onUp() { cleanup(fired); }
+  function onCancel() { cleanup(false); }
+  bubble.addEventListener("pointermove", onMove);
+  bubble.addEventListener("pointerup", onUp);
+  bubble.addEventListener("pointercancel", onCancel);
+});
+$("#chatForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const content = $("#messageInput").value.trim();
+  if (!content) return;
+  const row = { book_id: activeBookId, user_id: session.user.id, message_type: "text", content };
+  if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
+  const { error } = await supabaseClient.from("messages").insert(row);
+  if (error) return toast(error.message);
+  $("#messageInput").value = "";
+  cancelReply();
+});
 $("#stickerBtn").addEventListener("click", () => $("#stickerTray").classList.toggle("hidden"));
 $("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.closest("[data-set]"); if (!btn) return; activeStickerSet = Number(btn.dataset.set); renderStickerTray(); });
-$("#stickerGrid").addEventListener("click", async (e) => { const btn = e.target.closest("[data-sticker]"); if (!btn) return; const s = stickerById(btn.dataset.sticker); if (!s) return; const { error } = await supabaseClient.from("messages").insert({ book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id }); if (error) return toast(error.message); $("#stickerTray").classList.add("hidden"); });
+$("#stickerGrid").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-sticker]");
+  if (!btn) return;
+  const s = stickerById(btn.dataset.sticker);
+  if (!s) return;
+  const row = { book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id };
+  if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
+  const { error } = await supabaseClient.from("messages").insert(row);
+  if (error) return toast(error.message);
+  $("#stickerTray").classList.add("hidden");
+  cancelReply();
+});
 
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }
 if (window.visualViewport) {
   const vv = window.visualViewport;
   let inputFocused = false;
   function adjustChatForKeyboard() {
-    const composer = $("#chatForm");
-    if (!composer) return;
+    const wrap = $("#chatComposerWrap");
+    if (!wrap) return;
     // 只有在輸入框真的被聚焦時才考慮鍵盤高度，避免把 iOS Safari 滾動時
     // 網址列/工具列收合展開造成的視窗高度變化誤判成鍵盤彈出。
     if (!inputFocused) { resetChatComposerBaseline(); return; }
     const rawOffset = window.innerHeight - vv.height - vv.offsetTop;
     const keyboardOffset = Math.max(0, rawOffset);
     const safeBottom = safeBottomPx();
-    composer.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
+    wrap.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
     const tray = $("#stickerTray");
     if (tray) tray.style.bottom = `${158 + safeBottom + keyboardOffset}px`;
     if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
