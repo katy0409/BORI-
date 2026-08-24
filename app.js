@@ -823,8 +823,8 @@ function parseDiaryContent(raw = "") {
   if (!raw.startsWith(DIARY_PREFIX)) return { title: "生活隨筆", mood: "回憶", emoji: "📖", body: raw };
   try {
     const data = JSON.parse(raw.slice(DIARY_PREFIX.length));
-    const moodEmoji = { 幸福: "🥰", 開心: "😊", 平靜: "🌿", 疲累: "😴", 難過: "🥺" };
-    return { title: data.title || "生活隨筆", mood: data.mood || "回憶", emoji: moodEmoji[data.mood] || "📖", body: data.body || "" };
+    const moodIcons = { 幸福: "happy_bonded", 開心: "joyful", 平靜: "calm", 疲累: "tired", 難過: "sad" };
+    return { title: data.title || "生活隨筆", mood: data.mood || "回憶", iconKey: moodIcons[data.mood] || null, body: data.body || "" };
   } catch { return { title: "生活隨筆", mood: "回憶", emoji: "📖", body: raw }; }
 }
 function packDiaryContent(title, mood, body) { return DIARY_PREFIX + JSON.stringify({ title, mood, body }); }
@@ -844,7 +844,8 @@ function renderDiary() {
     const diary = parseDiaryContent(entry.content || ""), mine = entry.user_id === session?.user?.id;
     const date = new Date(`${entry.entry_date}T00:00:00+08:00`);
     const dateLabel = date.toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "short" });
-    return `<article class="diary-entry"><div class="diary-date-badge"><b>${String(date.getDate()).padStart(2,"0")}</b><small>${date.getMonth()+1}月</small></div><div class="diary-paper"><div class="diary-entry-meta"><span>${escapeHTML(diary.emoji)} ${escapeHTML(diary.mood)}</span><small>${escapeHTML(dateLabel)} · ${escapeHTML(owner?.name || (mine ? profile?.display_name : "成員") || "成員")}</small></div><h4>${escapeHTML(diary.title)}</h4><p>${escapeHTML(diary.body)}</p>${mine ? `<div class="diary-entry-actions"><button type="button" data-edit-diary="${entry.id}">編輯</button><button type="button" data-delete-diary="${entry.id}">刪除</button></div>` : ""}</div></article>`;
+    const moodTag = diary.iconKey ? `<img class="diary-mood-tag-icon" src="assets/mood-icons/${diary.iconKey}.png" alt="" />` : "📖";
+    return `<article class="diary-entry"><div class="diary-date-badge"><b>${String(date.getDate()).padStart(2,"0")}</b><small>${date.getMonth()+1}月</small></div><div class="diary-paper"><div class="diary-entry-meta"><span>${moodTag} ${escapeHTML(diary.mood)}</span><small>${escapeHTML(dateLabel)} · ${escapeHTML(owner?.name || (mine ? profile?.display_name : "成員") || "成員")}</small></div><h4>${escapeHTML(diary.title)}</h4><p>${escapeHTML(diary.body)}</p>${mine ? `<div class="diary-entry-actions"><button type="button" data-edit-diary="${entry.id}">編輯</button><button type="button" data-delete-diary="${entry.id}">刪除</button></div>` : ""}</div></article>`;
   }).join("") : `<div class="diary-empty"><span>📖</span><strong>故事正要開始</strong><p>收藏第一篇屬於你們的回憶吧。</p></div>`;
 }
 $("#diaryForm").addEventListener("submit", async (e) => {
