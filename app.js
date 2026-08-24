@@ -812,7 +812,7 @@ $$('[data-interaction-view]').forEach((button) => button.addEventListener("click
   $$(".interaction-view").forEach((view) => view.classList.add("hidden"));
   const target = { chat: "interactionChat", diary: "interactionDiary", question: "interactionQuestion" }[button.dataset.interactionView];
   $("#" + target).classList.remove("hidden");
-  if (button.dataset.interactionView === "chat") { userScrolledUpInChat = false; $("#scrollToLatestBtn").classList.add("hidden"); scrollChat(true); markChatRead(); }
+  if (button.dataset.interactionView === "chat") { userScrolledUpInChat = false; $("#scrollToLatestBtn").classList.add("hidden"); scrollChat(true); markChatRead(); resetChatComposerBaseline(); }
   if (button.dataset.interactionView === "diary") { resetDiaryForm(); renderDiary(); }
   if (button.dataset.interactionView === "question") renderDailyQuestion();
 }));
@@ -969,6 +969,15 @@ function resetChatComposerBaseline() {
   wrap.style.bottom = `${88 + safeBottom}px`;
   const tray = $("#stickerTray");
   if (tray) tray.style.bottom = `${158 + safeBottom}px`;
+  positionScrollToLatestBtn();
+}
+function positionScrollToLatestBtn() {
+  const wrap = $("#chatComposerWrap"), btn = $("#scrollToLatestBtn");
+  if (!wrap || !btn) return;
+  requestAnimationFrame(() => {
+    const rect = wrap.getBoundingClientRect();
+    btn.style.bottom = `${Math.max(8, window.innerHeight - rect.top + 12)}px`;
+  });
 }
 function taiwanToday() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((part) => [part.type, part.value]));
@@ -1546,10 +1555,12 @@ function startReply(msg) {
   $("#replyPreviewBar").classList.remove("hidden");
   $("#stickerTray").classList.add("hidden");
   $("#messageInput").focus();
+  positionScrollToLatestBtn();
 }
 function cancelReply() {
   replyingToMessage = null;
   $("#replyPreviewBar").classList.add("hidden");
+  positionScrollToLatestBtn();
 }
 $("#cancelReplyBtn").addEventListener("click", cancelReply);
 $("#messageList").addEventListener("pointerdown", (e) => {
@@ -1623,6 +1634,7 @@ if (window.visualViewport) {
     wrap.style.bottom = `${88 + safeBottom + keyboardOffset}px`;
     const tray = $("#stickerTray");
     if (tray) tray.style.bottom = `${158 + safeBottom + keyboardOffset}px`;
+    positionScrollToLatestBtn();
     if (keyboardOffset > 0 && $("#chatPage")?.classList.contains("active")) scrollChat();
   }
   const messageInput = $("#messageInput");
