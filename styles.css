@@ -672,3 +672,26 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .diary-mood-picker span{min-height:64px;filter:none}
 .diary-mood-picker img{width:38px;height:38px;object-fit:contain}
 .diary-mood-tag-icon{width:16px;height:16px;object-fit:contain;vertical-align:-3px}
+
+/* V1.10 split & settlement additions */
+.split-mode-switch .type-switch-option.active,.split-type-switch .type-switch-option.active{background:var(--green-soft);color:var(--green-dark)}
+.split-detail{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg)}
+.split-share-inputs{display:grid;gap:8px;margin-top:10px}
+.split-share-row{display:flex;align-items:center;gap:10px}
+.split-share-row img{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.split-share-row span{flex-shrink:0;font-size:12px}
+.split-share-row .split-name{flex:1;font-weight:700;font-size:13px}
+.split-share-row input{width:84px;border:1px solid var(--line);border-radius:12px;padding:9px 10px;text-align:right;background:var(--card);color:var(--brown)}
+#splitHint{display:block}
+#splitHint.negative{color:var(--danger)}
+.settle-summary-list{display:grid;gap:10px;margin-top:12px}
+.settle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--card)}
+.settle-row-info{display:flex;flex-direction:column;gap:2px}
+.settle-row-info strong{font-size:14px}
+.settle-row-info small{color:var(--muted);font-size:11px}
+.settle-row-amount{font-weight:800;color:var(--amber-dark);font-size:16px;white-space:nowrap}
+.settle-row button{flex-shrink:0;border:0;border-radius:99px;background:var(--green);color:#fff;font-weight:800;padding:9px 14px;font-size:12.5px}
+.settle-history-list{display:grid;gap:10px;margin-top:6px}
+.settle-history-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.settle-history-row small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px}
+.settle-history-row button{border:0;background:none;color:var(--danger);font-size:11px;font-weight:700}

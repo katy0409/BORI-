@@ -152,6 +152,11 @@
             <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
             <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
           </div>
+          <div id="settleSection" class="hidden">
+            <div class="section-head"><h2>分帳結算</h2><button type="button" class="text-button" data-open="settleHistoryDialog">結算紀錄</button></div>
+            <p class="muted-hint" style="margin-top:-6px">只計算已標記為「與房間分攤」的支出</p>
+            <div id="settleSummaryList" class="settle-summary-list"></div>
+          </div>
           <div class="section-head"><h2>帳戶餘額</h2><small class="muted-hint" style="margin:0">從記帳紀錄累計，非即時銀行資料</small></div>
           <div id="accountBalances" class="account-balance-grid"></div>
           <div class="quick-grid quick-grid-single"><button data-page="insightsPage"><span>◔</span><strong>分析與預算</strong><small>查看圖表、成員收支與預算進度</small></button></div>
@@ -181,6 +186,24 @@
             <label>🏷️ 分類<select id="categoryInput"></select></label>
             <label>💳 帳戶<div class="payment-picker" id="paymentPicker"></div></label>
             <div id="subAccountPicker" class="member-filter-row hidden"></div>
+            <div id="splitSection" class="split-section hidden">
+              <p class="filter-label">🤝 這筆怎麼分？</p>
+              <div class="type-switch split-mode-switch" id="splitModeSwitch">
+                <button type="button" class="type-switch-option active" data-split-mode="private">私人不分帳</button>
+                <button type="button" class="type-switch-option" data-split-mode="shared">與房間分攤</button>
+              </div>
+              <div id="splitDetail" class="split-detail hidden">
+                <p class="filter-label">分攤成員</p>
+                <div id="splitMemberRow" class="member-filter-row"></div>
+                <div class="type-switch split-type-switch" id="splitTypeSwitch">
+                  <button type="button" class="type-switch-option active" data-split-type="equal">平均分攤</button>
+                  <button type="button" class="type-switch-option" data-split-type="ratio">自訂比例</button>
+                  <button type="button" class="type-switch-option" data-split-type="amount">自訂金額</button>
+                </div>
+                <div id="splitShareInputs" class="split-share-inputs hidden"></div>
+                <small id="splitHint" class="muted-hint"></small>
+              </div>
+            </div>
             <label class="date-field-label">📅 日期<div class="date-field-wrap"><input id="dateInput" type="date" required /><span id="dateInputDisplay" class="date-field-display">選擇日期</span><span class="date-field-chevron">›</span></div></label>
             <label>🗒️ 備註<textarea id="noteInput" rows="3" placeholder="可留空"></textarea></label>
             <button class="primary record-save-btn" type="submit">🐻 儲存這筆紀錄</button>
@@ -233,6 +256,7 @@
 
   <dialog id="switchRoomDialog"><div class="dialog-head"><div><p class="eyebrow">SWITCH ROOM</p><h3>切換房間</h3></div><button type="button" class="dialog-close" data-close="switchRoomDialog">×</button></div><div id="switchRoomList" class="switch-room-list"></div><button type="button" class="secondary" data-close="switchRoomDialog" data-open="bookDialog">🚪 開新房間</button></dialog>
 
+  <dialog id="settleHistoryDialog"><div class="dialog-head"><div><p class="eyebrow">SETTLEMENTS</p><h3>結算紀錄</h3></div><button type="button" class="dialog-close" data-close="settleHistoryDialog">×</button></div><div id="settleHistoryList" class="settle-history-list"></div></dialog>
   <dialog id="editNameDialog"><form id="editNameForm"><div class="dialog-head"><div><p class="eyebrow">DISPLAY NAME</p><h3>編輯暱稱</h3></div><button type="button" class="dialog-close" data-close="editNameDialog">×</button></div><label>暱稱<input id="editNameInput" required maxlength="24" placeholder="例如：凱婷" /></label><button class="primary" type="submit">儲存</button></form></dialog>
 
   <dialog id="memberListDialog">

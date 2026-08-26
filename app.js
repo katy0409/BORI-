@@ -187,6 +187,7 @@ let books = [];
 let activeBookId = localStorage.getItem(ACTIVE_BOOK_KEY) || null;
 let transactions = [];
 let budgets = [];
+let settlements = [];
 let messages = [];
 let memberPrivacy = {};
 let roomMembers = [];
@@ -205,7 +206,7 @@ function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach(
 const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "dataExportDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); resetSplitState(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -289,17 +290,19 @@ async function loadBooks() {
 }
 
 async function fetchLedger() {
-  const [tx, bd] = await Promise.all([
+  const [tx, bd, st] = await Promise.all([
     supabaseClient.from("transactions").select("*").eq("book_id", activeBookId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
-    supabaseClient.from("budgets").select("*").eq("book_id", activeBookId).eq("month", currentMonth())
+    supabaseClient.from("budgets").select("*").eq("book_id", activeBookId).eq("month", currentMonth()),
+    supabaseClient.from("settlements").select("*").eq("book_id", activeBookId).order("created_at", { ascending: false })
   ]);
   if (tx.error) toast(tx.error.message); else transactions = tx.data || [];
   if (bd.error) toast(bd.error.message); else budgets = bd.data || [];
+  if (st.error) toast(st.error.message); else settlements = st.data || [];
 }
 
 async function loadActiveBookData() {
   unsubscribeRealtime();
-  transactions = []; budgets = []; messages = []; diaries = []; dailyAnswers = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
+  transactions = []; budgets = []; settlements = []; messages = []; diaries = []; dailyAnswers = []; memberPrivacy = {}; roomMembers = []; memberFilterId = null; myLastReadAt = null;
   if (!activeBookId) return;
   const msPromise = supabaseClient.from("messages").select("*").eq("book_id", activeBookId).order("created_at", { ascending: true }).limit(200);
   const mpPromise = supabaseClient.from("book_members").select("user_id, hide_balance, last_read_at").eq("book_id", activeBookId);
@@ -364,6 +367,7 @@ function subscribeRealtime() {
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
     .on("postgres_changes", { event: "*", schema: "public", table: "budgets", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
+    .on("postgres_changes", { event: "*", schema: "public", table: "settlements", filter: `book_id=eq.${activeBookId}` }, () => scheduleLedgerRefresh())
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "books", filter: `id=eq.${activeBookId}` }, async () => {
       await loadBooks();
       renderAll();
@@ -431,14 +435,109 @@ function renderLedger() {
   renderMemberFilterRow();
   $("#ledgerCount").textContent = visible.length ? `共 ${visible.length} 筆` : "";
   const expenses = monthTransactions("expense");
-  const exp = expenses.reduce((s, x) => s + Number(x.amount), 0);
-  const myPaid = expenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
+  const sharedExpenses = expenses.filter((x) => x.split_mode === "shared");
+  const exp = sharedExpenses.reduce((s, x) => s + Number(x.amount), 0);
+  const myPaid = sharedExpenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
   const otherPaid = Math.max(exp - myPaid, 0);
   $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
   renderAccountBalances();
   renderBudgets(expenses);
+  renderSettleSummary();
   $("#ledgerList").innerHTML = visible.length ? visible.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
+function shareMapForTransaction(x) {
+  if (x.transaction_type !== "expense" || x.split_mode !== "shared") return {};
+  const members = Array.isArray(x.split_members) ? x.split_members : [];
+  if (!members.length) return {};
+  const amount = Number(x.amount) || 0;
+  const map = {};
+  if (x.split_type === "amount" && x.split_shares) {
+    members.forEach((id) => { map[id] = Number(x.split_shares[id]) || 0; });
+    return map;
+  }
+  if (x.split_type === "ratio" && x.split_shares) {
+    members.forEach((id) => { map[id] = amount * (Number(x.split_shares[id]) || 0) / 100; });
+    return map;
+  }
+  const equalShare = amount / members.length;
+  members.forEach((id) => { map[id] = equalShare; });
+  return map;
+}
+function computeNetBalances() {
+  const net = {};
+  roomMembers.forEach((m) => { net[m.id] = 0; });
+  transactions.forEach((x) => {
+    if (x.transaction_type !== "expense" || x.split_mode !== "shared") return;
+    const shares = shareMapForTransaction(x);
+    net[x.user_id] = (net[x.user_id] || 0) + Number(x.amount);
+    Object.entries(shares).forEach(([uid, share]) => { net[uid] = (net[uid] || 0) - share; });
+  });
+  settlements.forEach((s) => {
+    net[s.from_user_id] = (net[s.from_user_id] || 0) + Number(s.amount);
+    net[s.to_user_id] = (net[s.to_user_id] || 0) - Number(s.amount);
+  });
+  return net;
+}
+function simplifyDebts(net) {
+  const creditors = [], debtors = [];
+  Object.entries(net).forEach(([id, value]) => {
+    if (value > 0.5) creditors.push({ id, value });
+    else if (value < -0.5) debtors.push({ id, value: -value });
+  });
+  creditors.sort((a, b) => b.value - a.value);
+  debtors.sort((a, b) => b.value - a.value);
+  const transfers = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(debtors[i].value, creditors[j].value);
+    if (amount > 0.5) transfers.push({ from: debtors[i].id, to: creditors[j].id, amount: Math.round(amount) });
+    debtors[i].value -= amount;
+    creditors[j].value -= amount;
+    if (debtors[i].value <= 0.5) i++;
+    if (creditors[j].value <= 0.5) j++;
+  }
+  return transfers;
+}
+function memberName(id) { return id === session?.user?.id ? "我" : (roomMembers.find((m) => m.id === id)?.name || "成員"); }
+function renderSettleSummary() {
+  const section = $("#settleSection");
+  if (!section) return;
+  const show = roomMembers.length > 1;
+  section.classList.toggle("hidden", !show);
+  if (!show) return;
+  const transfers = simplifyDebts(computeNetBalances());
+  $("#settleSummaryList").innerHTML = transfers.length
+    ? transfers.map((t) => `<div class="settle-row"><div class="settle-row-info"><strong>${escapeHTML(memberName(t.from))} 應付給 ${escapeHTML(memberName(t.to))}</strong><small>依「與房間分攤」的支出計算</small></div><div class="settle-row-amount">${money(t.amount)}</div><button type="button" data-settle-from="${t.from}" data-settle-to="${t.to}" data-settle-amount="${t.amount}">標記結清</button></div>`).join("")
+    : `<div class="empty-state compact"><p>目前沒有人欠錢 🎉</p></div>`;
+}
+$("#settleSummaryList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-settle-from]");
+  if (!btn) return;
+  const fromName = memberName(btn.dataset.settleFrom), toName = memberName(btn.dataset.settleTo), amount = Number(btn.dataset.settleAmount);
+  if (!confirm(`確認 ${fromName} 已經付給 ${toName} ${money(amount)} 了嗎？`)) return;
+  const { error } = await supabaseClient.from("settlements").insert({ book_id: activeBookId, from_user_id: btn.dataset.settleFrom, to_user_id: btn.dataset.settleTo, amount, settled_by: session.user.id });
+  if (error) return toast(error.message);
+  await loadActiveBookData();
+  renderAll();
+  toast("已標記結清 ✅");
+});
+function renderSettleHistory() {
+  $("#settleHistoryList").innerHTML = settlements.length
+    ? settlements.map((s) => `<div class="settle-history-row"><div><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${new Date(s.created_at).toLocaleString("zh-TW")}</small></div>${s.settled_by === session?.user?.id ? `<button type="button" data-delete-settlement="${s.id}">取消</button>` : ""}</div>`).join("")
+    : `<div class="empty-state compact"><p>還沒有結算紀錄。</p></div>`;
+}
+document.addEventListener("click", (e) => { if (e.target.closest('[data-open="settleHistoryDialog"]')) renderSettleHistory(); });
+$("#settleHistoryList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-delete-settlement]");
+  if (!btn) return;
+  if (!confirm("確定要取消這筆結算紀錄嗎？")) return;
+  const { error } = await supabaseClient.from("settlements").delete().eq("id", btn.dataset.deleteSettlement);
+  if (error) return toast(error.message);
+  await loadActiveBookData();
+  renderAll();
+  renderSettleHistory();
+  toast("已取消該筆結算");
+});
 function renderProfile() {
   $("#profileName").textContent = profile?.display_name || "BORI 使用者";
   $("#profileEmail").textContent = session?.user?.email || "Cloud Life · V1.3";
@@ -953,8 +1052,10 @@ async function createBook(name, type) {
   if (memberError) throw memberError;
   return data;
 }
-async function addTransaction(type, title, amount, category, note = "", date = null, paymentCategory = "cash", paymentMethod = "現金") {
-  const { error } = await supabaseClient.from("transactions").insert({ book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: date || localDateStr(), note, payment_category: paymentCategory, payment_method: paymentMethod });
+async function addTransaction(type, title, amount, category, note = "", date = null, paymentCategory = "cash", paymentMethod = "現金", split = null) {
+  const payload = { book_id: activeBookId, user_id: session.user.id, transaction_type: type, category, title, amount: Number(amount), transaction_date: date || localDateStr(), note, payment_category: paymentCategory, payment_method: paymentMethod };
+  if (split) Object.assign(payload, split);
+  const { error } = await supabaseClient.from("transactions").insert(payload);
   if (error) throw error;
 }
 
@@ -1207,11 +1308,125 @@ function setAddType(type) {
   $(".amount-field").classList.toggle("mode-income", type === "income");
   $("#addPageArt").src = type === "expense" ? "assets/bear-expense.png" : "assets/bear-income.png";
   $("#categoryInput").innerHTML = (type === "expense" ? activeCategories() : activeIncomeCategories()).map((c) => `<option>${escapeHTML(c.name)}</option>`).join("");
+  renderSplitSection();
 }
 $("#typeSwitch").addEventListener("click", (e) => { const btn = e.target.closest("[data-type]"); if (btn) setAddType(btn.dataset.type); });
-async function updateTransaction(id, type, title, amount, category, note, date, paymentCategory, paymentMethod) {
-  const { error } = await supabaseClient.from("transactions").update({ transaction_type: type, title, amount: Number(amount), category, note, transaction_date: date, payment_category: paymentCategory, payment_method: paymentMethod }).eq("id", id);
+async function updateTransaction(id, type, title, amount, category, note, date, paymentCategory, paymentMethod, split = null) {
+  const payload = { transaction_type: type, title, amount: Number(amount), category, note, transaction_date: date, payment_category: paymentCategory, payment_method: paymentMethod };
+  if (split) Object.assign(payload, split);
+  const { error } = await supabaseClient.from("transactions").update(payload).eq("id", id);
   if (error) throw error;
+}
+let splitMode = "private";
+let splitType = "equal";
+let splitSelectedMembers = [];
+let splitShares = {};
+function resetSplitState() {
+  splitMode = "private";
+  splitType = "equal";
+  splitSelectedMembers = roomMembers.map((m) => m.id);
+  splitShares = {};
+}
+function resetShareDefaults() {
+  splitShares = {};
+  if (!splitSelectedMembers.length) return;
+  if (splitType === "ratio") {
+    const even = +(100 / splitSelectedMembers.length).toFixed(1);
+    splitSelectedMembers.forEach((id) => { splitShares[id] = even; });
+  } else if (splitType === "amount") {
+    const total = Number($("#amountInput").value) || 0;
+    const even = +(total / splitSelectedMembers.length).toFixed(2);
+    splitSelectedMembers.forEach((id) => { splitShares[id] = even; });
+  }
+}
+function splitShareSum() { return splitSelectedMembers.reduce((s, id) => s + (Number(splitShares[id]) || 0), 0); }
+function renderSplitMemberChips() {
+  $("#splitMemberRow").innerHTML = roomMembers.map((m) => `<button type="button" class="member-chip ${splitSelectedMembers.includes(m.id) ? "active" : ""}" data-split-member="${m.id}">${m.avatar ? `<img src="${m.avatar}" alt="" />` : "🐻"} ${escapeHTML(m.id === session?.user?.id ? "我" : m.name)}</button>`).join("");
+}
+function updateSplitHint() {
+  const hint = $("#splitHint");
+  if (!hint || splitType === "equal") return;
+  const sum = splitShareSum();
+  if (splitType === "ratio") {
+    hint.textContent = `已分配 ${sum}%（需為 100%）`;
+    hint.classList.toggle("negative", Math.abs(sum - 100) > 0.5);
+  } else {
+    const total = Number($("#amountInput").value) || 0;
+    hint.textContent = `已分配 ${money(sum)}（需等於 ${money(total)}）`;
+    hint.classList.toggle("negative", Math.abs(sum - total) > 0.5);
+  }
+}
+function renderSplitShareInputs() {
+  const wrap = $("#splitShareInputs");
+  if (splitType === "equal") { wrap.classList.add("hidden"); wrap.innerHTML = ""; $("#splitHint").textContent = ""; return; }
+  wrap.classList.remove("hidden");
+  wrap.innerHTML = splitSelectedMembers.map((id) => {
+    const m = roomMembers.find((r) => r.id === id);
+    const name = id === session?.user?.id ? "我" : (m?.name || "成員");
+    const step = splitType === "ratio" ? "0.1" : "0.01";
+    return `<div class="split-share-row">${m?.avatar ? `<img src="${m.avatar}" alt="" />` : "<span>🐻</span>"}<span class="split-name">${escapeHTML(name)}</span><input type="number" min="0" step="${step}" data-split-share-input="${id}" value="${splitShares[id] ?? ""}" />${splitType === "ratio" ? "<span>%</span>" : "<span>$</span>"}</div>`;
+  }).join("");
+  updateSplitHint();
+}
+function renderSplitSection() {
+  const show = addType === "expense" && roomMembers.length > 1;
+  $("#splitSection").classList.toggle("hidden", !show);
+  if (!show) return;
+  $$("#splitModeSwitch .type-switch-option").forEach((b) => b.classList.toggle("active", b.dataset.splitMode === splitMode));
+  $("#splitDetail").classList.toggle("hidden", splitMode !== "shared");
+  if (splitMode !== "shared") return;
+  $$("#splitTypeSwitch .type-switch-option").forEach((b) => b.classList.toggle("active", b.dataset.splitType === splitType));
+  renderSplitMemberChips();
+  renderSplitShareInputs();
+}
+$("#splitModeSwitch").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-split-mode]");
+  if (!btn) return;
+  splitMode = btn.dataset.splitMode;
+  if (splitMode === "shared" && !splitSelectedMembers.length) splitSelectedMembers = roomMembers.map((m) => m.id);
+  renderSplitSection();
+});
+$("#splitTypeSwitch").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-split-type]");
+  if (!btn) return;
+  splitType = btn.dataset.splitType;
+  resetShareDefaults();
+  renderSplitSection();
+});
+$("#splitMemberRow").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-split-member]");
+  if (!btn) return;
+  const id = btn.dataset.splitMember;
+  if (splitSelectedMembers.includes(id)) {
+    if (splitSelectedMembers.length <= 1) return toast("至少要保留一位分攤成員");
+    splitSelectedMembers = splitSelectedMembers.filter((x) => x !== id);
+  } else {
+    splitSelectedMembers = [...splitSelectedMembers, id];
+  }
+  resetShareDefaults();
+  renderSplitSection();
+});
+$("#splitShareInputs").addEventListener("input", (e) => {
+  const input = e.target.closest("[data-split-share-input]");
+  if (!input) return;
+  splitShares[input.dataset.splitShareInput] = input.value;
+  updateSplitHint();
+});
+$("#amountInput").addEventListener("input", () => { if (splitMode === "shared" && splitType === "amount") updateSplitHint(); });
+function getSplitPayload(amountValue) {
+  if (splitMode !== "shared") return { split_mode: "private", split_type: null, split_members: null, split_shares: null };
+  if (!splitSelectedMembers.length) throw new Error("請至少選擇一位分攤成員");
+  if (splitType === "equal") return { split_mode: "shared", split_type: "equal", split_members: splitSelectedMembers, split_shares: null };
+  const sum = splitShareSum();
+  const shares = {};
+  splitSelectedMembers.forEach((id) => { shares[id] = Number(splitShares[id]) || 0; });
+  if (splitType === "ratio") {
+    if (Math.abs(sum - 100) > 0.5) throw new Error(`自訂比例總和需為 100%（目前 ${sum}%）`);
+  } else {
+    const total = Number(amountValue) || 0;
+    if (Math.abs(sum - total) > 0.5) throw new Error(`自訂金額總和需等於 ${money(total)}（目前 ${money(sum)}）`);
+  }
+  return { split_mode: "shared", split_type: splitType, split_members: splitSelectedMembers, split_shares: shares };
 }
 function openEditTransaction(id) {
   const tx = transactions.find((t) => t.id === id);
@@ -1227,6 +1442,11 @@ function openEditTransaction(id) {
   selectedPaymentCategory = tx.payment_category || "cash";
   selectedSubAccount = tx.payment_method || "現金";
   renderPaymentPicker();
+  splitMode = tx.split_mode === "shared" ? "shared" : "private";
+  splitType = tx.split_type || "equal";
+  splitSelectedMembers = Array.isArray(tx.split_members) && tx.split_members.length ? tx.split_members : roomMembers.map((m) => m.id);
+  splitShares = tx.split_shares ? { ...tx.split_shares } : {};
+  renderSplitSection();
   $("#addPageEyebrow").textContent = "EDIT RECORD";
   $("#addPageTitle").textContent = "編輯這筆紀錄";
   $("#deleteTransactionBtn").classList.remove("hidden");
@@ -1235,14 +1455,16 @@ $("#ledgerList").addEventListener("click", (e) => { const btn = e.target.closest
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
+    const split = addType === "expense" ? getSplitPayload($("#amountInput").value) : { split_mode: "private", split_type: null, split_members: null, split_shares: null };
     if (editingTransactionId) {
-      await updateTransaction(editingTransactionId, addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
+      await updateTransaction(editingTransactionId, addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount, split);
       toast("紀錄已更新 ✏️");
     } else {
-      await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount);
+      await addTransaction(addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount, split);
       toast(addType === "expense" ? "支出已同步到房間 ☁️" : "收入已同步到房間 💰");
     }
     e.target.reset();
+    resetSplitState();
     setAddType("expense");
     setDateValue("dateInput", "dateInputDisplay", localDateStr());
     editingTransactionId = null;
