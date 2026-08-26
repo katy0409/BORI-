@@ -439,7 +439,7 @@ function renderLedger() {
   const exp = sharedExpenses.reduce((s, x) => s + Number(x.amount), 0);
   const myPaid = sharedExpenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
   const otherPaid = Math.max(exp - myPaid, 0);
-  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
+  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid); const _allExp = (memberFilterId ? expenses.filter((x) => x.user_id === memberFilterId) : expenses).reduce((s2, x) => s2 + Number(x.amount), 0); const _ae = $("#allExpenseTotal"); if (_ae) _ae.textContent = money(_allExp);
   renderAccountBalances();
   renderBudgets(expenses);
   renderSettleSummary();
@@ -472,7 +472,7 @@ function computeNetBalances() {
     net[x.user_id] = (net[x.user_id] || 0) + Number(x.amount);
     Object.entries(shares).forEach(([uid, share]) => { net[uid] = (net[uid] || 0) - share; });
   });
-  settlements.forEach((s) => {
+  settlements.forEach((s) => { if (s.status === "pending") return;
     net[s.from_user_id] = (net[s.from_user_id] || 0) + Number(s.amount);
     net[s.to_user_id] = (net[s.to_user_id] || 0) - Number(s.amount);
   });
@@ -505,26 +505,92 @@ function renderSettleSummary() {
   const show = roomMembers.length > 1;
   section.classList.toggle("hidden", !show);
   if (!show) return;
+  const myId = session?.user?.id;
   const transfers = simplifyDebts(computeNetBalances());
-  $("#settleSummaryList").innerHTML = transfers.length
-    ? transfers.map((t) => `<div class="settle-row"><div class="settle-row-info"><strong>${escapeHTML(memberName(t.from))} 應付給 ${escapeHTML(memberName(t.to))}</strong><small>依「與房間分攤」的支出計算</small></div><div class="settle-row-amount">${money(t.amount)}</div><button type="button" data-settle-from="${t.from}" data-settle-to="${t.to}" data-settle-amount="${t.amount}">標記結清</button></div>`).join("")
-    : `<div class="empty-state compact"><p>目前沒有人欠錢 🎉</p></div>`;
+  const rows = transfers.map((t) => {
+    const isDebtor = t.from === myId;
+    const action = isDebtor
+      ? `<button type="button" data-settle-init-to="${t.to}" data-settle-init-amount="${t.amount}">發起結算</button>`
+      : `<small class="settle-wait">只有 ${escapeHTML(memberName(t.from))} 能發起</small>`;
+    return `<div class="settle-row"><div class="settle-row-info"><strong>${escapeHTML(memberName(t.from))} 應付給 ${escapeHTML(memberName(t.to))}</strong><small>依「與房間分攤」的支出計算</small></div><div class="settle-row-amount">${money(t.amount)}</div>${action}</div>`;
+  });
+  const pending = settlements.filter((s) => s.status === "pending" && (s.from_user_id === myId || s.to_user_id === myId));
+  const pendingRows = pending.map((s) => {
+    const iAmPayee = s.to_user_id === myId;
+    const info = `<div class="settle-row-info"><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${iAmPayee ? "對方已發起，等你確認收款" : "已送出，等待對方確認"}</small></div>`;
+    const btns = iAmPayee
+      ? `<button type="button" data-settle-confirm="${s.id}" data-settle-amount="${s.amount}" data-settle-from="${s.from_user_id}">確認收款</button>`
+      : `<button type="button" class="settle-cancel" data-settle-cancel="${s.id}">取消</button>`;
+    return `<div class="settle-row pending">${info}<div class="settle-row-amount"></div>${btns}</div>`;
+  });
+  const html = [...rows, ...pendingRows].join("");
+  $("#settleSummaryList").innerHTML = html || `<div class="empty-state compact"><p>目前沒有人欠錢 🎉</p></div>`;
 }
-$("#settleSummaryList").addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-settle-from]");
-  if (!btn) return;
-  const fromName = memberName(btn.dataset.settleFrom), toName = memberName(btn.dataset.settleTo), amount = Number(btn.dataset.settleAmount);
-  if (!confirm(`確認 ${fromName} 已經付給 ${toName} ${money(amount)} 了嗎？`)) return;
-  const { error } = await supabaseClient.from("settlements").insert({ book_id: activeBookId, from_user_id: btn.dataset.settleFrom, to_user_id: btn.dataset.settleTo, amount, settled_by: session.user.id });
+// ---- 分帳結算：發起 / 確認 ----
+let settleInitState = { to: null, amount: 0, cat: "cash", sub: "現金" };
+let settleConfirmState = { id: null, from: null, amount: 0, cat: "cash", sub: "現金" };
+function renderSettlePicker(pickerEl, subEl, state, key) {
+  if (!pickerEl || !subEl) return;
+  pickerEl.innerHTML = baseCategories.map((c) => `<label><input type="radio" name="${key}Cat" value="${c.key}" ${c.key === state.cat ? "checked" : ""}><span>${c.icon}<small>${c.label}</small></span></label>`).join("");
+  const subs = mySubAccounts(state.cat);
+  if (subs.length <= 1) { subEl.classList.add("hidden"); state.sub = subs[0].name; return; }
+  if (!subs.some((x) => x.name === state.sub)) state.sub = subs[0].name;
+  subEl.classList.remove("hidden");
+  subEl.innerHTML = subs.map((x) => `<button type="button" class="member-chip ${state.sub === x.name ? "active" : ""}" data-sub="${escapeHTML(x.name)}">${escapeHTML(x.name)}</button>`).join("");
+}
+function openSettleInitiate(to, amount) {
+  settleInitState = { to, amount, cat: "cash", sub: "現金" };
+  const who = $("#settleInitiateWho"); if (who) who.textContent = `結算給 ${memberName(to)}（最多 ${money(amount)}，可輸入部分金額）`;
+  const inp = $("#settleInitiateAmount"); if (inp) { inp.value = amount; inp.max = amount; }
+  renderSettlePicker($("#settleFromCategoryPicker"), $("#settleFromSubPicker"), settleInitState, "settleFrom");
+  $("#settleInitiateDialog")?.showModal();
+}
+function openSettleConfirm(id, from, amount) {
+  settleConfirmState = { id, from, amount, cat: "cash", sub: "現金" };
+  const who = $("#settleConfirmWho"); if (who) who.textContent = `${memberName(from)} 付給你 ${money(amount)}，選擇收到哪個帳戶`;
+  renderSettlePicker($("#settleToCategoryPicker"), $("#settleToSubPicker"), settleConfirmState, "settleTo");
+  $("#settleConfirmDialog")?.showModal();
+}
+$("#settleFromCategoryPicker")?.addEventListener("change", (e) => { if (e.target.name === "settleFromCat") { settleInitState.cat = e.target.value; renderSettlePicker($("#settleFromCategoryPicker"), $("#settleFromSubPicker"), settleInitState, "settleFrom"); } });
+$("#settleFromSubPicker")?.addEventListener("click", (e) => { const b = e.target.closest("[data-sub]"); if (b) { settleInitState.sub = b.dataset.sub; renderSettlePicker($("#settleFromCategoryPicker"), $("#settleFromSubPicker"), settleInitState, "settleFrom"); } });
+$("#settleToCategoryPicker")?.addEventListener("change", (e) => { if (e.target.name === "settleToCat") { settleConfirmState.cat = e.target.value; renderSettlePicker($("#settleToCategoryPicker"), $("#settleToSubPicker"), settleConfirmState, "settleTo"); } });
+$("#settleToSubPicker")?.addEventListener("click", (e) => { const b = e.target.closest("[data-sub]"); if (b) { settleConfirmState.sub = b.dataset.sub; renderSettlePicker($("#settleToCategoryPicker"), $("#settleToSubPicker"), settleConfirmState, "settleTo"); } });
+$("#settleSummaryList").addEventListener("click", (e) => {
+  const initBtn = e.target.closest("[data-settle-init-to]");
+  if (initBtn) return openSettleInitiate(initBtn.dataset.settleInitTo, Number(initBtn.dataset.settleInitAmount));
+  const confBtn = e.target.closest("[data-settle-confirm]");
+  if (confBtn) return openSettleConfirm(confBtn.dataset.settleConfirm, confBtn.dataset.settleFrom, Number(confBtn.dataset.settleAmount));
+  const cancelBtn = e.target.closest("[data-settle-cancel]");
+  if (cancelBtn) return cancelPendingSettlement(cancelBtn.dataset.settleCancel);
+});
+async function cancelPendingSettlement(id) {
+  if (!confirm("確定要取消這筆待確認的結算嗎？")) return;
+  const { error } = await supabaseClient.from("settlements").delete().eq("id", id);
   if (error) return toast(error.message);
-  await loadActiveBookData();
-  renderAll();
-  toast("已標記結清 ✅");
+  await loadActiveBookData(); renderAll(); toast("已取消");
+}
+$("#settleInitiateForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const amt = Math.round(Number($("#settleInitiateAmount").value));
+  if (!(amt > 0) || amt > settleInitState.amount) return toast(`金額需介於 1 ~ ${settleInitState.amount}`);
+  const { error } = await supabaseClient.from("settlements").insert({ book_id: activeBookId, from_user_id: session.user.id, to_user_id: settleInitState.to, amount: amt, settled_by: session.user.id, status: "pending", from_category: settleInitState.cat, from_method: settleInitState.sub });
+  if (error) return toast(error.message);
+  $("#settleInitiateDialog")?.close();
+  await loadActiveBookData(); renderAll(); toast("已送出，等待對方確認 ⏳");
+});
+$("#settleConfirmForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const { error } = await supabaseClient.from("settlements").update({ status: "confirmed", to_category: settleConfirmState.cat, to_method: settleConfirmState.sub, confirmed_by: session.user.id, confirmed_at: new Date().toISOString() }).eq("id", settleConfirmState.id);
+  if (error) return toast(error.message);
+  $("#settleConfirmDialog")?.close();
+  await loadActiveBookData(); renderAll(); toast("結算完成，已同步記帳 ✅");
 });
 function renderSettleHistory() {
-  $("#settleHistoryList").innerHTML = settlements.length
-    ? settlements.map((s) => `<div class="settle-history-row"><div><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${new Date(s.created_at).toLocaleString("zh-TW")}</small></div>${s.settled_by === session?.user?.id ? `<button type="button" data-delete-settlement="${s.id}">取消</button>` : ""}</div>`).join("")
-    : `<div class="empty-state compact"><p>還沒有結算紀錄。</p></div>`;
+  const myId = session?.user?.id;
+  const done = settlements.filter((s) => s.status !== "pending");
+  $("#settleHistoryList").innerHTML = done.length
+    ? done.map((s) => `<div class="settle-history-row"><div><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${new Date(s.confirmed_at || s.created_at).toLocaleString("zh-TW")}　已完成</small></div>${(s.from_user_id === myId || s.to_user_id === myId) ? `<button type="button" data-delete-settlement="${s.id}">取消</button>` : ""}</div>`).join("")
+    : `<div class="empty-state compact"><p>還沒有完成的結算紀錄。</p></div>`;
 }
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="settleHistoryDialog"]')) renderSettleHistory(); });
 $("#settleHistoryList").addEventListener("click", async (e) => {
