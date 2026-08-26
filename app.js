@@ -435,11 +435,10 @@ function renderLedger() {
   renderMemberFilterRow();
   $("#ledgerCount").textContent = visible.length ? `共 ${visible.length} 筆` : "";
   const expenses = monthTransactions("expense");
-  const sharedExpenses = expenses.filter((x) => x.split_mode === "shared");
-  const exp = sharedExpenses.reduce((s, x) => s + Number(x.amount), 0);
-  const myPaid = sharedExpenses.filter((x) => x.user_id === session?.user?.id).reduce((s, x) => s + Number(x.amount), 0);
-  const otherPaid = Math.max(exp - myPaid, 0);
-  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid); const _allExp = (memberFilterId ? expenses.filter((x) => x.user_id === memberFilterId) : expenses).reduce((s2, x) => s2 + Number(x.amount), 0); const _ae = $("#allExpenseTotal"); if (_ae) _ae.textContent = money(_allExp);
+  const _me = session?.user?.id;
+  const myPaid = expenses.filter((x) => x.user_id === _me).reduce((s, x) => s + Number(x.amount), 0);
+  const otherPaid = expenses.filter((x) => x.user_id !== _me).reduce((s, x) => s + Number(x.amount), 0);
+  $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
   renderAccountBalances();
   renderBudgets(expenses);
   renderSettleSummary();
@@ -586,10 +585,9 @@ $("#settleConfirmForm")?.addEventListener("submit", async (e) => {
   await loadActiveBookData(); renderAll(); toast("結算完成，已同步記帳 ✅");
 });
 function renderSettleHistory() {
-  const myId = session?.user?.id;
   const done = settlements.filter((s) => s.status !== "pending");
   $("#settleHistoryList").innerHTML = done.length
-    ? done.map((s) => `<div class="settle-history-row"><div><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${new Date(s.confirmed_at || s.created_at).toLocaleString("zh-TW")}　已完成</small></div>${(s.from_user_id === myId || s.to_user_id === myId) ? `<button type="button" data-delete-settlement="${s.id}">取消</button>` : ""}</div>`).join("")
+    ? done.map((s) => `<div class="settle-history-row"><div><strong>${escapeHTML(memberName(s.from_user_id))} → ${escapeHTML(memberName(s.to_user_id))}　${money(Number(s.amount))}</strong><small>${new Date(s.confirmed_at || s.created_at).toLocaleString("zh-TW")}　已完成</small></div></div>`).join("")
     : `<div class="empty-state compact"><p>還沒有完成的結算紀錄。</p></div>`;
 }
 document.addEventListener("click", (e) => { if (e.target.closest('[data-open="settleHistoryDialog"]')) renderSettleHistory(); });

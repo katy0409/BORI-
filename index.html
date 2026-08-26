@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.7.2，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.7.2｜Cloud Life</title>
+  <meta name="description" content="BORI V1.7.3，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.7.3｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.7.2</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.7.3</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -63,7 +63,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.7.2</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.7.3</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -148,10 +148,9 @@
         <div id="ledgerContent" class="hidden">
           <p class="filter-label ledger-member-filter-label">依成員查看帳戶餘額與紀錄</p>
           <div id="memberFilterRow" class="member-filter-row"></div>
-          <article class="payer-card total-expense-card"><span>本月全部支出</span><strong id="allExpenseTotal">$0</strong><small>個人＋共同支出合計（依上方成員篩選）</small></article>
           <div class="payer-grid">
-            <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月共同支出</small></article>
-            <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月共同支出</small></article>
+            <article class="payer-card mine"><span>你付了</span><strong id="myPaidTotal">$0</strong><small>本月支出</small></article>
+            <article class="payer-card partner"><span>其他成員付了</span><strong id="otherPaidTotal">$0</strong><small>本月支出</small></article>
           </div>
           <div id="settleSection" class="hidden">
             <div class="section-head"><h2>分帳結算</h2><button type="button" class="text-button" data-open="settleHistoryDialog">結算紀錄</button></div>
@@ -272,7 +271,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.7.2</p>
+      <p class="about-version">Cloud Life · V1.7.3</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>
