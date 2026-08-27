@@ -838,6 +838,8 @@ function renderChat() {
     if (m.message_type === "sticker") {
       const s = stickerById(m.sticker_id);
       html += `<div class="message ${mine ? "mine" : "other"} sticker-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${timeStr}</small></div>`;
+    } else if (m.message_type === "image") {
+      html += `<div class="message ${mine ? "mine" : "other"} image-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<a href="${escapeHTML(m.image_url || "")}" target="_blank" rel="noopener"><img src="${escapeHTML(m.image_url || "")}" alt="圖片" loading="lazy" /></a><small>${timeStr}</small></div>`;
     } else {
       html += `<div class="message ${mine ? "mine" : "other"}" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<p>${escapeHTML(m.content || "")}</p><small>${timeStr}</small></div>`;
     }
@@ -1835,7 +1837,7 @@ function startReply(msg) {
   if (!msg) return;
   const mine = msg.user_id === session?.user?.id;
   const senderName = mine ? "我" : (msg.profiles?.display_name || "成員");
-  const snippet = msg.message_type === "sticker" ? `[貼圖] ${stickerById(msg.sticker_id)?.text || ""}` : (msg.content || "");
+  const snippet = msg.message_type === "sticker" ? `[貼圖] ${stickerById(msg.sticker_id)?.text || ""}` : msg.message_type === "image" ? "[圖片]" : (msg.content || "");
   replyingToMessage = { id: msg.id, senderName, snippet: snippet.slice(0, 60) };
   $("#replyPreviewSender").textContent = `回覆 ${senderName}`;
   $("#replyPreviewSnippet").textContent = snippet;
@@ -1903,6 +1905,32 @@ $("#stickerGrid").addEventListener("click", async (e) => {
   if (error) return toast(error.message);
   $("#stickerTray").classList.add("hidden");
   cancelReply();
+});
+
+$("#chatImageBtn")?.addEventListener("click", () => $("#chatImageInput")?.click());
+$("#chatImageInput")?.addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) { toast("請選擇圖片檔"); e.target.value = ""; return; }
+  if (file.size > 6 * 1024 * 1024) { toast("圖片太大了，請選 6MB 以內"); e.target.value = ""; return; }
+  if (!activeBookId) { toast("請先選擇房間"); e.target.value = ""; return; }
+  toast("上傳中…");
+  try {
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${activeBookId}/${session.user.id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabaseClient.storage.from("chat-images").upload(path, file, { cacheControl: "3600", contentType: file.type });
+    if (upErr) { toast(upErr.message); e.target.value = ""; return; }
+    const { data: pub } = supabaseClient.storage.from("chat-images").getPublicUrl(path);
+    const row = { book_id: activeBookId, user_id: session.user.id, message_type: "image", image_url: pub.publicUrl };
+    if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
+    const { error } = await supabaseClient.from("messages").insert(row);
+    if (error) { toast(error.message); e.target.value = ""; return; }
+    $("#stickerTray")?.classList.add("hidden");
+    cancelReply();
+  } catch (err) {
+    toast("上傳失敗，請再試一次");
+  }
+  e.target.value = "";
 });
 
 function finishSplash() { const s = $("#splashScreen"); if (!s || s.dataset.done) return; s.dataset.done = "1"; s.classList.add("hide"); document.body.classList.remove("splash-lock"); setTimeout(() => s.remove(), 650); }

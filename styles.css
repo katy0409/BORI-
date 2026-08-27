@@ -701,3 +701,8 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .settle-row.pending{opacity:.95}
 .settle-wait{color:var(--muted,#9a8f86);font-size:12px;align-self:center}
 .settle-cancel{background:transparent;border:1px solid var(--line,#e5ddd5);color:var(--muted,#9a8f86)}
+
+/* V1.7.4 聊天圖片 */
+.image-message img{max-width:200px;max-height:260px;width:auto;height:auto;border-radius:14px;display:block;object-fit:cover;cursor:pointer}
+.image-message a{display:inline-block;line-height:0}
+#chatImageBtn{font-size:18px}
