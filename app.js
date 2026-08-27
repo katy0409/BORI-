@@ -1881,18 +1881,71 @@ $("#messageList").addEventListener("pointerdown", (e) => {
   bubble.addEventListener("pointerup", onUp);
   bubble.addEventListener("pointercancel", onCancel);
 });
+let pendingImages = [];
+function renderImagePreview() {
+  const bar = $("#imagePreviewBar");
+  if (!bar) return;
+  if (!pendingImages.length) { bar.classList.add("hidden"); bar.innerHTML = ""; return; }
+  bar.classList.remove("hidden");
+  bar.innerHTML = pendingImages.map((it, i) => `<div class="image-preview-item"><img src="${it.url}" alt=""><button type="button" class="rm" data-rm="${i}" aria-label="移除">×</button></div>`).join("");
+}
+function clearPendingImages() {
+  pendingImages.forEach((it) => { try { URL.revokeObjectURL(it.url); } catch (e) {} });
+  pendingImages = [];
+  renderImagePreview();
+}
+$("#imagePreviewBar")?.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]");
+  if (!b) return;
+  const i = Number(b.dataset.rm);
+  const it = pendingImages[i];
+  if (it) { try { URL.revokeObjectURL(it.url); } catch (e2) {} }
+  pendingImages.splice(i, 1);
+  renderImagePreview();
+});
+function autoGrowInput() {
+  const t = $("#messageInput");
+  if (!t) return;
+  t.style.height = "auto";
+  t.style.height = Math.min(t.scrollHeight, 120) + "px";
+}
+$("#messageInput")?.addEventListener("input", autoGrowInput);
+async function uploadPendingImages(replyMeta) {
+  for (const it of pendingImages) {
+    const file = it.file;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${activeBookId}/${session.user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error: upErr } = await supabaseClient.storage.from("chat-images").upload(path, file, { cacheControl: "3600", contentType: file.type });
+    if (upErr) { toast(upErr.message); continue; }
+    const { data: pub } = supabaseClient.storage.from("chat-images").getPublicUrl(path);
+    const row = { book_id: activeBookId, user_id: session.user.id, message_type: "image", image_url: pub.publicUrl };
+    if (replyMeta && !replyMeta.used) { row.reply_to_id = replyMeta.id; row.reply_preview_sender = replyMeta.senderName; row.reply_preview_text = replyMeta.snippet; replyMeta.used = true; }
+    await supabaseClient.from("messages").insert(row);
+  }
+}
 $("#chatForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const content = $("#messageInput").value.trim();
-  if (!content) return;
-  const row = { book_id: activeBookId, user_id: session.user.id, message_type: "text", content };
-  if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
-  const { error } = await supabaseClient.from("messages").insert(row);
-  if (error) return toast(error.message);
-  $("#messageInput").value = "";
+  const hasImages = pendingImages.length > 0;
+  if (!content && !hasImages) return;
+  if (!activeBookId) { toast("請先選擇房間"); return; }
+  const replyMeta = replyingToMessage ? { id: replyingToMessage.id, senderName: replyingToMessage.senderName, snippet: replyingToMessage.snippet, used: false } : null;
+  if (content) {
+    const row = { book_id: activeBookId, user_id: session.user.id, message_type: "text", content };
+    if (replyMeta && !replyMeta.used) { row.reply_to_id = replyMeta.id; row.reply_preview_sender = replyMeta.senderName; row.reply_preview_text = replyMeta.snippet; replyMeta.used = true; }
+    const { error } = await supabaseClient.from("messages").insert(row);
+    if (error) { toast(error.message); return; }
+    $("#messageInput").value = "";
+    autoGrowInput();
+  }
+  if (hasImages) {
+    toast("上傳中…");
+    await uploadPendingImages(replyMeta);
+    clearPendingImages();
+  }
   cancelReply();
 });
-$("#stickerBtn").addEventListener("click", () => $("#stickerTray").classList.toggle("hidden"));
+$("#stickerBtn").addEventListener("click", () => { const hidden = $("#stickerTray").classList.toggle("hidden"); $("#stickerBtn").classList.toggle("active", !hidden); });
 $("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.closest("[data-set]"); if (!btn) return; activeStickerSet = Number(btn.dataset.set); renderStickerTray(); });
 $("#stickerGrid").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-sticker]");
@@ -1904,32 +1957,20 @@ $("#stickerGrid").addEventListener("click", async (e) => {
   const { error } = await supabaseClient.from("messages").insert(row);
   if (error) return toast(error.message);
   $("#stickerTray").classList.add("hidden");
+  $("#stickerBtn").classList.remove("active");
   cancelReply();
 });
 
 $("#chatImageBtn")?.addEventListener("click", () => $("#chatImageInput")?.click());
-$("#chatImageInput")?.addEventListener("change", async (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) { toast("請選擇圖片檔"); e.target.value = ""; return; }
-  if (file.size > 6 * 1024 * 1024) { toast("圖片太大了，請選 6MB 以內"); e.target.value = ""; return; }
-  if (!activeBookId) { toast("請先選擇房間"); e.target.value = ""; return; }
-  toast("上傳中…");
-  try {
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-    const path = `${activeBookId}/${session.user.id}-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabaseClient.storage.from("chat-images").upload(path, file, { cacheControl: "3600", contentType: file.type });
-    if (upErr) { toast(upErr.message); e.target.value = ""; return; }
-    const { data: pub } = supabaseClient.storage.from("chat-images").getPublicUrl(path);
-    const row = { book_id: activeBookId, user_id: session.user.id, message_type: "image", image_url: pub.publicUrl };
-    if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
-    const { error } = await supabaseClient.from("messages").insert(row);
-    if (error) { toast(error.message); e.target.value = ""; return; }
-    $("#stickerTray")?.classList.add("hidden");
-    cancelReply();
-  } catch (err) {
-    toast("上傳失敗，請再試一次");
+$("#chatImageInput")?.addEventListener("change", (e) => {
+  const files = Array.from(e.target.files || []);
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) { toast("只能選圖片檔"); continue; }
+    if (file.size > 6 * 1024 * 1024) { toast(`「${file.name}」超過 6MB，略過`); continue; }
+    if (pendingImages.length >= 9) { toast("一次最多 9 張"); break; }
+    pendingImages.push({ file, url: URL.createObjectURL(file) });
   }
+  renderImagePreview();
   e.target.value = "";
 });
 
