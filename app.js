@@ -1952,6 +1952,11 @@ function autoGrowInput() {
   t.style.height = Math.min(t.scrollHeight, 120) + "px";
 }
 $("#messageInput")?.addEventListener("input", autoGrowInput);
+function pushLocalMessage(row) {
+  if (!row || messages.some((m) => m.id === row.id)) return;
+  messages.push({ ...row, profiles: { display_name: profile?.display_name, avatar_url: profile?.avatar_url } });
+  renderChat(); renderHome(); scrollChat();
+}
 async function uploadPendingImages(replyMeta) {
   for (const it of pendingImages) {
     const file = it.file;
@@ -1962,7 +1967,8 @@ async function uploadPendingImages(replyMeta) {
     const { data: pub } = supabaseClient.storage.from("chat-images").getPublicUrl(path);
     const row = { book_id: activeBookId, user_id: session.user.id, message_type: "image", image_url: pub.publicUrl };
     if (replyMeta && !replyMeta.used) { row.reply_to_id = replyMeta.id; row.reply_preview_sender = replyMeta.senderName; row.reply_preview_text = replyMeta.snippet; replyMeta.used = true; }
-    await supabaseClient.from("messages").insert(row);
+    const { data: inserted } = await supabaseClient.from("messages").insert(row).select("*").single();
+    pushLocalMessage(inserted);
   }
 }
 $("#chatForm").addEventListener("submit", async (e) => {
@@ -1975,10 +1981,11 @@ $("#chatForm").addEventListener("submit", async (e) => {
   if (content) {
     const row = { book_id: activeBookId, user_id: session.user.id, message_type: "text", content };
     if (replyMeta && !replyMeta.used) { row.reply_to_id = replyMeta.id; row.reply_preview_sender = replyMeta.senderName; row.reply_preview_text = replyMeta.snippet; replyMeta.used = true; }
-    const { error } = await supabaseClient.from("messages").insert(row);
+    const { data: sent, error } = await supabaseClient.from("messages").insert(row).select("*").single();
     if (error) { toast(error.message); return; }
     $("#messageInput").value = "";
     autoGrowInput();
+    pushLocalMessage(sent);
   }
   if (hasImages) {
     toast("上傳中…");
@@ -1996,8 +2003,9 @@ $("#stickerGrid").addEventListener("click", async (e) => {
   if (!s) return;
   const row = { book_id: activeBookId, user_id: session.user.id, message_type: "sticker", sticker_id: s.id };
   if (replyingToMessage) { row.reply_to_id = replyingToMessage.id; row.reply_preview_sender = replyingToMessage.senderName; row.reply_preview_text = replyingToMessage.snippet; }
-  const { error } = await supabaseClient.from("messages").insert(row);
+  const { data: sent, error } = await supabaseClient.from("messages").insert(row).select("*").single();
   if (error) return toast(error.message);
+  pushLocalMessage(sent);
   $("#stickerTray").classList.add("hidden");
   $("#stickerBtn").classList.remove("active");
   cancelReply();
