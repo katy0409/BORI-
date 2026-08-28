@@ -166,7 +166,7 @@ const stickerSets = [
     { id: "happy_shiba2", img: "assets/stickers5/happy_shiba2.png", text: "開心" },
     { id: "here_we_come2", img: "assets/stickers5/here_we_come2.png", text: "我們來啦" }
   ]},
-  { id: "office_slack", name: "上班摸魚日常", stickers: [
+  { id: "office_daily", name: "上班摸魚日常", stickers: [
     { id: "morning_no_work", img: "assets/stickers6/morning_no_work.png", text: "早安…不想上班" },
     { id: "coffee_first", img: "assets/stickers6/coffee_first.png", text: "先喝咖啡" },
     { id: "fake_busy", img: "assets/stickers6/fake_busy.png", text: "假裝很忙" },
@@ -186,9 +186,7 @@ const stickerSets = [
     { id: "lunch_what", img: "assets/stickers6/lunch_what.png", text: "午餐吃什麼？" },
     { id: "food_coma", img: "assets/stickers6/food_coma.png", text: "吃飽想睡" },
     { id: "tea_time", img: "assets/stickers6/tea_time.png", text: "下午茶時間" },
-    { id: "soul_left", img: "assets/stickers6/soul_left.png", text: "靈魂已下班" }
-  ]},
-  { id: "office_life", name: "薪水小偷上班中", stickers: [
+    { id: "soul_left", img: "assets/stickers6/soul_left.png", text: "靈魂已下班" },
     { id: "cant_finish", img: "assets/stickers7/cant_finish.png", text: "今天做不完" },
     { id: "tomorrow_say", img: "assets/stickers7/tomorrow_say.png", text: "明天再說" },
     { id: "keep_file_open", img: "assets/stickers7/keep_file_open.png", text: "檔案開著就好" },
