@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.7.8，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.7.8｜Cloud Life</title>
+  <meta name="description" content="BORI V1.7.9，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.7.9｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.7.8</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.7.9</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -63,7 +63,7 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.7.8</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.7.9</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -169,7 +169,7 @@
         </div>
       </section>
 
-      <section id="insightsPage" class="page insights-page"><div id="insightsEmpty" class="empty-state large-empty"><div class="empty-illustration">📊</div><h2>先開一個房間</h2></div><div id="insightsContent" class="hidden"><div class="form-intro"><p class="eyebrow">INSIGHTS</p><h2>分析與預算</h2></div><div class="insight-tabs"><button class="active" data-insight-tab="analysis">收支圖表</button><button data-insight-tab="budget">預算進度</button></div><div id="insightAnalysis"><p class="filter-label">依成員篩選</p><div id="analysisFilterRow" class="member-filter-row"></div><div class="analysis-metrics"><article><small>本月收入</small><strong id="analysisIncome">$0</strong></article><article><small>本月支出</small><strong id="analysisExpense">$0</strong></article><article><small>本月結餘</small><strong id="analysisNet">$0</strong></article><article><small>支出筆數</small><strong id="analysisCount">0</strong></article></div><article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article><p class="dialog-subhead">成員收支</p><div id="memberAnalysisList" class="member-analysis-list"></div></div><div id="insightBudget" class="hidden"><div class="section-head"><h2>本月預算</h2><button class="text-button" data-open="budgetDialog">＋ 新增</button></div><label class="budget-filter-label">預算篩選<select id="budgetViewFilter"><option value="">全部成員</option></select></label><div id="budgetPreview" class="budget-list"></div></div></div></section>
+      <section id="insightsPage" class="page insights-page"><div id="insightsEmpty" class="empty-state large-empty"><div class="empty-illustration">📊</div><h2>先開一個房間</h2></div><div id="insightsContent" class="hidden"><div class="form-intro"><p class="eyebrow">INSIGHTS</p><h2>分析與預算</h2></div><div class="insight-tabs"><button class="active" data-insight-tab="analysis">收支圖表</button><button data-insight-tab="budget">預算進度</button></div><div id="insightAnalysis"><div class="month-selector"><button type="button" id="analysisPrevMonth" aria-label="上個月">‹</button><input type="month" id="analysisMonthInput" /><button type="button" id="analysisNextMonth" aria-label="下個月">›</button></div><p class="filter-label">依成員篩選</p><div id="analysisFilterRow" class="member-filter-row"></div><div class="analysis-metrics"><article><small>收入</small><strong id="analysisIncome">$0</strong></article><article><small>支出</small><strong id="analysisExpense">$0</strong></article><article><small>結餘</small><strong id="analysisNet">$0</strong></article><article><small>支出筆數</small><strong id="analysisCount">0</strong></article></div><article class="donut-card"><div class="donut" id="donutChart"><span id="donutTotal">$0</span></div><div id="categoryLegend" class="legend"></div></article><p class="dialog-subhead">成員收支</p><div id="memberAnalysisList" class="member-analysis-list"></div></div><div id="insightBudget" class="hidden"><div class="section-head"><h2>本月預算</h2><button class="text-button" data-open="budgetDialog">＋ 新增</button></div><label class="budget-filter-label">預算篩選<select id="budgetViewFilter"><option value="">全部成員</option></select></label><div id="budgetPreview" class="budget-list"></div></div></div></section>
 
       <section id="addPage" class="page">
         <div id="addEmpty" class="empty-state large-empty"><div class="empty-illustration">🌱</div><h2>先開一個房間</h2><p>房間開好後，才能新增共同收支。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
@@ -271,7 +271,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.7.8</p>
+      <p class="about-version">Cloud Life · V1.7.9</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>

@@ -228,6 +228,7 @@ let profile = null;
 let books = [];
 let activeBookId = localStorage.getItem(ACTIVE_BOOK_KEY) || null;
 let transactions = [];
+let analysisMonth = "";
 let budgets = [];
 let settlements = [];
 let messages = [];
@@ -986,7 +987,9 @@ function beginStickerSetDrag(startRow, pointerId, startY) {
 }
 function renderAnalysis() {
   if (!activeBookId) return;
-  let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === currentMonth());
+  if (!analysisMonth) analysisMonth = currentMonth();
+  const _mi = $("#analysisMonthInput"); if (_mi && _mi.value !== analysisMonth) _mi.value = analysisMonth;
+  let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === analysisMonth);
   if (memberFilterId) analysisTransactions = analysisTransactions.filter((x) => x.user_id === memberFilterId);
   const expenses = analysisTransactions.filter((x) => x.transaction_type === "expense");
   const incomes = analysisTransactions.filter((x) => x.transaction_type === "income");
@@ -1010,6 +1013,16 @@ function renderAnalysis() {
   });
   $("#memberAnalysisList").innerHTML = memberRows.join("") || `<p class="muted">尚無成員資料</p>`;
 }
+function shiftAnalysisMonth(delta) {
+  if (!analysisMonth) analysisMonth = currentMonth();
+  const [y, m] = analysisMonth.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  analysisMonth = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+  renderAnalysis();
+}
+$("#analysisPrevMonth")?.addEventListener("click", () => shiftAnalysisMonth(-1));
+$("#analysisNextMonth")?.addEventListener("click", () => shiftAnalysisMonth(1));
+$("#analysisMonthInput")?.addEventListener("change", (e) => { if (e.target.value) { analysisMonth = e.target.value; renderAnalysis(); } });
 function showInteractionHub() {
   $("#interactionHub")?.classList.remove("hidden");
   $$(".interaction-view").forEach((view) => view.classList.add("hidden"));

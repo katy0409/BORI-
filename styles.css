@@ -721,3 +721,8 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .image-preview-item{position:relative;width:62px;height:62px;border-radius:12px;overflow:hidden;flex-shrink:0}
 .image-preview-item img{width:100%;height:100%;object-fit:cover;display:block}
 .image-preview-item .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;padding:0;display:grid;place-items:center;cursor:pointer}
+
+/* V1.7.9 分析月份選擇器 */
+.month-selector{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 14px}
+.month-selector button{width:34px;height:34px;border:0;border-radius:50%;background:var(--green-soft);color:var(--green-dark);font-size:18px;display:grid;place-items:center;padding:0;flex-shrink:0}
+.month-selector input[type=month]{border:1px solid var(--line);border-radius:99px;padding:8px 14px;background:var(--card);font-size:15px;color:var(--brown);font-family:inherit;text-align:center}
