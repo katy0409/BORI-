@@ -228,7 +228,7 @@ let profile = null;
 let books = [];
 let activeBookId = localStorage.getItem(ACTIVE_BOOK_KEY) || null;
 let transactions = [];
-let analysisMonth = "";
+let viewMonth = "";
 let budgets = [];
 let settlements = [];
 let messages = [];
@@ -474,16 +474,18 @@ function renderLedger() {
   $("#ledgerEmpty").classList.toggle("hidden", has);
   $("#ledgerContent").classList.toggle("hidden", !has);
   if (!has) return;
-  const visible = visibleTransactions();
+  if (!viewMonth) viewMonth = currentMonth();
+  const _lmi = $("#ledgerMonthInput"); if (_lmi && _lmi.value !== viewMonth) _lmi.value = viewMonth;
   renderMemberFilterRow();
+  const visible = visibleTransactions().filter((x) => String(x.transaction_date).slice(0, 7) === viewMonth);
   $("#ledgerCount").textContent = visible.length ? `共 ${visible.length} 筆` : "";
-  const expenses = monthTransactions("expense");
+  const expenses = transactions.filter((x) => x.transaction_type === "expense" && String(x.transaction_date).slice(0, 7) === viewMonth);
   const _me = session?.user?.id;
   const myPaid = expenses.filter((x) => x.user_id === _me).reduce((s, x) => s + Number(x.amount), 0);
   const otherPaid = expenses.filter((x) => x.user_id !== _me).reduce((s, x) => s + Number(x.amount), 0);
   $("#myPaidTotal").textContent = money(myPaid); $("#otherPaidTotal").textContent = money(otherPaid);
   renderAccountBalances();
-  renderBudgets(expenses);
+  renderBudgets(monthTransactions("expense"));
   renderSettleSummary();
   $("#ledgerList").innerHTML = visible.length ? visible.map(recordHTML).join("") : `<div class="empty-state compact"><p>還沒有收入或支出紀錄。</p></div>`;
 }
@@ -987,9 +989,9 @@ function beginStickerSetDrag(startRow, pointerId, startY) {
 }
 function renderAnalysis() {
   if (!activeBookId) return;
-  if (!analysisMonth) analysisMonth = currentMonth();
-  const _mi = $("#analysisMonthInput"); if (_mi && _mi.value !== analysisMonth) _mi.value = analysisMonth;
-  let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === analysisMonth);
+  if (!viewMonth) viewMonth = currentMonth();
+  const _mi = $("#analysisMonthInput"); if (_mi && _mi.value !== viewMonth) _mi.value = viewMonth;
+  let analysisTransactions = transactions.filter((x) => String(x.transaction_date).slice(0, 7) === viewMonth);
   if (memberFilterId) analysisTransactions = analysisTransactions.filter((x) => x.user_id === memberFilterId);
   const expenses = analysisTransactions.filter((x) => x.transaction_type === "expense");
   const incomes = analysisTransactions.filter((x) => x.transaction_type === "income");
@@ -1013,16 +1015,24 @@ function renderAnalysis() {
   });
   $("#memberAnalysisList").innerHTML = memberRows.join("") || `<p class="muted">尚無成員資料</p>`;
 }
-function shiftAnalysisMonth(delta) {
-  if (!analysisMonth) analysisMonth = currentMonth();
-  const [y, m] = analysisMonth.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  analysisMonth = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+function setViewMonth(m) {
+  if (!m) return;
+  viewMonth = m;
+  renderLedger();
   renderAnalysis();
 }
-$("#analysisPrevMonth")?.addEventListener("click", () => shiftAnalysisMonth(-1));
-$("#analysisNextMonth")?.addEventListener("click", () => shiftAnalysisMonth(1));
-$("#analysisMonthInput")?.addEventListener("change", (e) => { if (e.target.value) { analysisMonth = e.target.value; renderAnalysis(); } });
+function shiftViewMonth(delta) {
+  if (!viewMonth) viewMonth = currentMonth();
+  const [y, m] = viewMonth.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  setViewMonth(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}`);
+}
+$("#analysisPrevMonth")?.addEventListener("click", () => shiftViewMonth(-1));
+$("#analysisNextMonth")?.addEventListener("click", () => shiftViewMonth(1));
+$("#analysisMonthInput")?.addEventListener("change", (e) => setViewMonth(e.target.value));
+$("#ledgerPrevMonth")?.addEventListener("click", () => shiftViewMonth(-1));
+$("#ledgerNextMonth")?.addEventListener("click", () => shiftViewMonth(1));
+$("#ledgerMonthInput")?.addEventListener("change", (e) => setViewMonth(e.target.value));
 function showInteractionHub() {
   $("#interactionHub")?.classList.remove("hidden");
   $$(".interaction-view").forEach((view) => view.classList.add("hidden"));
