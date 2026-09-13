@@ -2328,6 +2328,7 @@ $("#ledgerList").addEventListener("click", (e) => { const btn = e.target.closest
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
+    const wasEditing = !!editingTransactionId;
     const split = addType === "expense" ? getSplitPayload($("#amountInput").value) : { split_mode: "private", split_type: null, split_members: null, split_shares: null };
     if (editingTransactionId) {
       await updateTransaction(editingTransactionId, addType, $("#titleInput").value.trim(), $("#amountInput").value, $("#categoryInput").value, $("#noteInput").value.trim(), $("#dateInput").value, selectedPaymentCategory, selectedSubAccount, split);
@@ -2344,7 +2345,7 @@ $("#transactionForm").addEventListener("submit", async (e) => {
     $("#deleteTransactionBtn").classList.add("hidden");
     await loadActiveBookData();
     renderAll();
-    goTo("homePage");
+    if (wasEditing) goTo("homePage");
   } catch (err) { toast(err.message); }
 });
 $("#deleteTransactionBtn").addEventListener("click", async () => {
