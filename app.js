@@ -249,7 +249,7 @@ function showOnly(id) { ["configErrorScreen", "authScreen", "appShell"].forEach(
 const roomRequiredDialogs = ["budgetDialog", "manageCategoriesDialog", "roomSettingsDialog", "memberListDialog", "switchRoomDialog", "dataExportDialog"];
 function openDialog(id) { if (!activeBookId && roomRequiredDialogs.includes(id)) return toast("請先開一個房間或加入房間"); $("#" + id)?.showModal(); }
 function closeDialog(id) { $("#" + id)?.close(); }
-function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); resetSplitState(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } }
+function goTo(pageId) { $$(".page").forEach((p) => p.classList.toggle("active", p.id === pageId)); $$(".nav-item,.nav-add").forEach((b) => b.classList.toggle("active", b.dataset.page === pageId)); if (pageId === "chatPage") { showInteractionHub(); resetChatComposerBaseline(); } if (pageId === "insightsPage") renderInsights(); if (pageId === "addPage" && activeBookId) { $("#transactionForm")?.reset(); resetSplitState(); setAddType("expense"); setDateValue("dateInput", "dateInputDisplay", localDateStr()); editingTransactionId = null; $("#deleteTransactionBtn").classList.add("hidden"); } const _pg = document.getElementById(pageId); if (_pg) _pg.scrollTop = 0; window.scrollTo(0, 0); }
 function unreadCount() {
   const myId = session?.user?.id;
   if (!myId || !myLastReadAt) return 0;
@@ -812,13 +812,59 @@ function computeAccountBalances() {
   });
   return balances;
 }
+function computeSubAccountBalances(categoryKey) {
+  const myId = session?.user?.id;
+  const map = {};
+  mySubAccounts(categoryKey).forEach((sa) => { map[sa.name] = 0; });
+  transactions.forEach((x) => {
+    if (x.payment_category !== categoryKey) return;
+    if (memberFilterId && x.user_id !== memberFilterId) return;
+    if (x.user_id !== myId && memberPrivacy[x.user_id]) return;
+    const name = x.payment_method || (baseCategories.find((c) => c.key === categoryKey)?.label) || categoryKey;
+    if (!(name in map)) map[name] = 0;
+    map[name] += x.transaction_type === "income" ? Number(x.amount) : -Number(x.amount);
+  });
+  return map;
+}
+let accountDetailCat = null;
+function openAccountDetail(cat) {
+  accountDetailCat = cat;
+  const meta = baseCategories.find((c) => c.key === cat);
+  const balances = computeSubAccountBalances(cat);
+  const total = Object.values(balances).reduce((s2, v) => s2 + v, 0);
+  const canAdjust = !memberFilterId || memberFilterId === session?.user?.id;
+  const t = $("#accountDetailTitle"); if (t) t.innerHTML = `${meta?.icon || ""} ${escapeHTML(meta?.label || cat)}`;
+  const tot = $("#accountDetailTotal"); if (tot) tot.textContent = money(total);
+  const names = Object.keys(balances);
+  const list = $("#accountDetailList");
+  if (list) list.innerHTML = names.length ? names.map((n) => `<div class="account-detail-row"><span>${escapeHTML(n)}</span><strong class="${balances[n] < 0 ? "negative" : ""}">${money(balances[n])}</strong>${canAdjust ? `<button type="button" class="text-button" data-adjust-sub="${escapeHTML(n)}">調整</button>` : ""}</div>`).join("") : `<p class="muted">此分類還沒有子帳戶。</p>`;
+  $("#accountDetailDialog")?.showModal();
+}
+async function adjustAccountBalance(cat, sub) {
+  const cur = computeSubAccountBalances(cat)[sub] || 0;
+  const input = prompt(`「${sub}」目前餘額為 ${money(cur)}。\n請輸入正確的餘額：`, String(Math.round(cur)));
+  if (input === null) return;
+  const target = Math.round(Number(input));
+  if (!Number.isFinite(target)) return toast("請輸入數字");
+  const delta = target - cur;
+  if (delta === 0) return toast("餘額不變");
+  const row = { book_id: activeBookId, user_id: session.user.id, transaction_type: delta > 0 ? "income" : "expense", category: "餘額調整", title: "餘額調整", amount: Math.abs(delta), transaction_date: localDateStr(), payment_category: cat, payment_method: sub, split_mode: "private", note: "手動調整餘額" };
+  const { error } = await supabaseClient.from("transactions").insert(row);
+  if (error) return toast(error.message);
+  await loadActiveBookData();
+  renderAll();
+  openAccountDetail(cat);
+  toast("餘額已調整 ✅");
+}
+$("#accountBalances")?.addEventListener("click", (e) => { const card = e.target.closest("[data-account-cat]"); if (card) openAccountDetail(card.dataset.accountCat); });
+$("#accountDetailList")?.addEventListener("click", (e) => { const b = e.target.closest("[data-adjust-sub]"); if (b && accountDetailCat) adjustAccountBalance(accountDetailCat, b.dataset.adjustSub); });
 function renderAccountBalances() {
   const el = $("#accountBalances");
   if (!el) return;
   const balances = computeAccountBalances();
   const selectedMember = memberFilterId ? roomMembers.find((m) => m.id === memberFilterId) : null;
   const ownerLabel = selectedMember ? selectedMember.name : "全部成員";
-  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card"><span class="account-icon">${c.icon}</span><small>${escapeHTML(ownerLabel)} · ${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong></div>`).join("");
+  el.innerHTML = baseCategories.map((c) => `<div class="account-balance-card clickable" data-account-cat="${c.key}"><span class="account-icon">${c.icon}</span><small>${escapeHTML(ownerLabel)} · ${c.label}</small><strong class="${balances[c.key] < 0 ? "negative" : ""}">${money(balances[c.key] || 0)}</strong><span class="account-chevron">›</span></div>`).join("");
 }
 let selectedPaymentCategory = "cash";
 let selectedSubAccount = "現金";
@@ -851,7 +897,7 @@ function recordHTML(x) {
   const attrs = isMine ? `type="button" class="record" data-edit-record="${x.id}"` : `class="record"`;
   return `<${tag} ${attrs}><div class="record-icon" style="background:${meta.color}20">${iconHTML}</div><div><strong>${escapeHTML(x.title)}</strong><small><b class="record-owner">${escapeHTML(ownerName)}</b> · ${escapeHTML(x.category)} · ${new Date(`${x.transaction_date}T00:00:00`).toLocaleDateString("zh-TW")} · ${escapeHTML(payLabel)}</small>${noteHTML}</div><b class="${income ? "income-text" : ""}">${income ? "+" : "-"}${money(x.amount)}</b></${tag}>`;
 }
-function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); if (!editingTransactionId) setAddType(addType); } }
+function renderAdd() { const has = !!activeBookId; $("#addEmpty").classList.toggle("hidden", has); $("#addContent").classList.toggle("hidden", !has); if (has) { renderPaymentPicker(); if (!editingTransactionId) setAddType(addType); } const _t = new Date(); const _h = $("#aiBookkeepingHint"); if (_h) _h.textContent = `例如：「${_t.getMonth() + 1}/${_t.getDate()} 早餐 85 現金」`; }
 function stickerById(id) { return allStickers.find((s) => s.id === id); }
 function formatDateDivider(dateStr) {
   const d = new Date(`${dateStr}T00:00:00`);
@@ -1006,7 +1052,20 @@ function renderAnalysis() {
   const grouped = {}; expenses.forEach((x) => grouped[x.category] = (grouped[x.category] || 0) + Number(x.amount)); const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
   let cursor = 0; const segments = entries.map(([c, v]) => { const start = cursor; cursor += exp ? (v / exp) * 360 : 0; return `${(categoryMeta[c] || categoryMeta.其他).color} ${start}deg ${cursor}deg`; });
   $("#donutChart").style.background = segments.length ? `conic-gradient(${segments.join(",")})` : "#eee7dc";
-  $("#categoryLegend").innerHTML = entries.length ? entries.map(([c, v]) => `<div class="legend-row"><i style="background:${(categoryMeta[c] || categoryMeta.其他).color}"></i><span>${escapeHTML(c)}</span><strong>${Math.round((v / exp) * 100)}%</strong></div>`).join("") : `<p class="muted">尚無支出分類</p>`;
+  $("#categoryLegend").innerHTML = entries.length ? entries.map(([c, v]) => `<div class="legend-row"><i style="background:${(categoryMeta[c] || categoryMeta.其他).color}"></i><span>${escapeHTML(c)}</span><strong>${money(v)} (${Math.round((v / exp) * 100)}%)</strong></div>`).join("") : `<p class="muted">尚無支出分類</p>`;
+  const [_yy, _mm] = viewMonth.split("-").map(Number);
+  const _dim = new Date(_yy, _mm, 0).getDate();
+  const _dayTotals = Array(_dim).fill(0);
+  expenses.forEach((x) => { const dd = Number(String(x.transaction_date).slice(8, 10)); if (dd >= 1 && dd <= _dim) _dayTotals[dd - 1] += Number(x.amount); });
+  const _maxDay = Math.max(1, ..._dayTotals);
+  const _dbc = $("#dailyBarChart");
+  if (_dbc) _dbc.innerHTML = _dayTotals.map((v, i) => `<div class="day-bar" title="${viewMonth}-${pad2(i + 1)}　${money(v)}"><span style="height:${v ? Math.max(3, Math.round((v / _maxDay) * 100)) : 0}%"></span><small>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</small></div>`).join("");
+  const _pd = new Date(_yy, _mm - 2, 1); const _pm = `${_pd.getFullYear()}-${pad2(_pd.getMonth() + 1)}`;
+  let _prevExp = transactions.filter((x) => x.transaction_type === "expense" && String(x.transaction_date).slice(0, 7) === _pm);
+  if (memberFilterId) _prevExp = _prevExp.filter((x) => x.user_id === memberFilterId);
+  const _prevSum = _prevExp.reduce((s2, x) => s2 + Number(x.amount), 0);
+  const _cmp = $("#analysisCompare");
+  if (_cmp) { if (_prevSum > 0) { const _d = exp - _prevSum; const _pp = Math.round((_d / _prevSum) * 100); _cmp.textContent = `與上月（${money(_prevSum)}）相比，${_d >= 0 ? "多花" : "少花"}了 ${money(Math.abs(_d))}（${_d >= 0 ? "+" : ""}${_pp}%）`; } else { _cmp.textContent = "上月沒有支出可比較。"; } }
   const memberRows = roomMembers.map((member) => {
     const rows = analysisTransactions.filter((x) => x.user_id === member.id);
     const memberIncome = rows.filter((x) => x.transaction_type === "income").reduce((s, x) => s + Number(x.amount), 0);

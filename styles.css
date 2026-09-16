@@ -726,3 +726,18 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .month-selector{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 14px}
 .month-selector button{width:34px;height:34px;border:0;border-radius:50%;background:var(--green-soft);color:var(--green-dark);font-size:18px;display:grid;place-items:center;padding:0;flex-shrink:0}
 .month-selector input[type=month]{border:1px solid var(--line);border-radius:99px;padding:8px 14px;background:var(--card);font-size:15px;color:var(--brown);font-family:inherit;text-align:center}
+
+/* V1.9.0 帳戶明細 + 每日支出圖 */
+.account-balance-card.clickable{cursor:pointer;position:relative}
+.account-chevron{position:absolute;top:10px;right:12px;color:var(--muted);font-size:16px}
+.account-detail-total{text-align:center;margin:2px 0 12px;color:var(--muted)}
+.account-detail-total strong{color:var(--brown);font-size:22px;margin-left:6px}
+.account-detail-list{display:flex;flex-direction:column}
+.account-detail-row{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.account-detail-row span{flex:1}
+.account-detail-row strong{min-width:84px;text-align:right}
+.daily-bars{display:flex;align-items:flex-end;gap:2px;height:120px;padding:8px 4px 0;overflow-x:auto}
+.day-bar{flex:1 0 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.day-bar span{width:70%;background:var(--green);border-radius:4px 4px 0 0;display:block}
+.day-bar small{font-size:9px;color:var(--muted);height:12px;line-height:12px}
+.compare-hint{text-align:center;margin-top:8px}
