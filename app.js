@@ -2035,48 +2035,100 @@ $$('input[type="date"]').forEach((input) => {
   input.addEventListener("input", () => { display.textContent = formatDateDisplay(input.value); });
   input.addEventListener("change", () => { display.textContent = formatDateDisplay(input.value); });
 });
+const categorySynonyms = { "餐飲": ["餐飲", "飲食", "伙食", "吃飯", "食物", "餐費", "三餐"], "交通": ["交通", "車費", "通勤", "交通費"], "休閒育樂": ["休閒育樂", "娛樂", "休閒", "育樂", "玩樂"], "住房": ["住房", "居住", "房租", "住宿", "居家"], "水電瓦斯": ["水電瓦斯", "水電", "帳單", "生活費", "水電費"], "醫療保健": ["醫療保健", "醫療", "健康", "保健"], "寵物": ["寵物", "毛小孩", "貓咪", "狗狗"], "服飾": ["服飾", "治裝", "衣著", "衣服"], "日常用品": ["日常用品", "生活用品", "雜貨", "日用品", "家用"], "美妝": ["美妝", "美容", "保養"], "教育": ["教育", "學習", "進修", "書籍"], "薪水": ["薪水", "薪資", "工資", "月薪"], "獎金": ["獎金", "分紅", "年終"], "退款": ["退款", "退費"], "投資": ["投資", "理財", "股票", "股息"], "紅包": ["紅包", "禮金"] };
+function resolveUserCategory(canonical, names) {
+  if (names.includes(canonical)) return canonical;
+  const syns = categorySynonyms[canonical] || [];
+  return syns.find((sy) => names.includes(sy)) || null;
+}
+function guessCategoryFromHistory(text, income) {
+  if (!text || !text.trim()) return null;
+  const wantType = income ? "income" : "expense";
+  const t = text.trim();
+  const counts = {};
+  transactions.forEach((x) => {
+    if (x.transaction_type !== wantType || !x.category || !x.title) return;
+    const pt = String(x.title).trim(); if (pt.length < 2) return;
+    let match = t.includes(pt) || pt.includes(t);
+    if (!match) { for (let i = 0; i < pt.length - 1; i++) { const g = pt.slice(i, i + 2); if (/[\u4e00-\u9fa5A-Za-z0-9]{2}/.test(g) && t.includes(g)) { match = true; break; } } }
+    if (match) counts[x.category] = (counts[x.category] || 0) + 1;
+  });
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best ? best[0] : null;
+}
 function parseConversationalRecord(input) {
   const text = String(input || "").trim();
   if (!text) throw new Error("請先說或輸入一筆紀錄");
   const today = taiwanToday();
-  let date = today, cleaned = text;
-  const fullDate = text.match(/(20\d{2})[年\/-](\d{1,2})[月\/-](\d{1,2})日?/);
-  const shortDate = text.match(/(?:^|\s)(\d{1,2})[月\/-](\d{1,2})日?/);
-  if (fullDate) { date = `${fullDate[1]}-${pad2(fullDate[2])}-${pad2(fullDate[3])}`; cleaned = cleaned.replace(fullDate[0], " "); }
-  else if (shortDate) { date = `${today.slice(0, 4)}-${pad2(shortDate[1])}-${pad2(shortDate[2])}`; cleaned = cleaned.replace(shortDate[0], " "); }
-  const amountMatch = cleaned.match(/(?:\$|NT\$?|元)?\s*(\d+(?:\.\d+)?)/i);
-  if (!amountMatch) throw new Error("找不到金額，例如：早餐 85 現金");
-  const amount = Number(amountMatch[1]);
-  cleaned = cleaned.replace(amountMatch[0], " ");
-  const income = /(收入|薪水|薪資|獎金|退款|入帳|賺)/.test(cleaned);
+  let date = today;
+  let cleaned = " " + text.replace(/[,，]/g, "") + " ";
+
+  // ---- 日期：相對詞 / N天前 / 完整或短日期（避開 7-11 這類假日期）----
+  let dateDone = false;
+  const rel = { "今天": 0, "今日": 0, "昨天": 1, "昨日": 1, "前天": 2, "大前天": 3 };
+  for (const w in rel) { if (cleaned.includes(w)) { const d = new Date(today + "T00:00:00"); d.setDate(d.getDate() - rel[w]); date = localDateStr(d); cleaned = cleaned.replace(w, " "); dateDone = true; break; } }
+  if (!dateDone) { const nd = cleaned.match(/(\d{1,2})\s*天前/); if (nd) { const d = new Date(today + "T00:00:00"); d.setDate(d.getDate() - Number(nd[1])); date = localDateStr(d); cleaned = cleaned.replace(nd[0], " "); dateDone = true; } }
+  if (!dateDone) {
+    const fd = cleaned.match(/(20\d{2})[年\/-](\d{1,2})[月\/-](\d{1,2})日?/);
+    const cn = cleaned.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日?/);
+    const sl = cleaned.match(/(?:^|\s)(\d{1,2})\/(\d{1,2})(?!\d)/);
+    if (fd) { date = `${fd[1]}-${pad2(fd[2])}-${pad2(fd[3])}`; cleaned = cleaned.replace(fd[0], " "); }
+    else if (cn) { date = `${today.slice(0, 4)}-${pad2(cn[1])}-${pad2(cn[2])}`; cleaned = cleaned.replace(cn[0], " "); }
+    else if (sl) { date = `${today.slice(0, 4)}-${pad2(sl[1])}-${pad2(sl[2])}`; cleaned = cleaned.replace(sl[0], " "); }
+  }
+
+  // ---- 金額：優先錢符號；否則排除數量詞與黏在文字裡的門市數字後取最合理者 ----
+  let amount = null;
+  const marked = [...cleaned.matchAll(/\$\s*(\d+(?:\.\d+)?)|nt\$?\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:元|塊|円|圓)/gi)];
+  if (marked.length) { const m = marked[marked.length - 1]; amount = Number(m[1] || m[2] || m[3]); cleaned = cleaned.replace(m[0], " "); }
+  else {
+    const cand = []; const re = /\d+(?:\.\d+)?/g; let mm;
+    while ((mm = re.exec(cleaned)) !== null) {
+      const raw = mm[0], idx = mm.index;
+      const after = cleaned.slice(idx + raw.length, idx + raw.length + 1);
+      const before = cleaned.slice(Math.max(0, idx - 1), idx);
+      if (/[個支杯份張包瓶罐碗盒條雙件台人位樓折%％次顆本盤袋根束打箱]/.test(after)) continue;
+      if (/[\u4e00-\u9fa5A-Za-z]/.test(after) || /[\u4e00-\u9fa5A-Za-z]/.test(before)) continue;
+      cand.push({ n: Number(raw), raw, idx });
+    }
+    if (cand.length) { cand.sort((a, b) => b.n - a.n || b.idx - a.idx); const c = cand[0]; amount = c.n; cleaned = cleaned.slice(0, c.idx) + " " + cleaned.slice(c.idx + c.raw.length); }
+    else { const any = cleaned.match(/\d+(?:\.\d+)?/); if (any) { amount = Number(any[0]); cleaned = cleaned.replace(any[0], " "); } }
+  }
+  if (!(amount > 0)) throw new Error("找不到金額，例如：早餐 85 現金");
+
+  const income = /(收入|薪水|薪資|工資|獎金|年終|退款|退費|入帳|中獎|紅包|禮金|利息|股息|股利|分紅)/.test(cleaned);
   const type = income ? "income" : "expense";
 
-  // 帳戶：先比對使用者自己實際新增過的子帳戶名稱（例如「國泰信用卡」「LINE Pay」），沒比對到才用大類關鍵字
+  // ---- 帳戶 ----
   let paymentCategory = null, paymentMethod = null;
   for (const cat of baseCategories) {
     const subs = mySubAccounts(cat.key);
-    const hit = subs.find((s) => s.name !== cat.label && cleaned.includes(s.name));
+    const hit = subs.find((sa) => sa.name !== cat.label && cleaned.includes(sa.name));
     if (hit) { paymentCategory = cat.key; paymentMethod = hit.name; cleaned = cleaned.replace(hit.name, " "); break; }
   }
   if (!paymentCategory) {
-    const paymentRules = [{ words: /信用卡|刷卡/, key: "credit_card" }, { words: /銀行|轉帳|匯款|存款/, key: "bank" }, { words: /LINE\s*Pay|街口|電子支付|悠遊付|拍付|Apple\s*Pay/i, key: "ewallet" }, { words: /現金/, key: "cash" }];
-    const rule = paymentRules.find((r) => r.words.test(cleaned));
-    paymentCategory = rule?.key || "cash";
-    if (rule) cleaned = cleaned.replace(rule.words, " ");
+    const rules = [{ w: /信用卡|刷卡|刷|信用/, k: "credit_card" }, { w: /銀行|轉帳|匯款|存款|帳戶|提款|atm/i, k: "bank" }, { w: /line\s*pay|linepay|街口|電子支付|悠遊付|一卡通|icash|apple\s*pay|google\s*pay|悠遊卡|載具|行動支付|支付寶|台灣pay/i, k: "ewallet" }, { w: /現金|付現|零錢|錢包|皮夾/, k: "cash" }];
+    const r = rules.find((x) => x.w.test(cleaned));
+    paymentCategory = r?.k || "cash";
+    if (r) cleaned = cleaned.replace(r.w, " ");
     paymentMethod = mySubAccounts(paymentCategory)[0]?.name || baseCategories.find((c) => c.key === paymentCategory)?.label || "現金";
   }
-  cleaned = cleaned.replace(/(收入|支出|記帳|一筆)/g, " ").replace(/\s+/g, " ").trim();
+  cleaned = cleaned.replace(/(收入|支出|記帳|記一筆|一筆|花了|付了|付|買了|買|領了|領|賺了|賺|花)/g, " ").replace(/\$|＄|nt\$?|元|塊|円|圓/gi, " ").replace(/\s+/g, " ").trim();
 
-  // 分類：先比對使用者自己實際設定的分類名稱，比對不到再用關鍵字猜，關鍵字猜出來的也要是使用者清單裡真的有的分類
-  const myCategoryNames = income ? activeIncomeCategories().map((c) => c.name) : activeCategories().map((c) => c.name);
-  let category = myCategoryNames.find((name) => cleaned.includes(name));
+  // ---- 分類：① 你的分類名稱命中 → ② 依你過往習慣 → ③ 關鍵字(含同義詞) → ④ 保底 ----
+  const myNames = income ? activeIncomeCategories().map((c) => c.name) : activeCategories().map((c) => c.name);
+  let category = [...myNames].sort((a, b) => b.length - a.length).find((name) => name.length >= 2 && cleaned.includes(name));
+  if (!category) { const h = guessCategoryFromHistory(cleaned, income); if (h && myNames.includes(h)) category = h; }
   if (!category) {
-    const expenseRules = [{ re: /早餐|午餐|晚餐|餐|便當|咖啡|飲料|珍奶|飲品|吃/, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|停車|高鐵|火車|uber/i, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂|ktv/i, cat: "休閒育樂" }, { re: /房租|租金|房貸/, cat: "住房" }, { re: /水費|電費|瓦斯/, cat: "水電瓦斯" }, { re: /醫院|看醫生|藥局|藥/, cat: "醫療保健" }, { re: /寵物|貓|狗|飼料/, cat: "寵物" }, { re: /衣服|鞋|服飾/, cat: "服飾" }, { re: /日常用品|衛生紙|清潔/, cat: "日常用品" }];
-    const incomeRules = [{ re: /薪水|薪資/, cat: "薪水" }, { re: /獎金/, cat: "獎金" }, { re: /退款/, cat: "退款" }, { re: /投資|股息/, cat: "投資" }];
-    const guess = (income ? incomeRules : expenseRules).find((rule) => rule.re.test(cleaned))?.cat;
-    category = guess && myCategoryNames.includes(guess) ? guess : (myCategoryNames.includes("其他") ? "其他" : myCategoryNames[myCategoryNames.length - 1]);
+    const eRules = [{ re: /早餐|午餐|晚餐|宵夜|消夜|下午茶|餐|便當|咖啡|飲料|珍奶|奶茶|手搖|茶|飲品|小吃|零食|吃|喝|麥當勞|星巴克|超商|超市|全聯|全家|7-?11|蛋糕|麵包|火鍋|拉麵|壽司|鹹酥雞|滷味|早午餐/i, cat: "餐飲" }, { re: /捷運|公車|計程車|加油|油錢|停車|高鐵|台鐵|火車|uber|車票|機票|運費|過路費|悠遊卡加值|停車費/i, cat: "交通" }, { re: /電影|遊戲|唱歌|娛樂|ktv|旅遊|旅行|門票|訂閱|netflix|spotify|展覽|演唱會|按摩/i, cat: "休閒育樂" }, { re: /房租|租金|房貸|管理費|修繕/, cat: "住房" }, { re: /水費|電費|瓦斯|網路費|電話費|手機費|帳單|第四台/, cat: "水電瓦斯" }, { re: /醫院|看醫生|診所|藥局|藥|健保|掛號|牙醫|眼科|疫苗/, cat: "醫療保健" }, { re: /寵物|貓|狗|飼料|罐罐|貓砂|寵物醫院|逛街/, cat: "寵物" }, { re: /衣服|鞋|服飾|褲|外套|包包|飾品|帽/, cat: "服飾" }, { re: /日常用品|衛生紙|清潔|洗髮|沐浴|生活用品|五金|家用|洗衣|電池|燈泡/, cat: "日常用品" }, { re: /化妝|保養|美容|美髮|剪髮|指甲|睫毛|保養品/, cat: "美妝" }, { re: /書|文具|課程|補習|學費|教材|訂閱課/, cat: "教育" }];
+    const iRules = [{ re: /薪水|薪資|工資|月薪/, cat: "薪水" }, { re: /獎金|年終|分紅|紅利/, cat: "獎金" }, { re: /退款|退費/, cat: "退款" }, { re: /投資|股息|股利|利息|配息|賣股/, cat: "投資" }, { re: /紅包|禮金/, cat: "紅包" }];
+    const guess = (income ? iRules : eRules).find((rule) => rule.re.test(cleaned))?.cat;
+    if (guess) category = resolveUserCategory(guess, myNames);
   }
-  return { type, title: cleaned || category, amount, category, date, paymentCategory, paymentMethod };
+  if (!category) category = myNames.includes("其他") ? "其他" : myNames[myNames.length - 1];
+
+  const title = cleaned.replace(/\s+/g, " ").trim() || category;
+  return { type, title, amount, category, date, paymentCategory, paymentMethod };
 }
 async function saveConversationalRecord() {
   try {
