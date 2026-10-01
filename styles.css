@@ -741,3 +741,8 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .day-bar span{width:70%;background:var(--green);border-radius:4px 4px 0 0;display:block}
 .day-bar small{font-size:9px;color:var(--muted);height:12px;line-height:12px}
 .compare-hint{text-align:center;margin-top:8px}
+
+/* ===== 統一各分頁標題字級（首頁/帳本/新增/互動/分析/日記/每日一問） ===== */
+:root{--page-title-size:26px;--page-title-lh:1.35}
+.home-greet h1,.form-intro h2,.together-heading h2,.diary-header h2{font-size:var(--page-title-size);line-height:var(--page-title-lh);letter-spacing:0;font-weight:800}
+.together-heading h2 span{font-size:.75em}
