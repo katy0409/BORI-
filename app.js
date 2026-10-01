@@ -403,7 +403,7 @@ function subscribeRealtime() {
       const sender = roomMembers.find((m) => m.id === rawMessage?.user_id);
       const data = rawMessage ? { ...rawMessage, profiles: sender ? { display_name: sender.name } : null } : null;
       if (data && !messages.some((m) => m.id === data.id)) {
-        messages.push(data); renderChat(); renderHome(); scrollChat();
+        messages.push(data); appendMessage(data); renderHome(); scrollChat();
         if ($("#chatPage")?.classList.contains("active") && data.user_id !== session?.user?.id) markChatRead();
         else renderUnreadBadge();
       }
@@ -909,6 +909,18 @@ function formatDateDivider(dateStr) {
   const sameYear = target.getFullYear() === today.getFullYear();
   return sameYear ? `${target.getMonth() + 1}月${target.getDate()}日` : `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日`;
 }
+function messageHTML(m) {
+  const mine = m.user_id === session.user.id, name = m.profiles?.display_name || (mine ? profile?.display_name : "成員");
+  const quoteHTML = m.reply_to_id ? `<div class="message-quote"><small>${escapeHTML(m.reply_preview_sender || "")}</small><p>${escapeHTML(m.reply_preview_text || "")}</p></div>` : "";
+  const timeStr = new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+  if (m.message_type === "sticker") {
+    const s = stickerById(m.sticker_id);
+    return `<div class="message ${mine ? "mine" : "other"} sticker-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${timeStr}</small></div>`;
+  } else if (m.message_type === "image") {
+    return `<div class="message ${mine ? "mine" : "other"} image-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<a href="${escapeHTML(m.image_url || "")}" target="_blank" rel="noopener"><img src="${escapeHTML(m.image_url || "")}" alt="圖片" loading="lazy" /></a><small>${timeStr}</small></div>`;
+  }
+  return `<div class="message ${mine ? "mine" : "other"}" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<p>${escapeHTML(m.content || "")}</p><small>${timeStr}</small></div>`;
+}
 function renderChat() {
   const has = !!activeBookId; $("#chatEmpty").classList.toggle("hidden", has); $("#chatContent").classList.toggle("hidden", !has); if (!has) return;
   const b = activeBook(); $("#chatBookTitle").textContent = b.name;
@@ -916,28 +928,33 @@ function renderChat() {
   const distanceFromBottomBefore = userScrolledUpInChat ? listEl.scrollHeight - listEl.scrollTop : null;
   if (!messages.length) {
     listEl.innerHTML = `<div class="chat-welcome"><span>🐻</span><p>這裡是你們的即時聊天室。<br>先傳一句話或一張 BORI 貼圖吧。</p></div>`;
-    renderStickerTray();
     return;
   }
   let html = "", lastDate = null;
   messages.forEach((m) => {
     const msgDate = String(m.created_at).slice(0, 10);
-    if (msgDate !== lastDate) { html += `<div class="chat-date-divider">${formatDateDivider(msgDate)}</div>`; lastDate = msgDate; }
-    const mine = m.user_id === session.user.id, name = m.profiles?.display_name || (mine ? profile?.display_name : "成員");
-    const quoteHTML = m.reply_to_id ? `<div class="message-quote"><small>${escapeHTML(m.reply_preview_sender || "")}</small><p>${escapeHTML(m.reply_preview_text || "")}</p></div>` : "";
-    const timeStr = new Date(m.created_at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
-    if (m.message_type === "sticker") {
-      const s = stickerById(m.sticker_id);
-      html += `<div class="message ${mine ? "mine" : "other"} sticker-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}${s ? `<img src="${s.img}" alt="${escapeHTML(s.text)}" />` : `<span>🐻</span><strong>BORI</strong>`}<small>${timeStr}</small></div>`;
-    } else if (m.message_type === "image") {
-      html += `<div class="message ${mine ? "mine" : "other"} image-message" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<a href="${escapeHTML(m.image_url || "")}" target="_blank" rel="noopener"><img src="${escapeHTML(m.image_url || "")}" alt="圖片" loading="lazy" /></a><small>${timeStr}</small></div>`;
-    } else {
-      html += `<div class="message ${mine ? "mine" : "other"}" data-message-id="${m.id}"><small class="sender">${escapeHTML(name)}</small>${quoteHTML}<p>${escapeHTML(m.content || "")}</p><small>${timeStr}</small></div>`;
-    }
+    if (msgDate !== lastDate) { html += `<div class="chat-date-divider" data-date="${msgDate}">${formatDateDivider(msgDate)}</div>`; lastDate = msgDate; }
+    html += messageHTML(m);
   });
   listEl.innerHTML = html;
   if (distanceFromBottomBefore !== null) listEl.scrollTop = listEl.scrollHeight - distanceFromBottomBefore;
-  renderStickerTray();
+}
+// 只把一則新訊息加到清單尾端，不整包重畫（大幅減少聊天室卡頓）
+function appendMessage(m) {
+  const listEl = $("#messageList");
+  if (!listEl) return;
+  // 清單還是空狀態（歡迎畫面）時，退回完整渲染一次
+  if (!listEl.querySelector(".message")) { renderChat(); return; }
+  const msgDate = String(m.created_at).slice(0, 10);
+  const lastDivider = [...listEl.querySelectorAll(".chat-date-divider")].pop();
+  if (!lastDivider || lastDivider.dataset.date !== msgDate) {
+    const div = document.createElement("div");
+    div.className = "chat-date-divider";
+    div.dataset.date = msgDate;
+    div.textContent = formatDateDivider(msgDate);
+    listEl.appendChild(div);
+  }
+  listEl.insertAdjacentHTML("beforeend", messageHTML(m));
 }
 let activeStickerSet = 0;
 let hiddenStickerSets = new Set(JSON.parse(localStorage.getItem("bori-hidden-stickers") || "[]"));
@@ -2831,8 +2848,9 @@ function autoGrowInput() {
 $("#messageInput")?.addEventListener("input", autoGrowInput);
 function pushLocalMessage(row) {
   if (!row || messages.some((m) => m.id === row.id)) return;
-  messages.push({ ...row, profiles: { display_name: profile?.display_name, avatar_url: profile?.avatar_url } });
-  renderChat(); renderHome(); scrollChat();
+  const msg = { ...row, profiles: { display_name: profile?.display_name, avatar_url: profile?.avatar_url } };
+  messages.push(msg);
+  appendMessage(msg); renderHome(); scrollChat();
 }
 async function uploadPendingImages(replyMeta) {
   for (const it of pendingImages) {
@@ -2871,7 +2889,7 @@ $("#chatForm").addEventListener("submit", async (e) => {
   }
   cancelReply();
 });
-$("#stickerBtn").addEventListener("click", () => { const hidden = $("#stickerTray").classList.toggle("hidden"); $("#stickerBtn").classList.toggle("active", !hidden); });
+$("#stickerBtn").addEventListener("click", () => { const hidden = $("#stickerTray").classList.toggle("hidden"); $("#stickerBtn").classList.toggle("active", !hidden); if (!hidden && !$("#stickerGrid").children.length) renderStickerTray(); });
 $("#stickerSetTabs").addEventListener("click", (e) => { const btn = e.target.closest("[data-set]"); if (!btn) return; activeStickerSet = Number(btn.dataset.set); renderStickerTray(); });
 $("#stickerGrid").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-sticker]");
