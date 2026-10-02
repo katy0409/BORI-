@@ -746,3 +746,12 @@ body.chat-keyboard-open .bottom-nav{display:none}
 :root{--page-title-size:26px;--page-title-lh:1.35}
 .home-greet h1,.form-intro h2,.together-heading h2,.diary-header h2{font-size:var(--page-title-size);line-height:var(--page-title-lh);letter-spacing:0;font-weight:800}
 .together-heading h2 span{font-size:.75em}
+
+/* ===== 帳本頁標題列：月份切換移到標題右側，減少空白 ===== */
+.ledger-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.ledger-intro>div:first-child{min-width:0}
+.ledger-intro .month-selector{margin:0 0 2px;gap:6px;flex-shrink:0}
+.ledger-intro .month-selector button{width:30px;height:30px;font-size:16px}
+.ledger-intro .month-selector input[type=month]{padding:6px 10px;font-size:14px;font-weight:700;min-width:0;width:auto;max-width:128px;-webkit-appearance:none;appearance:none}
+#ledgerPage:has(#ledgerContent.hidden) .ledger-intro .month-selector{display:none}
+@media(max-width:350px){.ledger-intro .month-selector input[type=month]{max-width:108px;font-size:13px;padding:6px 8px}}

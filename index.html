@@ -15,7 +15,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=1.25.2" />
+  <link rel="stylesheet" href="styles.css?v=1.25.3" />
 </head>
 <body>
   <section id="splashScreen" class="splash-screen" aria-label="BORI 啟動畫面">
@@ -143,9 +143,9 @@
       </section>
 
       <section id="ledgerPage" class="page">
-        <div class="form-intro"><p class="eyebrow">ALL RECORDS</p><h2>帳本</h2></div>
+        <div class="form-intro ledger-intro"><div><p class="eyebrow">ALL RECORDS</p><h2>帳本</h2></div><div class="month-selector" id="ledgerMonthSelector"><button type="button" id="ledgerPrevMonth" aria-label="上個月">‹</button><input type="month" id="ledgerMonthInput" /><button type="button" id="ledgerNextMonth" aria-label="下個月">›</button></div></div>
         <div id="ledgerEmpty" class="empty-state large-empty"><div class="empty-illustration">📒</div><h2>先開一個房間</h2><p>開房間後，這裡會列出所有收支紀錄與分析。</p><button class="primary" data-open="bookDialog">🚪 開房間</button></div>
-        <div id="ledgerContent" class="hidden"><div class="month-selector" id="ledgerMonthSelector"><button type="button" id="ledgerPrevMonth" aria-label="上個月">‹</button><input type="month" id="ledgerMonthInput" /><button type="button" id="ledgerNextMonth" aria-label="下個月">›</button></div>
+        <div id="ledgerContent" class="hidden">
           <p class="filter-label ledger-member-filter-label">依成員查看帳戶餘額與紀錄</p>
           <div id="memberFilterRow" class="member-filter-row"></div>
           <div class="payer-grid">
@@ -362,6 +362,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=1.25.2"></script>
+  <script src="app.js?v=1.25.3"></script>
 </body>
 </html>
