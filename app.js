@@ -938,6 +938,7 @@ function renderChat() {
   });
   listEl.innerHTML = html;
   if (distanceFromBottomBefore !== null) listEl.scrollTop = listEl.scrollHeight - distanceFromBottomBefore;
+  else scrollChat();
 }
 // 只把一則新訊息加到清單尾端，不整包重畫（大幅減少聊天室卡頓）
 function appendMessage(m) {
@@ -973,10 +974,28 @@ function scrollChat(force) {
   if (!el) return;
   if (!force && userScrolledUpInChat) return;
   const doScroll = () => { el.scrollTop = el.scrollHeight; };
+  syncChatListPadding();
   requestAnimationFrame(doScroll);
   setTimeout(doScroll, 120);
   setTimeout(doScroll, 400);
+  setTimeout(() => { if (!userScrolledUpInChat) doScroll(); }, 900);
 }
+// 依輸入框實際位置計算訊息清單底部留白，確保最後一則訊息不會被輸入框蓋住
+function syncChatListPadding() {
+  const listEl = $("#messageList"), wrap = $("#chatComposerWrap");
+  if (!listEl || !wrap) return;
+  const lr = listEl.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+  if (!lr.height || !wr.height) return;
+  const pad = Math.max(24, Math.round(lr.bottom - wr.top + 16));
+  const atBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 40;
+  listEl.style.paddingBottom = pad + "px";
+  if (atBottom && !userScrolledUpInChat) listEl.scrollTop = listEl.scrollHeight;
+}
+// 圖片/貼圖載入後高度會變，若使用者在底部就跟著貼底
+$("#messageList").addEventListener("load", (e) => {
+  if (e.target.tagName === "IMG" && !userScrolledUpInChat) { const el = $("#messageList"); el.scrollTop = el.scrollHeight; }
+}, true);
+if (window.ResizeObserver) new ResizeObserver(() => syncChatListPadding()).observe($("#chatComposerWrap"));
 let userScrolledUpInChat = false;
 $("#messageList").addEventListener("scroll", () => {
   const el = $("#messageList");
@@ -2028,6 +2047,7 @@ function positionScrollToLatestBtn() {
   requestAnimationFrame(() => {
     const rect = wrap.getBoundingClientRect();
     btn.style.bottom = `${Math.max(8, window.innerHeight - rect.top + 12)}px`;
+    syncChatListPadding();
   });
 }
 function taiwanToday() {
