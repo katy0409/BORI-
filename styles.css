@@ -755,3 +755,8 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .ledger-intro .month-selector input[type=month]{padding:6px 10px;font-size:14px;font-weight:700;min-width:0;width:auto;max-width:128px;-webkit-appearance:none;appearance:none}
 #ledgerPage:has(#ledgerContent.hidden) .ledger-intro .month-selector{display:none}
 @media(max-width:350px){.ledger-intro .month-selector input[type=month]{max-width:108px;font-size:13px;padding:6px 8px}}
+
+/* ===== 右上角頭像：移除按鈕預設內距，避免照片被壓成橢圓、露出底色 ===== */
+#headerAvatar{padding:0;overflow:hidden;display:grid;place-items:center;aspect-ratio:1/1;-webkit-appearance:none;appearance:none}
+#headerAvatarImg{width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;object-position:center}
+#headerAvatar:has(#headerAvatarImg:not(.hidden)){background:var(--card);box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.08)}
