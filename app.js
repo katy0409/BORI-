@@ -2093,6 +2093,24 @@ function guessCategoryFromHistory(text, income) {
   const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   return best ? best[0] : null;
 }
+function guessAccountFromHistory(text) {
+  if (!text || !text.trim()) return null;
+  const myId = session?.user?.id;
+  const t = text.trim();
+  const counts = {};
+  transactions.forEach((x) => {
+    if (x.user_id !== myId || !x.payment_category) return;
+    if (x.category === "餘額調整") return;
+    const pt = String(x.title || "").trim(); if (pt.length < 2) return;
+    let match = t.includes(pt) || pt.includes(t);
+    if (!match) { for (let i = 0; i < pt.length - 1; i++) { const g = pt.slice(i, i + 2); if (/[\u4e00-\u9fa5A-Za-z0-9]{2}/.test(g) && t.includes(g)) { match = true; break; } } }
+    if (match) { const k = x.payment_category + "||" + (x.payment_method || ""); counts[k] = (counts[k] || 0) + 1; }
+  });
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (!best) return null;
+  const [cat, method] = best[0].split("||");
+  return { paymentCategory: cat, paymentMethod: method || null };
+}
 function parseConversationalRecord(input) {
   const text = String(input || "").trim();
   if (!text) throw new Error("請先說或輸入一筆紀錄");
@@ -2136,7 +2154,7 @@ function parseConversationalRecord(input) {
   const income = /(收入|薪水|薪資|工資|獎金|年終|退款|退費|入帳|中獎|紅包|禮金|利息|股息|股利|分紅)/.test(cleaned);
   const type = income ? "income" : "expense";
 
-  // ---- 帳戶 ----
+  // ---- 帳戶：① 明確子帳戶名 → ② 支付關鍵字 → ③ 依你過往同項目習慣 → ④ 保底現金 ----
   let paymentCategory = null, paymentMethod = null;
   for (const cat of baseCategories) {
     const subs = mySubAccounts(cat.key);
@@ -2146,10 +2164,13 @@ function parseConversationalRecord(input) {
   if (!paymentCategory) {
     const rules = [{ w: /信用卡|刷卡|刷|信用/, k: "credit_card" }, { w: /銀行|轉帳|匯款|存款|帳戶|提款|atm/i, k: "bank" }, { w: /line\s*pay|linepay|街口|電子支付|悠遊付|一卡通|icash|apple\s*pay|google\s*pay|悠遊卡|載具|行動支付|支付寶|台灣pay/i, k: "ewallet" }, { w: /現金|付現|零錢|錢包|皮夾/, k: "cash" }];
     const r = rules.find((x) => x.w.test(cleaned));
-    paymentCategory = r?.k || "cash";
-    if (r) cleaned = cleaned.replace(r.w, " ");
-    paymentMethod = mySubAccounts(paymentCategory)[0]?.name || baseCategories.find((c) => c.key === paymentCategory)?.label || "現金";
+    if (r) { paymentCategory = r.k; cleaned = cleaned.replace(r.w, " "); paymentMethod = mySubAccounts(paymentCategory)[0]?.name || baseCategories.find((c) => c.key === paymentCategory)?.label || "現金"; }
   }
+  if (!paymentCategory) {
+    const h = guessAccountFromHistory(cleaned);
+    if (h) { paymentCategory = h.paymentCategory; paymentMethod = h.paymentMethod || mySubAccounts(paymentCategory)[0]?.name || baseCategories.find((c) => c.key === paymentCategory)?.label; }
+  }
+  if (!paymentCategory) { paymentCategory = "cash"; paymentMethod = mySubAccounts("cash")[0]?.name || baseCategories.find((c) => c.key === "cash")?.label || "現金"; }
   cleaned = cleaned.replace(/(收入|支出|記帳|記一筆|一筆|花了|付了|付|買了|買|領了|領|賺了|賺|花)/g, " ").replace(/\$|＄|nt\$?|元|塊|円|圓/gi, " ").replace(/\s+/g, " ").trim();
 
   // ---- 分類：① 你的分類名稱命中 → ② 依你過往習慣 → ③ 關鍵字(含同義詞) → ④ 保底 ----
