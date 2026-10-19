@@ -784,3 +784,30 @@ body.chat-keyboard-open .bottom-nav{display:none}
 html,body{touch-action:manipulation}
 #amountInput{cursor:pointer;caret-color:transparent;-webkit-user-select:none;user-select:none}
 .calc-key,.calc-sheet{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+
+/* V1.9.5 計算機 — 奶油手繪風 */
+.calc-backdrop{background:rgba(70,52,38,.38)}
+.calc-panel{background:linear-gradient(180deg,#fdf8ee,#f7efdf);padding:14px 16px calc(64px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0;overflow:hidden}
+.calc-head{color:#6b4f3d;font-size:15px;margin:0 4px 46px}
+.calc-x{color:#b49a85}
+.calc-display{position:relative;display:flex;align-items:center;gap:10px;min-height:104px;margin:0 0 16px;padding:14px 20px;background:#e4eed6;border:2px solid #b9cfa2;border-radius:28px;box-shadow:inset 0 0 0 5px #e4eed6,inset 0 0 0 7px transparent}
+.calc-display:before{content:"";position:absolute;inset:6px;border:2px dashed #a9c193;border-radius:22px;pointer-events:none}
+.calc-peek{position:absolute;left:14px;top:-40px;width:78px;pointer-events:none}
+.calc-paw{color:#8aa877;opacity:.75;flex-shrink:0;margin-top:22px}
+.calc-texts{flex:1;min-width:0;text-align:right}
+.calc-expr{color:#8d9a7c;font-size:15px;font-weight:700}
+.calc-result{color:#3f3227;font-size:46px;font-weight:900;line-height:1.1}
+.calc-keys{gap:11px}
+.calc-key{position:relative;min-height:62px;padding:0;border-radius:22px;font-size:26px;font-weight:800;color:#5a4334;background:linear-gradient(180deg,#fdf3e6,#f5e4cf);border:1.5px solid #ead3b8;box-shadow:inset 0 3px 0 rgba(255,255,255,.75),0 4px 0 #e4ceb2,0 6px 12px rgba(150,110,70,.12);display:grid;place-items:center;transition:transform .08s,box-shadow .08s}
+.calc-key:after{content:"";position:absolute;right:9px;bottom:8px;width:15px;height:15px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b98a6a'%3E%3Cellipse cx='12' cy='16' rx='5' ry='4.2'/%3E%3Ccircle cx='5.6' cy='10.4' r='2.2'/%3E%3Ccircle cx='9.4' cy='6.6' r='2.3'/%3E%3Ccircle cx='14.6' cy='6.6' r='2.3'/%3E%3Ccircle cx='18.4' cy='10.4' r='2.2'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.55}
+.calc-key:active{transform:translateY(3px);box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 1px 0 #e4ceb2}
+.calc-c{background:linear-gradient(180deg,#fbd3cf,#f3b7b2);border-color:#eba8a2;color:#7a4a40;box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 4px 0 #e2a29b,0 6px 12px rgba(150,80,70,.12)}
+.calc-back{background:linear-gradient(180deg,#efe5d8,#e3d6c5);border-color:#d8c8b4;color:#6b5646;box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 4px 0 #d3c1ab,0 6px 12px rgba(120,95,70,.12)}
+.calc-op{background:linear-gradient(180deg,#e5eed8,#d3e2c1);border-color:#c2d5ab;color:#4c6a3c;box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 4px 0 #bccfa5,0 6px 12px rgba(90,120,70,.12)}
+.calc-div{background:linear-gradient(180deg,#eef0cf,#e1e6b4);border-color:#d3d9a1;box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 4px 0 #cdd398,0 6px 12px rgba(120,120,60,.12)}
+.calc-op:not(.calc-pct):not(.calc-div):after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e58d9c' stroke-width='2.4' stroke-linejoin='round'%3E%3Cpath d='M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z'/%3E%3C/svg%3E")}
+.calc-eq{background:linear-gradient(180deg,#86ad74,#6a945a);border-color:#5f8650;color:#fff;box-shadow:inset 0 3px 0 rgba(255,255,255,.25),0 4px 0 #557a47,0 6px 12px rgba(60,90,50,.2)}
+.calc-done{background:linear-gradient(180deg,#6b8f5c,#527645);border-color:#4a6b3e;color:#fff;font-size:21px;box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 4px 0 #43613a,0 6px 12px rgba(50,80,40,.22)}
+.calc-eq:after,.calc-done:after{display:none}
+.calc-sleep{position:absolute;left:12px;bottom:calc(4px + env(safe-area-inset-bottom));width:96px;pointer-events:none}
+@media(max-width:360px){.calc-key{min-height:54px;font-size:22px}.calc-result{font-size:38px}}
