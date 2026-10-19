@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="BORI" />
-  <meta name="description" content="BORI V1.9.2，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
-  <title>BORI V1.9.2｜Cloud Life</title>
+  <meta name="description" content="BORI V1.9.3，開房間跟情侶、家人或朋友一起生活記帳的雲端 App。" />
+  <title>BORI V1.9.3｜Cloud Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 
   <section id="authScreen" class="gate-screen hidden">
     <div class="gate-card auth-card">
-      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.9.2</small></div></div>
+      <div class="auth-brand"><span>🌾</span><div><strong>보리</strong><small>BORI V1.9.3</small></div></div>
       <div class="auth-tabs"><button class="active" data-auth-tab="login">登入</button><button data-auth-tab="register">註冊</button></div>
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required autocomplete="email" /></label>
@@ -58,12 +58,13 @@
     </div>
   </section>
 
+  <div id="calcSheet" class="calc-sheet hidden"><div class="calc-backdrop" data-calc-close></div><div class="calc-panel"><div class="calc-head"><span>計算金額</span><button type="button" class="calc-x" data-calc-close aria-label="關閉">×</button></div><div class="calc-display"><div id="calcExpr" class="calc-expr"></div><div id="calcResult" class="calc-result">0</div></div><div class="calc-keys"><button type="button" class="calc-key calc-fn" data-calc="C">C</button><button type="button" class="calc-key calc-fn" data-calc="back">⌫</button><button type="button" class="calc-key calc-op" data-calc="%">%</button><button type="button" class="calc-key calc-op" data-calc="/">÷</button><button type="button" class="calc-key" data-calc="7">7</button><button type="button" class="calc-key" data-calc="8">8</button><button type="button" class="calc-key" data-calc="9">9</button><button type="button" class="calc-key calc-op" data-calc="*">×</button><button type="button" class="calc-key" data-calc="4">4</button><button type="button" class="calc-key" data-calc="5">5</button><button type="button" class="calc-key" data-calc="6">6</button><button type="button" class="calc-key calc-op" data-calc="-">−</button><button type="button" class="calc-key" data-calc="1">1</button><button type="button" class="calc-key" data-calc="2">2</button><button type="button" class="calc-key" data-calc="3">3</button><button type="button" class="calc-key calc-op" data-calc="+">＋</button><button type="button" class="calc-key" data-calc="0">0</button><button type="button" class="calc-key" data-calc=".">.</button><button type="button" class="calc-key calc-eq" data-calc="=">=</button><button type="button" class="calc-key calc-done" data-calc="done">完成</button></div></div></div>
   <dialog id="adminDialog"><div class="dialog-head"><div><p class="eyebrow">ADMIN CONSOLE</p><h3>管理者入口</h3></div><button type="button" class="dialog-close" data-close="adminDialog">×</button></div><form id="adminCodeForm" class="auth-form"><label>8 位數字管理碼<input id="adminCodeInput" type="password" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required autocomplete="off" /></label><button class="primary" type="submit">進入房間管理</button></form><div id="adminPanel" class="hidden"><p class="muted-hint">管理碼可管理及永久刪除所有房間，請勿提供給一般成員。</p><div id="adminRoomList" class="admin-room-list"></div></div></dialog>
 
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.9.2</small></span></button>
+        <button class="brand-button" data-page="homePage"><span class="brand-mark">🌾</span><span><strong>보리</strong><small>BORI · V1.9.3</small></span></button>
         <button id="topbarRoom" class="topbar-room hidden" data-open="switchRoomDialog"><img id="topbarRoomIcon" src="" alt="" /><span id="topbarRoomName"></span></button>
       </div>
       <button class="avatar" data-page="profilePage" id="headerAvatar"><span id="headerAvatarEmoji">🐻</span><img id="headerAvatarImg" class="hidden" alt="" /></button>
@@ -181,7 +182,7 @@
             <button type="button" class="type-switch-option income" data-type="income"><img class="type-switch-icon" src="assets/bear-income.png" alt="" /><span>收入</span></button>
           </div>
           <form id="transactionForm" class="expense-form record-form-card">
-            <label class="amount-field"><span>$</span><input id="amountInput" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0" required /></label>
+            <label class="amount-field"><span>$</span><input id="amountInput" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0" required /><button type="button" id="calcOpenBtn" class="calc-open-btn" aria-label="計算機">🧮</button></label>
             <label>📝 項目<input id="titleInput" placeholder="例如：晚餐、電影票" required /></label>
             <label>🏷️ 分類<select id="categoryInput"></select></label>
             <label>💳 帳戶<div class="payment-picker" id="paymentPicker"></div></label>
@@ -271,7 +272,7 @@
     <div class="about-content">
       <div class="about-mascot">🐻🌾</div>
       <h4>보리 BORI</h4>
-      <p class="about-version">Cloud Life · V1.9.2</p>
+      <p class="about-version">Cloud Life · V1.9.3</p>
       <p class="about-desc">跟重要的人一起記帳、聊天、累積生活裡的小幸福。收支同步、預算管理、即時聊天，一起把日子過好。</p>
     </div>
   </dialog>

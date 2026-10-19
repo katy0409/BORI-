@@ -2455,6 +2455,71 @@ $("#splitShareInputs").addEventListener("input", (e) => {
   updateSplitHint();
 });
 $("#amountInput").addEventListener("input", () => { if (splitMode === "shared" && splitType === "amount") updateSplitHint(); });
+
+// ---- 金額計算機 ----
+let calcExpr = "";
+function calcEvaluate(expr) {
+  const tokens = expr.match(/\d+\.?\d*|[+\-*/%]/g);
+  if (!tokens || !tokens.length) return null;
+  // 轉為數列與運算子，先處理 % (視為 /100 的單目後綴)
+  const nums = [], ops = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let t = tokens[i];
+    if (/^\d/.test(t)) {
+      let v = parseFloat(t);
+      while (tokens[i + 1] === "%") { v = v / 100; i++; }
+      nums.push(v); i++;
+    } else { ops.push(t); i++; }
+  }
+  if (!nums.length) return null;
+  // 先乘除
+  let n2 = [nums[0]], o2 = [];
+  for (let k = 0; k < ops.length; k++) {
+    const op = ops[k], nx = nums[k + 1];
+    if (nx === undefined) break;
+    if (op === "*") n2[n2.length - 1] *= nx;
+    else if (op === "/") n2[n2.length - 1] = nx === 0 ? NaN : n2[n2.length - 1] / nx;
+    else { o2.push(op); n2.push(nx); }
+  }
+  let res = n2[0];
+  for (let k = 0; k < o2.length; k++) { res = o2[k] === "+" ? res + n2[k + 1] : res - n2[k + 1]; }
+  return Number.isFinite(res) ? Math.round(res * 100) / 100 : null;
+}
+function calcRender() {
+  const disp = calcExpr.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−").replace(/\+/g, "＋");
+  $("#calcExpr").textContent = disp || "";
+  const r = calcEvaluate(calcExpr);
+  $("#calcResult").textContent = r === null ? (calcExpr ? "…" : "0") : String(r);
+}
+function openCalc() {
+  const cur = $("#amountInput").value;
+  calcExpr = cur && Number(cur) > 0 ? String(cur) : "";
+  calcRender();
+  $("#calcSheet")?.classList.remove("hidden");
+}
+function closeCalc() { $("#calcSheet")?.classList.add("hidden"); }
+function calcApply() {
+  const r = calcEvaluate(calcExpr);
+  if (r !== null && r > 0) { $("#amountInput").value = r; $("#amountInput").dispatchEvent(new Event("input")); }
+  closeCalc();
+}
+$("#calcOpenBtn")?.addEventListener("click", openCalc);
+document.querySelectorAll("[data-calc-close]").forEach((el) => el.addEventListener("click", closeCalc));
+$("#calcSheet")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-calc]"); if (!btn) return;
+  const v = btn.dataset.calc;
+  if (v === "C") { calcExpr = ""; }
+  else if (v === "back") { calcExpr = calcExpr.slice(0, -1); }
+  else if (v === "done") { return calcApply(); }
+  else if (v === "=") { const r = calcEvaluate(calcExpr); if (r !== null) calcExpr = String(r); }
+  else if (/[+\-*/]/.test(v)) { if (!calcExpr && v !== "-") return; if (/[+\-*/]$/.test(calcExpr)) calcExpr = calcExpr.slice(0, -1); calcExpr += v; }
+  else if (v === "%") { if (/\d$/.test(calcExpr)) calcExpr += "%"; }
+  else if (v === ".") { const last = calcExpr.split(/[+\-*/]/).pop(); if (!last.includes(".")) calcExpr += calcExpr && /\d$/.test(calcExpr) ? "." : "0."; }
+  else { calcExpr += v; }
+  calcRender();
+});
+
 function getSplitPayload(amountValue) {
   if (splitMode !== "shared") return { split_mode: "private", split_type: null, split_members: null, split_shares: null };
   if (!splitSelectedMembers.length) throw new Error("請至少選擇一位分攤成員");
