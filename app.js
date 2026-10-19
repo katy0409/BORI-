@@ -2504,7 +2504,8 @@ function calcApply() {
   if (r !== null && r > 0) { $("#amountInput").value = r; $("#amountInput").dispatchEvent(new Event("input")); }
   closeCalc();
 }
-$("#calcOpenBtn")?.addEventListener("click", openCalc);
+$("#amountInput").addEventListener("click", openCalc);
+$("#amountInput").addEventListener("focus", (e) => { e.target.blur(); openCalc(); });
 document.querySelectorAll("[data-calc-close]").forEach((el) => el.addEventListener("click", closeCalc));
 $("#calcSheet")?.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-calc]"); if (!btn) return;
@@ -2561,6 +2562,7 @@ function openEditTransaction(id) {
 $("#ledgerList").addEventListener("click", (e) => { const btn = e.target.closest("[data-edit-record]"); if (btn) openEditTransaction(btn.dataset.editRecord); });
 $("#transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!(Number($("#amountInput").value) > 0)) { toast("請先輸入金額"); openCalc(); return; }
   try {
     const wasEditing = !!editingTransactionId;
     const split = addType === "expense" ? getSplitPayload($("#amountInput").value) : { split_mode: "private", split_type: null, split_members: null, split_shares: null };

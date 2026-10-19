@@ -780,3 +780,7 @@ body.chat-keyboard-open .bottom-nav{display:none}
 .calc-fn{background:#efe4d4;color:var(--muted);font-size:18px}
 .calc-eq{background:var(--green);color:#fff}
 .calc-done{background:var(--green-dark);color:#fff;font-size:18px}
+/* V1.9.4 點金額直接開計算機、禁止雙擊放大 */
+html,body{touch-action:manipulation}
+#amountInput{cursor:pointer;caret-color:transparent;-webkit-user-select:none;user-select:none}
+.calc-key,.calc-sheet{touch-action:manipulation;-webkit-user-select:none;user-select:none}
